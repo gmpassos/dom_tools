@@ -10,7 +10,16 @@ A simple usage example:
 import 'package:dom_tools/dom_tools.dart';
 
 main() {
-  var awesome = new Awesome();
+
+  // Example of an image that only loads when visualized in viewport: 
+
+  TrackElementInViewport tracker = TrackElementInViewport() ;
+  var imageElement = ImageElement() ;
+  
+  tracker.track(imageElement, onEnterViewport: (elem) {
+    imageElement.src = 'http://api.host/path/to/image' ;
+  });
+
 }
 ```
 
