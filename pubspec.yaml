@@ -1,13 +1,13 @@
 name: dom_tools
 description: DOM rich elements and tools
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/gmpassos/dom_tools
 
 environment:
   sdk: '>=2.7.0 <3.0.0'
 
 dependencies:
-#  path: ^1.6.0
+  intl: "^0.16.0"
 
 dev_dependencies:
   pedantic: ^1.8.0

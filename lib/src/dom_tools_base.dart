@@ -17,6 +17,61 @@ bool isInViewport(Element elem) {
   return rect.bottom > 0 && rect.right > 0 && rect.left < windowWidth && rect.top < windowHeight ;
 }
 
+///////////////////////////
+
+CssStyleDeclaration defineCSS(CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS, [dynamic defaultCSS]) {
+  if (currentCSS == null) {
+    return appendCSS ?? asCssStyleDeclaration(defaultCSS) ;
+  }
+  else if (appendCSS == null) {
+    return currentCSS ?? asCssStyleDeclaration(defaultCSS);
+  }
+  else {
+    return CssStyleDeclaration()
+      ..cssText = currentCSS.cssText + ' ; ' + appendCSS.cssText;
+  }
+}
+
+CssStyleDeclaration asCssStyleDeclaration(dynamic css) {
+  if (css == null) return CssStyleDeclaration();
+  if (css is CssStyleDeclaration) return css;
+  if (css is String) return CssStyleDeclaration()..cssText = css;
+  if (css is Function) return asCssStyleDeclaration( css() ) ;
+
+  throw StateError("Can't convert to CSS: $css") ;
+}
+
+bool hasCSS(CssStyleDeclaration css) {
+  if (css == null) return false ;
+  var cssText = css.cssText ;
+  if (cssText == null || cssText.trim().isEmpty) return false ;
+  return true ;
+}
+
+bool applyCSS(CssStyleDeclaration css, Element element, [List<Element> extraElements]) {
+  if ( !hasCSS(css) ) return false ;
+  
+  var apply = _applyCSS(css, element) ;
+
+  if (extraElements != null) {
+    for (var elem in extraElements) {
+      var ok = _applyCSS(css, elem) ;
+      apply |= ok ;
+    }
+  }
+
+  return apply ;
+}
+
+bool _applyCSS(CssStyleDeclaration css, Element element) {
+  if (element != null) {
+    var newCss = element.style.cssText + ' ; ' + css.cssText;
+    element.style.cssText = newCss;
+    return true ;
+  }
+  return false ;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class _ElementTrack {
