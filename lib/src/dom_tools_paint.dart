@@ -1,14 +1,28 @@
 
+import 'dart:async';
 import 'dart:html';
 import 'dart:math' as math ;
+import 'dart:math';
 
 import 'package:intl/intl.dart';
+
+import 'perspective_filter.dart';
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class Color from  'dart:ui' (Flutter):
 ////////////////////////////////////////////////////////////////////////////////
 
 class Color {
+
+  static final Color BLACK = Color.fromRGBO(0, 0, 0);
+  static final Color WHITE = Color.fromRGBO(255, 255, 255);
+
+  static final Color RED = Color.fromRGBO(255, 0, 0);
+  static final Color GREEN = Color.fromRGBO(0, 255, 0);
+  static final Color BLUE = Color.fromRGBO(0, 0, 255);
+
+  static final Color CYAN = Color.fromRGBO(0, 255, 255);
+
   /// Construct a color from the lower 32 bits of an [int].
   ///
   /// The bits are interpreted as follows:
@@ -57,7 +71,7 @@ class Color {
   /// Out of range values are brought into range using modulo 255.
   ///
   /// See also [fromARGB], which takes the opacity as an integer value.
-  const Color.fromRGBO(int r, int g, int b, double opacity) :
+  const Color.fromRGBO(int r, int g, int b, [double opacity = 1.0]) :
         value = ((((opacity * 0xff ~/ 1) & 0xff) << 24) |
         ((r                    & 0xff) << 16) |
         ((g                    & 0xff) << 8)  |
@@ -248,10 +262,207 @@ class Color {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+Rectangle<int> getImageDimension(CanvasImageSource image) {
+  if ( image is ImageElement ) {
+    return Rectangle(0,0, image.naturalWidth , image.naturalHeight ) ;
+  }
+  else if ( image is CanvasElement ) {
+    return Rectangle(0,0, image.width , image.height ) ;
+  }
+  else if ( image is VideoElement ) {
+    return Rectangle(0,0, image.width , image.height ) ;
+  }
+  return null ;
+}
+
+CanvasImageSource createScaledImage(CanvasImageSource image, int w, int h, double scale) {
+  var w2 = (w * scale).toInt();
+  var h2 = (h * scale).toInt();
+
+  var canvas = CanvasElement(width: w2, height: h2);
+
+  CanvasRenderingContext2D context = canvas.getContext('2d');
+
+  context.drawImageScaledFromSource(image, 0, 0, w, h, 0, 0, w2, h2);
+
+  return canvas;
+}
+
+Future<ImageElement> createImageElementFromFile(File file) {
+  var reader = FileReader();
+
+  var completer = Completer<ImageElement>();
+
+  reader.onLoadEnd.listen((e) {
+    completer.complete(createImageElementFromBase64(reader.result));
+  });
+
+  reader.readAsDataUrl(file);
+
+  return completer.future;
+}
+
+ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
+  if (base64 == null || base64.isEmpty) return null ;
+  if (!base64.startsWith('data:')) {
+    if (mimeType == null || mimeType.trim().isEmpty) mimeType = 'image/jpeg' ;
+    base64 = 'data:$mimeType;base64,$base64' ;
+  }
+
+  var imgElement = ImageElement();
+  imgElement.src = base64;
+
+  return imgElement;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+List< Point<num> > copyPoints( List< Point<num> > points ) {
+  return points.map( (p) => Point( p.x , p.y )  ).toList() ;
+}
+
+List< Point<num> > scalePoints( List< Point<num> > points , double scale ) {
+  return points.map( (p) => Point( p.x*scale , p.y*scale )  ).toList() ;
+}
+
+List< Point<num> > scalePointsXY( List< Point<num> > points , double scaleX, double scaleY ) {
+  return points.map( (p) => Point( p.x*scaleX , p.y*scaleY )  ).toList() ;
+}
+
+List< Point<num> > translatePoints( List< Point<num> > points , num x, num y ) {
+  return points.map( (p) => Point( p.x+x , p.y+y )  ).toList() ;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+class ImageScaledCache {
+
+  final CanvasImageSource _image ;
+  int _width ;
+  int _height ;
+  int _maxScaleCacheEntries ;
+
+  ImageScaledCache(this._image, [int width, int height, int maxScaleCacheEntries]) {
+    if (width == null || height == null) {
+      var wh = getImageDimension(_image) ;
+
+      width ??= wh.width ;
+      height ??= wh.height ;
+    }
+
+    _width = width ;
+    _height = height ;
+
+    _maxScaleCacheEntries = maxScaleCacheEntries != null && maxScaleCacheEntries > 0 ? maxScaleCacheEntries : 2 ;
+
+  }
+
+  CanvasImageSource get image => _image;
+  int get width => _width;
+  int get height => _height;
+
+  int get maxScaleCacheEntries => _maxScaleCacheEntries ;
+
+  /////
+
+  final Map<double, CanvasImageSource> _scaleCache = {} ;
+
+  void clearScaleCache() {
+    _scaleCache.clear() ;
+  }
+
+  CanvasImageSource getImageScaled(double scale) {
+    if (scale <= 0) return null ;
+    if (scale == 1.0) return _image ;
+
+    var scaledImage = _scaleCache[scale] ;
+
+    if (scaledImage == null) {
+      scaledImage = createScaledImage(_image, _width, _height, scale);
+
+      limitEntries(_scaleCache, _maxScaleCacheEntries-1);
+
+      _scaleCache[scale] = scaledImage ;
+    }
+
+    return scaledImage ;
+  }
+
+  static int limitEntries(Map cache, int maxCacheEntries) {
+    var removed = 0 ;
+    while ( cache.length > maxCacheEntries ) {
+      cache.remove( cache.keys.first ) ;
+      removed++ ;
+    }
+    return removed ;
+  }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Image Viewer using Canvas and highlight elements (Clip and Rectangles)
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef ImageFilter = CanvasImageSource Function(CanvasImageSource image, int width, int height) ;
+
+enum Quality {
+  HIGH,
+  MEDIUM,
+  LOW
+}
+
+enum EditionType {
+  CLIP,
+  POINTS,
+  PERSPECTIVE
+}
+
+typedef ValueCopier<T> = T Function(T value) ;
+
+class ViewerValue<T> {
+
+  static T copyValue<T>(ViewerValue<T> viewerValue) {
+    return viewerValue != null ? viewerValue.valueCopy : null ;
+  }
+
+  static T getValue<T>(ViewerValue<T> viewerValue) {
+    return viewerValue != null ? viewerValue.value : null ;
+  }
+
+  static Color getColor(ViewerValue viewerValue, [Color defaultColor]) {
+    return viewerValue != null ? viewerValue.color ?? defaultColor : defaultColor ;
+  }
+
+  static String getKey(ViewerValue viewerValue, [String defaultKey]) {
+    return viewerValue != null ? viewerValue.key ?? defaultKey : defaultKey ;
+  }
+
+  //////////////////////////////////
+
+  T _value ;
+  final Color color ;
+  final ValueCopier<T> _copier ;
+
+  ViewerValue(this._value, this.color, [this._copier]);
+
+  bool get isNull => _value == null ;
+
+  T get value => _value;
+
+  set value(T value) {
+    _value = value;
+  }
+
+  T get valueCopy => _copier != null ? _copier(_value) : null ;
+
+  String key ;
+
+  @override
+  String toString() {
+    return key != null ? '{value: $_value, color: $color, key: $key}' : '{value: $_value, color: $color}' ;
+  }
+}
 
 class CanvasImageViewer {
 
@@ -264,22 +475,33 @@ class CanvasImageViewer {
   CanvasImageSource _image ;
   ImageFilter _imageFilter ;
 
-  Rectangle<num> _clip ;
-  final Color _clipColor ;
-
-  final List<Rectangle<num>> _rectangles ;
-  final Color _rectanglesColor ;
+  ViewerValue<Rectangle<num>> _clip ;
+  ViewerValue<List<Rectangle<num>>> _rectangles ;
+  ViewerValue<List<Point<num>>> _points ;
+  ViewerValue<List<Point<num>>> _perspective ;
+  ViewerValue<num> _gridSize ;
 
   final DateTime time ;
 
-  final bool _editable ;
+  final EditionType _editionType ;
 
-  CanvasImageViewer(this._canvas, { int width, int height, bool canvasSizeToImageSize = true , CanvasImageSource image, ImageFilter imageFilter, Rectangle<num> clip , String clipColor, List<Rectangle<num>> rectangles , Color rectanglesColor , this.time , bool editable} ) :
+  ImagePerspectiveFilterCache _imagePerspectiveFilterCache ;
+
+
+  CanvasImageViewer(this._canvas, { int width, int height, bool canvasSizeToImageSize = true , CanvasImageSource image, ImageFilter imageFilter,
+    ViewerValue< Rectangle<num> > clip ,
+    ViewerValue< List<Rectangle<num>> > rectangles ,
+    ViewerValue< List<Point<num>> > points ,
+    ViewerValue<List<Point<num>>> perspective ,
+    ViewerValue<num> gridSize,
+    this.time , EditionType editable
+  } ) :
         _clip = clip ,
-        _clipColor = Color.parse(clipColor ?? '#0000FF') ,
         _rectangles = rectangles ,
-        _rectanglesColor = Color.parse(rectanglesColor ?? '#00FF00') ,
-        _editable = editable ?? false
+        _points = points ,
+        _perspective = perspective ,
+        _gridSize = gridSize ,
+        _editionType = editable
   {
 
     _imageFilter = imageFilter ;
@@ -288,10 +510,10 @@ class CanvasImageViewer {
       var imgW = 100 ;
       var imgH = 100 ;
 
-      var wh = getCanvasImageSource_Width_Height(image) ;
+      var wh = getImageDimension(image) ;
       if (wh != null) {
-        imgW = wh[0];
-        imgH = wh[1];
+        imgW = wh.width ;
+        imgH = wh.height ;
       }
 
       _image = _imageFilter(image, imgW, imgH) ?? image ;
@@ -304,10 +526,10 @@ class CanvasImageViewer {
     var h = height ;
 
     if (w == null || h == null) {
-      var wh = getCanvasImageSource_Width_Height(_image) ;
+      var wh = getImageDimension(_image) ;
       if (wh != null) {
-        w ??= wh[0];
-        h ??= wh[1];
+        w ??= wh.width ;
+        h ??= wh.height ;
       }
     }
 
@@ -317,49 +539,139 @@ class CanvasImageViewer {
     _width = w ;
     _height = h ;
 
-    _clip = _clip != null ? _clip.intersection( Rectangle(0,0,w,h) ) : Rectangle(0,0,w,h) ;
+    _imagePerspectiveFilterCache = ImagePerspectiveFilterCache(_image, w, h) ;
+
+    if ( _clip != null && !_clip.isNull ) {
+      _clip.value = _normalizeClip(_clip.value) ;
+    }
 
     if ( canvasSizeToImageSize ?? true ) {
       _canvas.width = w;
       _canvas.height = h;
     }
 
-    if ( _editable ) {
+    if ( isEditable ) {
       _canvas.onMouseDown.listen(_onMouseDown);
       _canvas.onMouseUp.listen(_onMouseUp);
+      _canvas.onClick.listen(_onMouseClick);
       _canvas.onMouseLeave.listen(_onMouseLeave);
       _canvas.onMouseMove.listen(_onMouseMove);
     }
 
   }
 
-  static List<int> getCanvasImageSource_Width_Height(CanvasImageSource image) {
-    if ( image is ImageElement ) {
-      return [ image.naturalWidth , image.naturalHeight ] ;
-    }
-    else if ( image is CanvasElement ) {
-      return [ image.width , image.height ] ;
-    }
-    else if ( image is VideoElement ) {
-      return [ image.width , image.height ] ;
-    }
-    return null ;
+  Rectangle<num> _defaultClip() {
+    var border = min(10 , min(_width~/10,_height~/10) ) ;
+    return Rectangle(border,border, _width-(border*2), _height-(border*2)) ;
   }
+
+  Rectangle<num> _normalizeClip(Rectangle<num> clip) {
+    return _clip.value.intersection( Rectangle(0,0, _width, _height) ) ;
+  }
+
+  List< Point<num> > _defaultPerspective() {
+    return [ Point(0,0) , Point(width,0) , Point(width,height) , Point(0,height) ] ;
+  }
+
+
+  EditionType get editionType => _editionType;
+  bool get isEditable => _editionType != null ;
 
   int get width => _width;
   int get height => _height;
 
-  Rectangle<num> get clip => Rectangle( _clip.left , _clip.top , _clip.width , _clip.height ) ;
-  List<Rectangle<num>> get rectangles => _rectangles.map( (r) => Rectangle( r.left , r.top , r.width , r.height ) ).toList() ;
+  //////
+
+  static ViewerValue<Rectangle<num>> clipViewerValue(Rectangle<num> clip, [Color color]) {
+    return ViewerValue<Rectangle<num>>(clip, color, (v) => Rectangle<num>( v.left , v.top , v.width , v.height ) ) ;
+  }
+
+  Rectangle<num> get clip => ViewerValue.copyValue(_clip) ;
+  String get clipKey => ViewerValue.getKey(_clip, 'clip') ;
+
+  //////
+
+  static ViewerValue< List<Rectangle<num>> > rectanglesViewerValue(List<Rectangle<num>> rectangles, [Color color]) {
+    return ViewerValue< List<Rectangle<num>> >(rectangles, color, (value) => value.map( (r) => Rectangle<num>( r.left , r.top , r.width , r.height ) ).toList() ) ;
+  }
+
+  List<Rectangle<num>> get rectangles => ViewerValue.copyValue(_rectangles) ;
+  String get rectanglesKey => ViewerValue.getKey(_rectangles, 'rectangles') ;
+
+  //////
+
+  static ViewerValue< List<Point<num>> > pointsViewerValue(List<Point<num>> points, [Color color]) {
+    return ViewerValue< List<Point<num>> >(points, color, (value) => value.map( (p) => Point<num>( p.x , p.y ) ).toList() ) ;
+  }
+
+  List<Point<num>> get points => ViewerValue.copyValue(_points) ;
+  String get pointsKey => ViewerValue.getKey(_points, 'points') ;
+
+  //////
+
+  static ViewerValue<num> gridSizeViewerValue(num gridSize, [Color color]) {
+    return ViewerValue<num>(gridSize, color, (value) => value) ;
+  }
+
+  num get gridSize => ViewerValue.copyValue(_gridSize) ;
+  String get gridSizeKey => ViewerValue.getKey(_gridSize, 'gridSize') ;
+
+  //////
+
+  static ViewerValue< List<Point<num>> > perspectiveViewerValueFromNums(List<num> perspective, [Color color]) {
+    if (perspective == null) {
+      return perspectiveViewerValue(null, color) ;
+    }
+
+    // ignore: omit_local_variable_types
+    List< Point<num> > points = [] ;
+
+    for (var i = 1; i < perspective.length; ++i) {
+      var x = perspective[i-1];
+      var y = perspective[i];
+      points.add( Point(x,y) ) ;
+    }
+
+    return perspectiveViewerValue(points, color) ;
+  }
+
+  static ViewerValue< List<Point<num>> > perspectiveViewerValue(List< Point<num> > perspective, [Color color]) {
+    return ViewerValue< List<Point<num>> >(perspective, color, (value) => value.map( (p) => Point<num>( p.x , p.y ) ).toList() ) ;
+  }
+
+  List<Point<num>> get perspective => ViewerValue.copyValue(_perspective) ;
+  String get perspectiveKey => ViewerValue.getKey(_perspective, 'perspective') ;
+
+  //////
+
+  void _deselectDOM() {
+    var selection = window.getSelection() ;
+    if ( selection != null ) {
+      selection.empty() ;
+    }
+  }
 
   Point _pressed ;
 
   void _onMouseDown(MouseEvent event) {
+    _deselectDOM() ;
+
     var mouse = event.offset ;
     _pressed = mouse ;
 
-    adjustClip(_pressed);
-    render();
+    var edited = edit(mouse, false);
+    if (edited != null) {
+      _renderImpl( edited , false ) ;
+    }
+  }
+
+  void _onMouseClick(MouseEvent event) {
+    var mouse = event.offset ;
+
+    var edited = edit(mouse, true);
+    if (edited != null) {
+      _renderImpl( edited , false ) ;
+    }
   }
 
   void _onMouseUp(MouseEvent event) {
@@ -375,52 +687,88 @@ class CanvasImageViewer {
 
     var mouse = event.offset ;
 
-    adjustClip(mouse);
-    render();
+    var edited = edit(mouse, false);
+    if (edited != null) {
+      _renderImpl( edited , false ) ;
+    }
   }
 
-  void adjustClip( Point mouse ) {
-    if (!_editable) return ;
+  ///////////////////////////////////
 
-    var wRatio = width / _canvas.offset.width ;
-    var hRatio = height / _canvas.offset.height ;
+  double get offsetWidthRatio => width / _canvas.offset.width ;
+  double get offsetHeightRatio => height / _canvas.offset.height ;
+
+  Quality edit( Point mouse , bool click ) {
+    if ( !isEditable ) return null ;
+
+    switch ( _editionType ) {
+      case EditionType.CLIP: return adjustClip(mouse, click) ;
+      case EditionType.POINTS: return adjustPoints(mouse, click) ;
+      case EditionType.PERSPECTIVE: return adjustPerspective(mouse, click) ;
+      default: return null ;
+    }
+  }
+
+  Quality adjustClip( Point mouse , bool click ) {
+    if (click) return null ;
+
+    print('--- adjustClip ---') ;
+    if (_clip == null) return null ;
+
+    var wRatio = offsetWidthRatio ;
+    var hRatio = offsetHeightRatio ;
 
     var x = (bound(mouse.x, 0, width) * wRatio).toInt() ;
     var y = (bound(mouse.y, 0, height) * hRatio).toInt() ;
 
     print('---> xy: $x $y >> ratio: $wRatio $hRatio');
 
-    var edges = _toEdgePoints(_clip) ;
+    var clip = _clip.value ?? _defaultClip() ;
+    var edges = _toEdgePoints(clip) ;
+
     var target = nearestPoint(edges, Point(x,y)) ;
 
     print(target);
 
-    var clip2 = Rectangle( _clip.left , _clip.top, _clip.width, _clip.height ) ;
+    var clip2 ;
 
     if ( target == edges[0] || target == edges[1] || target == edges[2] || target == edges[3] || target == edges[4] ) {
-      int diffW = x-_clip.left ;
-      clip2 = Rectangle( x , _clip.top, _clip.width-diffW, _clip.height ) ;
+      int diffW = x-clip.left ;
+      clip2 = Rectangle( x , clip.top, clip.width-diffW, clip.height ) ;
     }
     else if ( target == edges[5] || target == edges[6] || target == edges[7] || target == edges[8] || target == edges[9] ) {
-      int diffH = y-_clip.top ;
-      clip2 = Rectangle( _clip.left , y, _clip.width, _clip.height-diffH ) ;
+      int diffH = y-clip.top ;
+      clip2 = Rectangle( clip.left , y, clip.width, clip.height-diffH ) ;
     }
     else if ( target == edges[10] || target == edges[11] || target == edges[12] || target == edges[13] || target == edges[14] ) {
-      clip2 = Rectangle( _clip.left , _clip.top, x-_clip.left , _clip.height ) ;
+      clip2 = Rectangle( clip.left , clip.top, x-clip.left , clip.height ) ;
     }
     else if ( target == edges[15] || target == edges[16] || target == edges[17] || target == edges[18] || target == edges[19] ) {
-      clip2 = Rectangle( _clip.left , _clip.top, _clip.width, y-_clip.top ) ;
+      clip2 = Rectangle( clip.left , clip.top, clip.width, y-clip.top ) ;
+    }
+    else {
+      clip2 = Rectangle<num>( clip.left , clip.top, clip.width, clip.height ) ;
     }
 
     clip2 = clip2.intersection( Rectangle(0,0,width,height) ) ;
 
     if (clip2 != null) {
-      _clip = clip2;
+      var clipArea = clip2.width * clip2.height ;
+      if (clipArea > 1) {
+        _clip = clipViewerValue(clip2 , ViewerValue.getColor(_clip) ) ;
+        return Quality.HIGH ;
+      }
     }
+
+    return Quality.HIGH ;
   }
 
-  int bound(int val, int min, int max) {
+  num bound(num val, num min, num max) {
     return val < min ? min : (val > max ? max : val) ;
+  }
+
+  Point<num> boundPoint(Point<num> val, Point<num> min, Point<num> max) {
+    return Point( bound(val.x, min.x, max.x) , bound(val.y, min.y, max.y) ) ;
   }
 
   List<Point> _toEdgePoints( Rectangle r ) {
@@ -463,7 +811,9 @@ class CanvasImageViewer {
     ] ;
   }
 
-  Point nearestPoint(List<Point> points, Point p) {
+  Point nearestPoint(List<Point<num>> points, Point<num> p) {
+    if (points == null || points.isEmpty) return null ;
+
     Point nearest ;
     double nearestDistance ;
 
@@ -478,32 +828,385 @@ class CanvasImageViewer {
     return nearest ;
   }
 
+  /////
+
+  Quality adjustPoints( Point mouse , bool click ) {
+    if (!click) return null ;
+
+    print('--- adjustPoints ---') ;
+    if (_points == null) return null ;
+
+    var wRatio = offsetWidthRatio ;
+    var hRatio = offsetHeightRatio ;
+
+    var x = (bound(mouse.x, 0, width) * wRatio).toInt() ;
+    var y = (bound(mouse.y, 0, height) * hRatio).toInt() ;
+
+    print('---> xy: $x $y >> ratio: $wRatio $hRatio');
+
+    var point = Point(x,y);
+    var points = _points.value ?? [] ;
+
+    var target = nearestPoint(points, point) ;
+
+    if (target == null) {
+      points.add(point) ;
+    }
+    else {
+      var distance = target.distanceTo(point) ;
+
+      if (distance <= 10) {
+        points.remove(target) ;
+      }
+      else {
+        points.add(point) ;
+      }
+    }
+
+    _points.value = points ;
+
+    return Quality.HIGH ;
+  }
+
+  /////
+
+  Quality adjustPerspective(Point<num> mouse, bool click) {
+    //if (click) return null ;
+
+    print('--- adjustPerspective ---') ;
+    if (_perspective == null) return null ;
+
+    var wRatio = offsetWidthRatio ;
+    var hRatio = offsetHeightRatio ;
+
+    var x = (bound(mouse.x, 0, width) * wRatio).toInt() ;
+    var y = (bound(mouse.y, 0, height) * hRatio).toInt() ;
+
+    print('---> xy: $x $y >> ratio: $wRatio $hRatio');
+
+    var point = Point<num>(x,y);
+    var points = _perspective.value ?? _defaultPerspective() ;
+
+    if ( points.length != 4 ) points = _defaultPerspective() ;
+
+    var initialBounds = _getPointsBounds(points) ;
+
+    var target = nearestPoint(points, point) ;
+    var targetIdx = points.indexOf(target) ;
+
+    print('target: $target #$targetIdx') ;
+
+    var pointsAdjusted = copyPoints(points) ;
+    pointsAdjusted[targetIdx] = point ;
+
+    var bounds = _getPointsBounds(pointsAdjusted) ;
+
+    if ( bounds != initialBounds ) {
+      var tolerance = max(10, max(width,height)/50) ;
+
+      var wDiff = initialBounds.width - bounds.width ;
+      var hDiff = initialBounds.height - bounds.height ;
+
+      var xDiff = target.x - point.x ;
+      var yDiff = target.y - point.y ;
+
+      if (wDiff < 0) wDiff = -wDiff ;
+      if (hDiff < 0) hDiff = -hDiff ;
+
+      if (xDiff < 0) xDiff = -xDiff ;
+      if (yDiff < 0) yDiff = -yDiff ;
+
+      //print('Changing bounds> tolerance: $tolerance > whDiff: $wDiff , $hDiff > xyDiff: $xDiff , $yDiff >> $bounds != $initialBounds') ;
+
+      var pointFixed = point ;
+
+      if (xDiff < tolerance && yDiff < tolerance) {
+        if (wDiff > 0 && xDiff < yDiff || xDiff < tolerance) {
+          pointFixed = Point(target.x, point.y) ;
+        }
+        else if (hDiff > 0 && yDiff < xDiff || yDiff < tolerance) {
+          pointFixed = Point(point.x, target.y);
+        }
+      }
+
+      if ( point != pointFixed ) {
+        var boundsPrev = bounds;
+
+        pointsAdjusted[targetIdx] = pointFixed;
+        bounds = _getPointsBounds(pointsAdjusted);
+
+        //print('    [$targetIdx] $target -> $point -> $pointFixed ; $boundsPrev -> $bounds');
+
+        point = pointFixed ;
+      }
+    }
+
+    var scaleX = width / bounds.width ;
+    var scaleY = height / bounds.height ;
+
+    print('scaleX: $scaleX ; scaleY: $scaleY >> $bounds') ;
+
+    var pointsScaled = translatePoints(pointsAdjusted, -bounds.left , -bounds.top) ;
+    pointsScaled = scalePointsXY(pointsScaled, scaleX, scaleY) ;
+
+    var spaceW = max(5 , width/20) ;
+    var spaceH = max(5 , height/20) ;
+
+    var pointsInBounds = [
+      boundPoint( pointsScaled[0] , Point(0,0) , Point(width/2-spaceW,height/2-spaceH) ) ,
+      boundPoint( pointsScaled[1] , Point(width/2+spaceW,0) , Point(width,height/2-spaceH) ) ,
+      boundPoint( pointsScaled[2] , Point(width/2+spaceW,height/2+spaceH) , Point(width,height) ) ,
+      boundPoint( pointsScaled[3] , Point(0,height/2+spaceH) , Point(width/2-spaceW,height) ) ,
+    ] ;
+
+    print('points: $points >> ${ _getPointsBounds(points) }');
+    print('pointsAdjusted: $pointsAdjusted >> ${ _getPointsBounds(pointsAdjusted) }');
+    print('pointsScaled: $pointsScaled >> ${ _getPointsBounds(pointsScaled) }');
+    print('pointsInBounds: $pointsInBounds >> ${ _getPointsBounds(pointsInBounds) }');
+
+    _perspective.value = pointsInBounds ;
+
+    return Quality.MEDIUM ;
+  }
+
+  Rectangle<num> _getPointsBounds( List<Point<num>> points ) {
+    var p0 = points[0] ;
+
+    var minX = p0.x ;
+    var maxX = p0.x ;
+
+    var minY = p0.y ;
+    var maxY = p0.y ;
+
+    for (var p in points) {
+      if ( p.x < minX ) minX = p.x ;
+      if ( p.y < minY ) minY = p.y ;
+
+      if ( p.x > maxX ) maxX = p.x ;
+      if ( p.y > maxY ) maxY = p.y ;
+    }
+
+    return Rectangle( minX , minY , maxX-minX , maxY-minY ) ;
+  }
+
+  /////////////////////////////////////////////////
+
+  void renderAsync( Duration delay ) {
+    _renderAsyncImpl( delay , Quality.HIGH , false ) ;
+  }
+
+  void _renderAsyncImpl( Duration delay , Quality quality , bool forceQuality ) {
+    if ( delay != null ) {
+      Future.delayed( delay , () => _renderImpl(quality, forceQuality) ) ;
+    }
+    else {
+      Future.microtask( () => _renderImpl(quality, forceQuality) ) ;
+    }
+  }
+
   void render() {
+    _renderImpl( Quality.HIGH , false ) ;
+  }
+
+  void _renderImpl( Quality quality , bool forceQuality ) {
+    quality ??= Quality.HIGH ;
+
     CanvasRenderingContext2D context = _canvas.getContext('2d');
+
+    var renderOk = _renderImage(context, quality, forceQuality);
+    if (!renderOk) {
+      return ;
+    }
+
+    _renderGrid(context, ViewerValue.getValue(_gridSize) , ViewerValue.getColor(_gridSize, Color.CYAN.withOpacity(0.80) ) , 2) ;
+
+    _renderRectangles(context, ViewerValue.getValue(_rectangles) , ViewerValue.getColor(_rectangles, Color.GREEN ) );
+    _renderPoints(context, ViewerValue.getValue(_points) , ViewerValue.getColor(_points, Color.RED ) );
+    _renderClip(context, ViewerValue.getValue(_clip) , ViewerValue.getColor(_clip, Color.BLUE ) );
+
+    _renderTime(context, time);
+  }
+
+  //////////////////////////////////////////
+
+  bool _renderImage(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
+    if ( _perspective != null && !_perspective.isNull ) {
+      return _renderImageWithPerspective(context, quality, forceQuality);
+    }
+    else {
+      _renderImageImpl(context);
+      return true ;
+    }
+  }
+
+  void _renderImageImpl(CanvasRenderingContext2D context) {
+    context.clearRect(0, 0, width, height) ;
+    context.drawImageScaledFromSource(_image, 0, 0, width, height, 0, 0, width, height);
+  }
+
+  DateTime renderImageWithPerspective_lastTime = DateTime.now() ;
+  Quality renderImageWithPerspective_lastQuality ;
+  String renderImageWithPerspective_renderSign ;
+
+  bool _renderImageWithPerspective(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
+    if ( forceQuality && quality == renderImageWithPerspective_lastQuality ) {
+      return false ;
+    }
+
+    var requestedRenderSign = '$quality > ${ _perspective.value }' ;
+
+    if ( renderImageWithPerspective_renderSign == requestedRenderSign ) {
+      return false ;
+    }
+
+    var now = DateTime.now() ;
+
+    var renderInterval = now.millisecondsSinceEpoch - renderImageWithPerspective_lastTime.millisecondsSinceEpoch ;
+    //renderInterval -= renderImageWithPerspective_renderTime ;
+    var shortRenderTime = renderInterval < 100 ;
+
+    var renderQuality = shortRenderTime ? Quality.LOW : quality ;
+
+    if ( forceQuality && quality != renderQuality ) {
+      return false ;
+    }
+
+    var renderSign = '$renderQuality > ${ _perspective.value }' ;
+
+    if ( renderImageWithPerspective_renderSign == renderSign ) {
+      return false ;
+    }
+
+    print('-------------------- _renderImageWithPerspective>>>> ') ;
+    print('forceQuality: $forceQuality') ;
+    print('quality: $quality') ;
+    print('renderQuality: $renderQuality') ;
+    print('renderInterval: $renderInterval') ;
+    print('shortRenderTime: $shortRenderTime') ;
+
     context.clearRect(0, 0, width, height) ;
 
-    renderImage(context, _image);
-    renderRectangles(context, _rectangles);
-    renderClip(context, _clip);
-    renderTime(context, time);
+    var renderedQuality ;
+
+    if ( renderQuality == Quality.LOW ) {
+      renderedQuality = _renderImageWithPerspective_qualityLow(context);
+    }
+    else if ( renderQuality == Quality.MEDIUM ) {
+      renderedQuality = _renderImageWithPerspective_qualityMedium(context);
+    }
+    else {
+      renderedQuality = _renderImageWithPerspective_qualityHigh(context);
+    }
+
+    renderImageWithPerspective_lastTime = DateTime.now() ;
+    renderImageWithPerspective_lastQuality = renderedQuality ;
+
+    print('renderedQuality: $renderedQuality') ;
+
+    var renderedSign = '$renderedQuality > ${ _perspective.value }' ;
+    renderImageWithPerspective_renderSign = renderedSign ;
+
+    {
+      var scheduleDelay ;
+      var scheduleQuality ;
+
+      if (renderedQuality == Quality.LOW && !forceQuality) {
+        if ( isOffsetRenderScaleGoodForHighQuality ) {
+          scheduleDelay = Duration(milliseconds: 200);
+          scheduleQuality = Quality.MEDIUM;
+        }
+        else {
+          scheduleDelay = Duration(milliseconds: 500);
+          scheduleQuality = Quality.MEDIUM;
+        }
+      }
+      else if (renderedQuality == Quality.MEDIUM ) {
+        if ( isOffsetRenderScaleGoodForHighQuality ) {
+          scheduleDelay = Duration(milliseconds: 2000);
+          scheduleQuality = Quality.HIGH;
+        }
+      }
+
+      if (scheduleDelay != null && scheduleQuality != null) {
+        _renderAsyncImpl(scheduleDelay, scheduleQuality, true) ;
+        print('schedulled render> scheduleDelay: $scheduleDelay ; scheduleQuality: $scheduleQuality') ;
+      }
+    }
+
+    return true ;
   }
 
+  Quality _renderImageWithPerspective_qualityLow(CanvasRenderingContext2D context) {
+    var scaleOffset = max( 1/offsetWidthRatio , 1/offsetHeightRatio );
+    var scale = scaleOffset * 0.40 ;
 
-  void renderImage(CanvasRenderingContext2D context, CanvasImageSource image) {
-    context.drawImageScaledFromSource(image, 0, 0, width, height, 0, 0, width, height);
+    print('_renderImageWithPerspective_qualityLow> scale: $scale ; scaleOffset: $scaleOffset') ;
+
+    if (scaleOffset < 0.30) {
+      return _renderImageWithPerspective_qualityMedium(context) ;
+    }
+
+    var imageFiltered = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
+
+    var w = imageFiltered.width ;
+    var h = imageFiltered.height ;
+
+    context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
+
+    return Quality.LOW ;
   }
 
-  void renderClip(CanvasRenderingContext2D context, Rectangle clip) {
+  double get offsetRenderScale => max( 1/offsetWidthRatio , 1/offsetHeightRatio ) ;
+
+  bool get isOffsetRenderScaleGoodForHighQuality => offsetRenderScale > 0.70 ;
+
+  Quality _renderImageWithPerspective_qualityMedium(CanvasRenderingContext2D context) {
+    var scale = offsetRenderScale * 1.05 ;
+
+    print('_renderImageWithPerspective_qualityMedium> scale: $scale') ;
+
+    if (scale > 0.80) {
+      return _renderImageWithPerspective_qualityHigh(context) ;
+    }
+
+    var imageFiltered = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
+
+    var w = imageFiltered.width ;
+    var h = imageFiltered.height ;
+
+    context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
+
+    return Quality.MEDIUM ;
+  }
+
+  Quality _renderImageWithPerspective_qualityHigh(CanvasRenderingContext2D context) {
+    var scaleOffset = offsetRenderScale ;
+
+    print('_renderImageWithPerspective_qualityHigh> scaleOffset: $scaleOffset') ;
+
+    if ( !isOffsetRenderScaleGoodForHighQuality ) {
+      return _renderImageWithPerspective_qualityMedium(context) ;
+    }
+
+    var imageFiltered = applyPerspective(_image, _perspective.value, false) ;
+
+    var w = imageFiltered.width ;
+    var h = imageFiltered.height ;
+
+    context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
+
+    return Quality.HIGH ;
+  }
+
+  void _renderClip(CanvasRenderingContext2D context, Rectangle clip, Color color) {
     if (clip == null) return ;
 
-    renderShadow(context, clip) ;
+    _renderShadow(context, clip) ;
 
-    context.setStrokeColorRgb( _clipColor.red , _clipColor.green, _clipColor.blue ) ;
-    context.lineWidth = 4;
-    _strokeRect(context, clip);
+    _strokeRect(context, clip, color, 3);
   }
 
-  void renderShadow(CanvasRenderingContext2D context, Rectangle clip) {
+  void _renderShadow(CanvasRenderingContext2D context, Rectangle clip) {
     if (clip == null) return ;
 
     context.setFillColorRgb(0, 0, 0, 0.40);
@@ -514,26 +1217,85 @@ class CanvasImageViewer {
     context.fillRect(clip.left + clip.width, clip.top, width - (clip.left + clip.width), clip.height);
   }
 
-  void renderRectangles(CanvasRenderingContext2D context, List<Rectangle<num>> rectangles) {
+  void _renderRectangles(CanvasRenderingContext2D context, List<Rectangle<num>> rectangles, Color color) {
     if (rectangles == null || rectangles.isEmpty) return ;
 
-    context.setStrokeColorRgb( _rectanglesColor.red , _rectanglesColor.green, _rectanglesColor.blue ) ;
-    context.lineWidth = 3;
-
-    _strokeRects(context, rectangles);
+    _strokeRects(context, rectangles, color, 3);
   }
 
-  void _strokeRect(CanvasRenderingContext2D context, Rectangle<num> rect) {
-    context.strokeRect(rect.left, rect.top, rect.width, rect.height);
+  void _renderPoints(CanvasRenderingContext2D context, List<Point<num>> points, Color color) {
+    if (points == null || points.isEmpty) return ;
+
+    _strokePoints(context, points, color, 3);
   }
 
-  void _strokeRects(CanvasRenderingContext2D context, List<Rectangle<num>> rects) {
+  void _strokeRects(CanvasRenderingContext2D context, List<Rectangle<num>> rects, Color color, int lineWidth) {
     for (var rect in rects) {
-      _strokeRect(context, rect);
+      _strokeRect(context, rect, color, lineWidth);
     }
   }
 
-  void renderTime(CanvasRenderingContext2D context, DateTime time) {
+  void _strokeRect(CanvasRenderingContext2D context, Rectangle<num> rect, Color color, int lineWidth) {
+    context.setStrokeColorRgb( color.red , color.green, color.blue , 0.40) ;
+    context.lineWidth = lineWidth;
+    context.strokeRect(rect.left, rect.top, rect.width, rect.height);
+
+    context.setStrokeColorRgb( color.red , color.green, color.blue ) ;
+    context.lineWidth = 1;
+    context.strokeRect(rect.left, rect.top, rect.width, rect.height);
+  }
+
+  void _strokePoints(CanvasRenderingContext2D context, List<Point<num>> points, Color color, int lineWidth) {
+    for (var p in points) {
+      _strokePoint(context, p, color, lineWidth);
+    }
+  }
+
+  void _strokePoint(CanvasRenderingContext2D context, Point<num> p, Color color, int lineWidth) {
+    var b = 3 ;
+    var l = b*2;
+
+    context.setStrokeColorRgb( Color.BLACK.red , Color.BLACK.green, Color.BLACK.blue) ;
+    context.lineWidth = lineWidth;
+    context.strokeRect(p.x-b-1, p.y-b+1, l, l);
+
+    context.setStrokeColorRgb( Color.WHITE.red , Color.WHITE.green, Color.WHITE.blue) ;
+    context.lineWidth = lineWidth;
+    context.strokeRect(p.x-b+1, p.y-b-1, l, l);
+
+    context.setStrokeColorRgb( color.red , color.green, color.blue ) ;
+    context.lineWidth = lineWidth;
+    context.strokeRect(p.x-b, p.y-b, l, l);
+  }
+
+  void _renderGrid(CanvasRenderingContext2D context, num gridSize, Color color, int lineWidth) {
+    if (gridSize == null || gridSize <= 0 || lineWidth == null || lineWidth < 1) return ;
+
+    context.setStrokeColorRgb( color.red , color.green, color.blue ) ;
+    context.lineWidth = lineWidth;
+
+    // ignore: omit_local_variable_types
+    int size = gridSize is double ? ( gridSize < 1 ? min( (width*gridSize).toInt() , (height*gridSize).toInt() ) : gridSize.toInt() ) : gridSize.toInt() ;
+    var minSize = max(2, lineWidth*3) ;
+    if (size < minSize) size = minSize ;
+
+    for (var x = size ; x < width ; x += size) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, height);
+      context.stroke();
+    }
+
+    for (var y = size ; y < height ; y += size) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(width, y);
+      context.stroke();
+    }
+
+  }
+
+  void _renderTime(CanvasRenderingContext2D context, DateTime time) {
     if (time == null) return ;
 
     var timeStr = DATE_FORMAT_YYYY_MM_DD_HH_MM_SS.format( time.toLocal() ) ;

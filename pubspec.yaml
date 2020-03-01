@@ -1,6 +1,6 @@
 name: dom_tools
 description: DOM rich elements and tools
-version: 1.0.1
+version: 1.2.0
 homepage: https://github.com/gmpassos/dom_tools
 
 environment:
