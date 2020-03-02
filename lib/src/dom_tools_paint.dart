@@ -4,6 +4,7 @@ import 'dart:html';
 import 'dart:math' as math ;
 import 'dart:math';
 
+import 'package:dom_tools/dom_tools.dart';
 import 'package:intl/intl.dart';
 
 import 'perspective_filter.dart';
@@ -276,6 +277,37 @@ Rectangle<int> getImageDimension(CanvasImageSource image) {
   return null ;
 }
 
+CanvasElement cropImageByRectangle(CanvasImageSource image, Rectangle crop) {
+  if (crop == null) return null ;
+  return cropImage(image, crop.left, crop.top, crop.width, crop.height) ;
+}
+
+CanvasElement cropImage(CanvasImageSource image, int x, int y, int width, int height) {
+  if ( !(image is CanvasElement) ) {
+    var imgDim = getImageDimension(image);
+    var imgCanvas = CanvasElement(width: imgDim.width, height: imgDim.height) ;
+    CanvasRenderingContext2D context = imgCanvas.getContext('2d') ;
+    context.drawImage(image, 0, 0) ;
+    image = imgCanvas ;
+  }
+
+  var imgCropData ;
+
+  if ( image is CanvasElement ) {
+    CanvasRenderingContext2D imgContext = image.getContext('2d') ;
+    imgCropData = imgContext.getImageData(x,y, width, height) ;
+  }
+  else {
+    return null ;
+  }
+
+  var canvasCrop = CanvasElement(width: width, height: height) ;
+  CanvasRenderingContext2D contextCrop = canvasCrop.getContext('2d') ;
+  contextCrop.putImageData(imgCropData, 0, 0, 0, 0, width, height);
+
+  return canvasCrop ;
+}
+
 CanvasImageSource createScaledImage(CanvasImageSource image, int w, int h, double scale) {
   var w2 = (w * scale).toInt();
   var h2 = (h * scale).toInt();
@@ -317,6 +349,20 @@ ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+
+List<Point<num>> numsToPoints(List<num> perspective, [Color color]) {
+  // ignore: omit_local_variable_types
+  List< Point<num> > points = [] ;
+
+  for (var i = 1; i < perspective.length; i+=2) {
+    var x = perspective[i-1];
+    var y = perspective[i];
+    points.add( Point(x,y) ) ;
+  }
+
+  return points ;
+}
 
 List< Point<num> > copyPoints( List< Point<num> > points ) {
   return points.map( (p) => Point( p.x , p.y )  ).toList() ;
@@ -372,6 +418,14 @@ class ImageScaledCache {
     _scaleCache.clear() ;
   }
 
+  bool isImageScaledInCache(double scale) {
+    if (scale <= 0) return false ;
+    if (scale == 1.0) return true ;
+
+    var scaledImage = _scaleCache[scale] ;
+    return scaledImage != null ;
+  }
+
   CanvasImageSource getImageScaled(double scale) {
     if (scale <= 0) return null ;
     if (scale == 1.0) return _image ;
@@ -390,9 +444,14 @@ class ImageScaledCache {
   }
 
   static int limitEntries(Map cache, int maxCacheEntries) {
+    if (cache == null || cache.isEmpty) return 0 ;
+
+    if (maxCacheEntries < 0) maxCacheEntries = 0 ;
     var removed = 0 ;
     while ( cache.length > maxCacheEntries ) {
-      cache.remove( cache.keys.first ) ;
+      var key = cache.keys.first;
+      print('-- removing from cache: $key > ${ cache.length } / $maxCacheEntries');
+      cache.remove( key ) ;
       removed++ ;
     }
     return removed ;
@@ -464,6 +523,13 @@ class ViewerValue<T> {
   }
 }
 
+class _RenderImageResult {
+  final Quality quality ;
+  Point translate ;
+
+  _RenderImageResult(this.quality, this.translate) ;
+}
+
 class CanvasImageViewer {
 
   static final DATE_FORMAT_YYYY_MM_DD_HH_MM_SS = DateFormat('yyyy/MM/dd HH:mm:ss', Intl.getCurrentLocale()) ;
@@ -481,12 +547,13 @@ class CanvasImageViewer {
   ViewerValue<List<Point<num>>> _perspective ;
   ViewerValue<num> _gridSize ;
 
+  bool _cropPerspective ;
+
   final DateTime time ;
 
   final EditionType _editionType ;
 
   ImagePerspectiveFilterCache _imagePerspectiveFilterCache ;
-
 
   CanvasImageViewer(this._canvas, { int width, int height, bool canvasSizeToImageSize = true , CanvasImageSource image, ImageFilter imageFilter,
     ViewerValue< Rectangle<num> > clip ,
@@ -494,6 +561,7 @@ class CanvasImageViewer {
     ViewerValue< List<Point<num>> > points ,
     ViewerValue<List<Point<num>>> perspective ,
     ViewerValue<num> gridSize,
+    bool cropPerspective,
     this.time , EditionType editable
   } ) :
         _clip = clip ,
@@ -558,6 +626,10 @@ class CanvasImageViewer {
       _canvas.onMouseMove.listen(_onMouseMove);
     }
 
+    cropPerspective ??= !isEditable || editable != EditionType.PERSPECTIVE ;
+
+    _cropPerspective = cropPerspective ;
+
   }
 
   Rectangle<num> _defaultClip() {
@@ -573,6 +645,7 @@ class CanvasImageViewer {
     return [ Point(0,0) , Point(width,0) , Point(width,height) , Point(0,height) ] ;
   }
 
+  bool get cropPerspective => _cropPerspective;
 
   EditionType get editionType => _editionType;
   bool get isEditable => _editionType != null ;
@@ -626,7 +699,7 @@ class CanvasImageViewer {
     // ignore: omit_local_variable_types
     List< Point<num> > points = [] ;
 
-    for (var i = 1; i < perspective.length; ++i) {
+    for (var i = 1; i < perspective.length; i+=2) {
       var x = perspective[i-1];
       var y = perspective[i];
       points.add( Point(x,y) ) ;
@@ -695,8 +768,31 @@ class CanvasImageViewer {
 
   ///////////////////////////////////
 
-  double get offsetWidthRatio => width / _canvas.offset.width ;
-  double get offsetHeightRatio => height / _canvas.offset.height ;
+  double get offsetWidthRatio {
+    var offsetW = _canvas.offset.width;
+    return width / offsetW;
+  }
+  double get offsetHeightRatio {
+    var offsetH = _canvas.offset.height;
+    return height / offsetH;
+  }
+
+  Point _getMousePointInCanvas(Point<num> mouse, [bool fixTranslation = true]) {
+    var wRatio = offsetWidthRatio ;
+    var hRatio = offsetHeightRatio ;
+
+    var x = (_bound(mouse.x, 0, width) * wRatio).toInt() ;
+    var y = (_bound(mouse.y, 0, height) * hRatio).toInt() ;
+
+    if ( fixTranslation && _renderedTranslation != null ) {
+      x -= _renderedTranslation.x.toInt() ;
+      y -= _renderedTranslation.y.toInt() ;
+    }
+
+    print('mouse> xy: $x $y >> ratio: $wRatio $hRatio');
+
+    return Point(x,y) ;
+  }
 
   Quality edit( Point mouse , bool click ) {
     if ( !isEditable ) return null ;
@@ -715,36 +811,30 @@ class CanvasImageViewer {
     print('--- adjustClip ---') ;
     if (_clip == null) return null ;
 
-    var wRatio = offsetWidthRatio ;
-    var hRatio = offsetHeightRatio ;
-
-    var x = (bound(mouse.x, 0, width) * wRatio).toInt() ;
-    var y = (bound(mouse.y, 0, height) * hRatio).toInt() ;
-
-    print('---> xy: $x $y >> ratio: $wRatio $hRatio');
+    var point = _getMousePointInCanvas(mouse) ;
 
     var clip = _clip.value ?? _defaultClip() ;
     var edges = _toEdgePoints(clip) ;
 
-    var target = nearestPoint(edges, Point(x,y)) ;
+    var target = nearestPoint(edges, point) ;
 
     print(target);
 
     var clip2 ;
 
     if ( target == edges[0] || target == edges[1] || target == edges[2] || target == edges[3] || target == edges[4] ) {
-      int diffW = x-clip.left ;
-      clip2 = Rectangle( x , clip.top, clip.width-diffW, clip.height ) ;
+      int diffW = point.x-clip.left ;
+      clip2 = Rectangle( point.x , clip.top, clip.width-diffW, clip.height ) ;
     }
     else if ( target == edges[5] || target == edges[6] || target == edges[7] || target == edges[8] || target == edges[9] ) {
-      int diffH = y-clip.top ;
-      clip2 = Rectangle( clip.left , y, clip.width, clip.height-diffH ) ;
+      int diffH = point.y-clip.top ;
+      clip2 = Rectangle( clip.left , point.y, clip.width, clip.height-diffH ) ;
     }
     else if ( target == edges[10] || target == edges[11] || target == edges[12] || target == edges[13] || target == edges[14] ) {
-      clip2 = Rectangle( clip.left , clip.top, x-clip.left , clip.height ) ;
+      clip2 = Rectangle( clip.left , clip.top, point.x-clip.left , clip.height ) ;
     }
     else if ( target == edges[15] || target == edges[16] || target == edges[17] || target == edges[18] || target == edges[19] ) {
-      clip2 = Rectangle( clip.left , clip.top, clip.width, y-clip.top ) ;
+      clip2 = Rectangle( clip.left , clip.top, clip.width, point.y-clip.top ) ;
     }
     else {
       clip2 = Rectangle<num>( clip.left , clip.top, clip.width, clip.height ) ;
@@ -763,12 +853,12 @@ class CanvasImageViewer {
     return Quality.HIGH ;
   }
 
-  num bound(num val, num min, num max) {
+  num _bound(num val, num min, num max) {
     return val < min ? min : (val > max ? max : val) ;
   }
 
-  Point<num> boundPoint(Point<num> val, Point<num> min, Point<num> max) {
-    return Point( bound(val.x, min.x, max.x) , bound(val.y, min.y, max.y) ) ;
+  Point<num> _boundPoint(Point<num> val, Point<num> min, Point<num> max) {
+    return Point( _bound(val.x, min.x, max.x) , _bound(val.y, min.y, max.y) ) ;
   }
 
   List<Point> _toEdgePoints( Rectangle r ) {
@@ -836,15 +926,8 @@ class CanvasImageViewer {
     print('--- adjustPoints ---') ;
     if (_points == null) return null ;
 
-    var wRatio = offsetWidthRatio ;
-    var hRatio = offsetHeightRatio ;
+    var point = _getMousePointInCanvas(mouse) ;
 
-    var x = (bound(mouse.x, 0, width) * wRatio).toInt() ;
-    var y = (bound(mouse.y, 0, height) * hRatio).toInt() ;
-
-    print('---> xy: $x $y >> ratio: $wRatio $hRatio');
-
-    var point = Point(x,y);
     var points = _points.value ?? [] ;
 
     var target = nearestPoint(points, point) ;
@@ -876,15 +959,8 @@ class CanvasImageViewer {
     print('--- adjustPerspective ---') ;
     if (_perspective == null) return null ;
 
-    var wRatio = offsetWidthRatio ;
-    var hRatio = offsetHeightRatio ;
+    var point = _getMousePointInCanvas(mouse, false) ;
 
-    var x = (bound(mouse.x, 0, width) * wRatio).toInt() ;
-    var y = (bound(mouse.y, 0, height) * hRatio).toInt() ;
-
-    print('---> xy: $x $y >> ratio: $wRatio $hRatio');
-
-    var point = Point<num>(x,y);
     var points = _perspective.value ?? _defaultPerspective() ;
 
     if ( points.length != 4 ) points = _defaultPerspective() ;
@@ -953,10 +1029,10 @@ class CanvasImageViewer {
     var spaceH = max(5 , height/20) ;
 
     var pointsInBounds = [
-      boundPoint( pointsScaled[0] , Point(0,0) , Point(width/2-spaceW,height/2-spaceH) ) ,
-      boundPoint( pointsScaled[1] , Point(width/2+spaceW,0) , Point(width,height/2-spaceH) ) ,
-      boundPoint( pointsScaled[2] , Point(width/2+spaceW,height/2+spaceH) , Point(width,height) ) ,
-      boundPoint( pointsScaled[3] , Point(0,height/2+spaceH) , Point(width/2-spaceW,height) ) ,
+      _boundPoint( pointsScaled[0] , Point(0,0) , Point(width/2-spaceW,height/2-spaceH) ) ,
+      _boundPoint( pointsScaled[1] , Point(width/2+spaceW,0) , Point(width,height/2-spaceH) ) ,
+      _boundPoint( pointsScaled[2] , Point(width/2+spaceW,height/2+spaceH) , Point(width,height) ) ,
+      _boundPoint( pointsScaled[3] , Point(0,height/2+spaceH) , Point(width/2-spaceW,height) ) ,
     ] ;
 
     print('points: $points >> ${ _getPointsBounds(points) }');
@@ -1004,59 +1080,75 @@ class CanvasImageViewer {
     }
   }
 
+  bool get inDOM {
+    return isInDOM(_canvas) ;
+  }
+
   void render() {
+    if ( !inDOM ) {
+      Future.delayed( Duration(seconds: 1) , () => render()) ;
+      return ;
+    }
+
     _renderImpl( Quality.HIGH , false ) ;
   }
+
+  Point<num> _renderedTranslation ;
 
   void _renderImpl( Quality quality , bool forceQuality ) {
     quality ??= Quality.HIGH ;
 
     CanvasRenderingContext2D context = _canvas.getContext('2d');
 
-    var renderOk = _renderImage(context, quality, forceQuality);
-    if (!renderOk) {
+    var renderImageResult = _renderImage(context, quality, forceQuality);
+
+    if ( renderImageResult == null ) {
       return ;
     }
 
-    _renderGrid(context, ViewerValue.getValue(_gridSize) , ViewerValue.getColor(_gridSize, Color.CYAN.withOpacity(0.80) ) , 2) ;
+    var translate = renderImageResult.translate ;
 
-    _renderRectangles(context, ViewerValue.getValue(_rectangles) , ViewerValue.getColor(_rectangles, Color.GREEN ) );
-    _renderPoints(context, ViewerValue.getValue(_points) , ViewerValue.getColor(_points, Color.RED ) );
-    _renderClip(context, ViewerValue.getValue(_clip) , ViewerValue.getColor(_clip, Color.BLUE ) );
+    _renderGrid(context, translate, ViewerValue.getValue(_gridSize) , ViewerValue.getColor(_gridSize, Color.CYAN.withOpacity(0.70) ) , 2) ;
 
-    _renderTime(context, time);
+    _renderRectangles(context, translate, ViewerValue.getValue(_rectangles) , ViewerValue.getColor(_rectangles, Color.GREEN ) );
+    _renderPoints(context, translate, ViewerValue.getValue(_points) , ViewerValue.getColor(_points, Color.RED ) );
+    _renderClip(context, translate, ViewerValue.getValue(_clip) , ViewerValue.getColor(_clip, Color.BLUE ) );
+
+    _renderTime(context, translate, time);
+
+    _renderedTranslation = translate ;
   }
 
   //////////////////////////////////////////
 
-  bool _renderImage(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
+  _RenderImageResult _renderImage(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
     if ( _perspective != null && !_perspective.isNull ) {
-      return _renderImageWithPerspective(context, quality, forceQuality);
+      return _renderImageWithPerspective(context, quality, forceQuality) ;
     }
     else {
-      _renderImageImpl(context);
-      return true ;
+      return _renderImageImpl(context);
     }
   }
 
-  void _renderImageImpl(CanvasRenderingContext2D context) {
+  _RenderImageResult _renderImageImpl(CanvasRenderingContext2D context) {
     context.clearRect(0, 0, width, height) ;
     context.drawImageScaledFromSource(_image, 0, 0, width, height, 0, 0, width, height);
+    return _RenderImageResult( Quality.HIGH , Point(0,0) ) ;
   }
 
   DateTime renderImageWithPerspective_lastTime = DateTime.now() ;
   Quality renderImageWithPerspective_lastQuality ;
   String renderImageWithPerspective_renderSign ;
 
-  bool _renderImageWithPerspective(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
+  _RenderImageResult _renderImageWithPerspective(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
     if ( forceQuality && quality == renderImageWithPerspective_lastQuality ) {
-      return false ;
+      return null ;
     }
 
     var requestedRenderSign = '$quality > ${ _perspective.value }' ;
 
     if ( renderImageWithPerspective_renderSign == requestedRenderSign ) {
-      return false ;
+      return null ;
     }
 
     var now = DateTime.now() ;
@@ -1067,14 +1159,23 @@ class CanvasImageViewer {
 
     var renderQuality = shortRenderTime ? Quality.LOW : quality ;
 
+    if (_forceImageQualityHigh) renderQuality = Quality.HIGH ;
+
+    if ( renderQuality == Quality.LOW && _isImageWithPerspectiveInCache_QualityMedium ) {
+      renderQuality = Quality.MEDIUM ;
+    }
+    else if ( renderQuality == Quality.MEDIUM && _isImageWithPerspectiveInCache_QualityHigh ) {
+      renderQuality = Quality.HIGH ;
+    }
+
     if ( forceQuality && quality != renderQuality ) {
-      return false ;
+      return null ;
     }
 
     var renderSign = '$renderQuality > ${ _perspective.value }' ;
 
     if ( renderImageWithPerspective_renderSign == renderSign ) {
-      return false ;
+      return null ;
     }
 
     print('-------------------- _renderImageWithPerspective>>>> ') ;
@@ -1086,17 +1187,19 @@ class CanvasImageViewer {
 
     context.clearRect(0, 0, width, height) ;
 
-    var renderedQuality ;
+    _RenderImageResult renderImageResult ;
 
     if ( renderQuality == Quality.LOW ) {
-      renderedQuality = _renderImageWithPerspective_qualityLow(context);
+      renderImageResult = _renderImageWithPerspective_qualityLow(context);
     }
     else if ( renderQuality == Quality.MEDIUM ) {
-      renderedQuality = _renderImageWithPerspective_qualityMedium(context);
+      renderImageResult = _renderImageWithPerspective_qualityMedium(context);
     }
     else {
-      renderedQuality = _renderImageWithPerspective_qualityHigh(context);
+      renderImageResult = _renderImageWithPerspective_qualityHigh(context);
     }
+
+    var renderedQuality = renderImageResult.quality ;
 
     renderImageWithPerspective_lastTime = DateTime.now() ;
     renderImageWithPerspective_lastQuality = renderedQuality ;
@@ -1133,12 +1236,23 @@ class CanvasImageViewer {
       }
     }
 
-    return true ;
+    return renderImageResult ;
   }
 
-  Quality _renderImageWithPerspective_qualityLow(CanvasRenderingContext2D context) {
-    var scaleOffset = max( 1/offsetWidthRatio , 1/offsetHeightRatio );
-    var scale = scaleOffset * 0.40 ;
+  double get offsetRenderScale => max( 1/offsetWidthRatio , 1/offsetHeightRatio ) ;
+  bool get isOffsetRenderScaleGoodForHighQuality => offsetRenderScale > 0.70 || _forceImageQualityHigh ;
+
+  double get renderScale_QualityLow => offsetRenderScale * 0.40 ;
+  double get renderScale_QualityMedium => offsetRenderScale * 1.05 ;
+  double get renderScale_QualityHigh => 1 ;
+
+  //bool get _isImageWithPerspectiveInCache_QualityLow => _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(_perspective.value, renderScale_QualityLow) ;
+  bool get _isImageWithPerspectiveInCache_QualityMedium => _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(_perspective.value, renderScale_QualityMedium) ;
+  bool get _isImageWithPerspectiveInCache_QualityHigh => _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(_perspective.value, renderScale_QualityHigh) ;
+
+  _RenderImageResult _renderImageWithPerspective_qualityLow(CanvasRenderingContext2D context) {
+    var scaleOffset = offsetRenderScale ;
+    var scale = renderScale_QualityLow ;
 
     print('_renderImageWithPerspective_qualityLow> scale: $scale ; scaleOffset: $scaleOffset') ;
 
@@ -1146,70 +1260,102 @@ class CanvasImageViewer {
       return _renderImageWithPerspective_qualityMedium(context) ;
     }
 
-    var imageFiltered = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
+    var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
 
-    var w = imageFiltered.width ;
-    var h = imageFiltered.height ;
-
-    context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
-
-    return Quality.LOW ;
+    return _buildRenderImageResult( context, Quality.LOW , scale , filterResult ) ;
   }
 
-  double get offsetRenderScale => max( 1/offsetWidthRatio , 1/offsetHeightRatio ) ;
 
-  bool get isOffsetRenderScaleGoodForHighQuality => offsetRenderScale > 0.70 ;
+  _RenderImageResult _renderImageWithPerspective_qualityMedium(CanvasRenderingContext2D context) {
+    var scaleOffset = offsetRenderScale ;
+    var scale = renderScale_QualityMedium ;
 
-  Quality _renderImageWithPerspective_qualityMedium(CanvasRenderingContext2D context) {
-    var scale = offsetRenderScale * 1.05 ;
-
-    print('_renderImageWithPerspective_qualityMedium> scale: $scale') ;
+    print('_renderImageWithPerspective_qualityMedium> scale: $scale ; scaleOffset: $scaleOffset') ;
 
     if (scale > 0.80) {
       return _renderImageWithPerspective_qualityHigh(context) ;
     }
 
-    var imageFiltered = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
+    var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
 
-    var w = imageFiltered.width ;
-    var h = imageFiltered.height ;
-
-    context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
-
-    return Quality.MEDIUM ;
+    return _buildRenderImageResult( context, Quality.MEDIUM , scale , filterResult ) ;
   }
 
-  Quality _renderImageWithPerspective_qualityHigh(CanvasRenderingContext2D context) {
-    var scaleOffset = offsetRenderScale ;
+  final bool _forceImageQualityHigh = false ;
 
-    print('_renderImageWithPerspective_qualityHigh> scaleOffset: $scaleOffset') ;
+  _RenderImageResult _renderImageWithPerspective_qualityHigh(CanvasRenderingContext2D context) {
+    var scaleOffset = offsetRenderScale ;
+    var scale = renderScale_QualityHigh ;
+
+    print('_renderImageWithPerspective_qualityHigh> scale: $scale ; scaleOffset: $scaleOffset') ;
 
     if ( !isOffsetRenderScaleGoodForHighQuality ) {
       return _renderImageWithPerspective_qualityMedium(context) ;
     }
 
-    var imageFiltered = applyPerspective(_image, _perspective.value, false) ;
+    var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(_perspective.value , scale) ;
 
-    var w = imageFiltered.width ;
-    var h = imageFiltered.height ;
-
-    context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
-
-    return Quality.HIGH ;
+    return _buildRenderImageResult( context, Quality.HIGH , scale , filterResult ) ;
   }
 
-  void _renderClip(CanvasRenderingContext2D context, Rectangle clip, Color color) {
+  _RenderImageResult _buildRenderImageResult(CanvasRenderingContext2D context, Quality quality, double scale, FilterResult filterResult ) {
+
+    if ( _cropPerspective ) {
+      var imageResult = filterResult.imageResult ;
+      var imageResultCropped = filterResult.imageResultCropped ;
+
+      var w = imageResultCropped.width ;
+      var h = imageResultCropped.height ;
+
+      var cropWRatio = imageResultCropped.width / imageResult.width ;
+      var cropHRatio = imageResultCropped.height / imageResult.height ;
+
+      var w2 = (width * cropWRatio).toInt() ;
+      var h2 = (height * cropHRatio).toInt() ;
+
+      context.drawImageScaledFromSource(imageResultCropped, 0, 0, w, h, 0, 0, w2, h2);
+
+      return _RenderImageResult( quality , Point(0,0) ) ;
+    }
+    else {
+      var imageFiltered = filterResult.imageResult ;
+
+      var w = imageFiltered.width ;
+      var h = imageFiltered.height ;
+
+      context.drawImageScaledFromSource(imageFiltered, 0, 0, w, h, 0, 0, width, height);
+
+      return _RenderImageResult( quality , filterResult.translationScaled(1/scale) ) ;
+    }
+
+  }
+
+  void _renderClip(CanvasRenderingContext2D context, Point<num> translate, Rectangle clip, Color color) {
     if (clip == null) return ;
 
-    _renderShadow(context, clip) ;
+    _renderShadow(context, translate, clip) ;
+
+    _translate(context, translate);
 
     _strokeRect(context, clip, color, 3);
   }
 
-  void _renderShadow(CanvasRenderingContext2D context, Rectangle clip) {
+  void _renderShadow(CanvasRenderingContext2D context, Point<num> translate, Rectangle clip) {
     if (clip == null) return ;
 
     context.setFillColorRgb(0, 0, 0, 0.40);
+
+    _translate(context, null);
+
+    if (translate != null && (translate.x != 0 || translate.y != 0) ) {
+      var x = translate.x;
+      var y = translate.y;
+
+      context.fillRect(0, 0, x, height);
+      context.fillRect(x, 0, width-x, y);
+    }
+
+    _translate(context, translate);
 
     context.fillRect(0, 0, width, clip.top);
     context.fillRect(0, clip.top + clip.height, width, height - (clip.top + clip.height));
@@ -1217,16 +1363,77 @@ class CanvasImageViewer {
     context.fillRect(clip.left + clip.width, clip.top, width - (clip.left + clip.width), clip.height);
   }
 
-  void _renderRectangles(CanvasRenderingContext2D context, List<Rectangle<num>> rectangles, Color color) {
+  void _renderRectangles(CanvasRenderingContext2D context, Point<num> translate, List<Rectangle<num>> rectangles, Color color) {
     if (rectangles == null || rectangles.isEmpty) return ;
+
+    _translate(context, translate);
 
     _strokeRects(context, rectangles, color, 3);
   }
 
-  void _renderPoints(CanvasRenderingContext2D context, List<Point<num>> points, Color color) {
+  void _renderPoints(CanvasRenderingContext2D context, Point<num> translate, List<Point<num>> points, Color color) {
     if (points == null || points.isEmpty) return ;
 
+    _translate(context, translate);
+
     _strokePoints(context, points, color, 3);
+  }
+
+  void _renderGrid(CanvasRenderingContext2D context, Point<num> translate, num gridSize, Color color, int lineWidth) {
+    if (gridSize == null || gridSize <= 0 || lineWidth == null || lineWidth < 1) return ;
+
+    _translate(context, null);
+
+    context.setStrokeColorRgb( color.red , color.green, color.blue , color.opacity ) ;
+    context.lineWidth = lineWidth;
+
+    // ignore: omit_local_variable_types
+    int size = gridSize is double ? ( gridSize < 1 ? min( (width*gridSize).toInt() , (height*gridSize).toInt() ) : gridSize.toInt() ) : gridSize.toInt() ;
+    var minSize = max(2, lineWidth*3) ;
+    if (size < minSize) size = minSize ;
+
+    for (var x = size ; x < width ; x += size) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, height);
+      context.stroke();
+    }
+
+    for (var y = size ; y < height ; y += size) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(width, y);
+      context.stroke();
+    }
+
+  }
+
+  void _renderTime(CanvasRenderingContext2D context, Point<num> translate, DateTime time) {
+    if (time == null) return ;
+
+    _translate(context, null);
+
+    var timeStr = DATE_FORMAT_YYYY_MM_DD_HH_MM_SS.format( time.toLocal() ) ;
+
+    context.font = '30px Arial';
+
+    var margin = 4 ;
+    var shadow = 2 ;
+
+    context.setFillColorRgb(0, 0, 0, 0.60);
+    context.fillText(timeStr, margin, height-margin) ;
+
+    context.setFillColorRgb(255, 255, 255, 0.70);
+    context.fillText(timeStr, margin+shadow, height-(margin+shadow)) ;
+  }
+
+  /////////////////////////////////////////////////////
+
+  void _translate(CanvasRenderingContext2D context, Point<num> translate) {
+    context.resetTransform() ;
+    if (translate != null) {
+      context.translate(translate.x, translate.y);
+    }
   }
 
   void _strokeRects(CanvasRenderingContext2D context, List<Rectangle<num>> rects, Color color, int lineWidth) {
@@ -1266,50 +1473,6 @@ class CanvasImageViewer {
     context.setStrokeColorRgb( color.red , color.green, color.blue ) ;
     context.lineWidth = lineWidth;
     context.strokeRect(p.x-b, p.y-b, l, l);
-  }
-
-  void _renderGrid(CanvasRenderingContext2D context, num gridSize, Color color, int lineWidth) {
-    if (gridSize == null || gridSize <= 0 || lineWidth == null || lineWidth < 1) return ;
-
-    context.setStrokeColorRgb( color.red , color.green, color.blue ) ;
-    context.lineWidth = lineWidth;
-
-    // ignore: omit_local_variable_types
-    int size = gridSize is double ? ( gridSize < 1 ? min( (width*gridSize).toInt() , (height*gridSize).toInt() ) : gridSize.toInt() ) : gridSize.toInt() ;
-    var minSize = max(2, lineWidth*3) ;
-    if (size < minSize) size = minSize ;
-
-    for (var x = size ; x < width ; x += size) {
-      context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, height);
-      context.stroke();
-    }
-
-    for (var y = size ; y < height ; y += size) {
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(width, y);
-      context.stroke();
-    }
-
-  }
-
-  void _renderTime(CanvasRenderingContext2D context, DateTime time) {
-    if (time == null) return ;
-
-    var timeStr = DATE_FORMAT_YYYY_MM_DD_HH_MM_SS.format( time.toLocal() ) ;
-
-    context.font = '30px Arial';
-
-    var margin = 4 ;
-    var shadow = 2 ;
-
-    context.setFillColorRgb(0, 0, 0, 0.60);
-    context.fillText(timeStr, margin, height-margin) ;
-
-    context.setFillColorRgb(255, 255, 255, 0.70);
-    context.fillText(timeStr, margin+shadow, height-(margin+shadow)) ;
   }
 
 

@@ -1,5 +1,6 @@
 import 'dart:html';
 import 'dart:math' as math;
+import 'dart:math';
 
 import 'dart:typed_data';
 
@@ -12,6 +13,31 @@ class _Rect {
   int height;
 
   _Rect(this.x, this.y, this.width, this.height);
+}
+
+class FilterResult {
+  final CanvasImageSource imageSource ;
+  final CanvasElement imageResult ;
+  final Rectangle<num> crop ;
+
+  FilterResult(this.imageSource, this.imageResult, this.crop);
+
+  FilterResult copyWithSource() => FilterResult( null , imageResult , crop ) ;
+
+  Point<num> get translation => Point( crop.left , crop.top ) ;
+
+  Point<num> translationScaled(double scale) => Point( crop.left*scale , crop.top*scale ) ;
+
+  CanvasElement _imageResultCropped ;
+
+  CanvasElement get imageResultCropped {
+    _imageResultCropped ??= cropImageByRectangle(imageResult, crop) ;
+    return _imageResultCropped ;
+  }
+
+  int get resultWidth => imageResult.width ;
+  int get resultHeight => imageResult.height ;
+
 }
 
 class ImagePerspectiveFilter {
@@ -188,7 +214,7 @@ class ImagePerspectiveFilter {
     return imageData.data;
   }
 
-  CanvasElement filter( { CanvasElement canvas, int marginX = 0, int marginY = 0, bool crop = true } ) {
+  FilterResult filter( [ CanvasElement resultCanvas ] ) {
     // ignore: omit_local_variable_types
     Uint8ClampedList inPixels = _getImagePixels();
     if (inPixels == null) return null ;
@@ -239,23 +265,24 @@ class ImagePerspectiveFilter {
       }
     }
 
-    canvas ??= CanvasElement(width: outWidth, height: outHeight);
+    var canvasW = max( srcWidth , outWidth ) ;
+    var canvasH = max( srcHeight , outHeight ) ;
 
-    CanvasRenderingContext2D context = canvas.getContext('2d');
+    resultCanvas ??= CanvasElement(width: canvasW, height: canvasH);
+
+    CanvasRenderingContext2D context = resultCanvas.getContext('2d');
 
     var imgData = context.createImageData(outWidth, outHeight);
     imgData.data.setAll(0, outPixels);
 
-    context.putImageData(imgData, marginX, marginY, 0, 0, outWidth, outHeight);
+    context.putImageData(imgData, 0,0, 0, 0, outWidth, outHeight);
 
-    if (crop) {
-      return _cropCanvas(context, marginX, marginY);
-    }
+    var crop = _computeCrop() ;
 
-    return canvas;
+    return FilterResult( image , resultCanvas , crop ) ;
   }
 
-  CanvasElement _cropCanvas(CanvasRenderingContext2D context, int marginX, int marginY) {
+  Rectangle<int> _computeCrop() {
     var x0 = math.min(_x0, _x3).toInt() ;
     var y0 = math.min(_y0, _y1).toInt() ;
 
@@ -271,19 +298,12 @@ class ImagePerspectiveFilter {
     var w = xB-xA ;
     var h = yB-yA ;
 
-    var canvasCrop = CanvasElement(width: w, height: h);
-    CanvasRenderingContext2D contextCrop = canvasCrop.getContext('2d');
-
-    var subData = context.getImageData(x,y,w,h) ;
-
-    contextCrop.putImageData(subData, marginX, marginY, 0, 0, w, h);
-
-    return canvasCrop ;
+    return Rectangle(x, y, w, h) ;
   }
 
 }
 
-CanvasElement applyPerspective(CanvasImageSource image, List<Point<num>> perspective, bool crop) {
+FilterResult applyPerspective(CanvasImageSource image, List<Point<num>> perspective) {
   var wh = getImageDimension(image) ;
 
   var w = wh.width ;
@@ -292,7 +312,7 @@ CanvasElement applyPerspective(CanvasImageSource image, List<Point<num>> perspec
   var filter = ImagePerspectiveFilter(image, w,h);
   filter.setCornersFromPointsList(perspective) ;
 
-  return filter.filter( crop: crop );
+  return filter.filter();
 }
 
 ////////////////////////////////////////////
@@ -302,12 +322,12 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
   int _maxPerspectiveCacheEntries ;
 
   ImagePerspectiveFilterCache(CanvasImageSource image, [int width, int height, int maxScaleCacheEntries, int maxPerspectiveCacheEntries]) : super(image, width, height, maxScaleCacheEntries) {
-    _maxPerspectiveCacheEntries = maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0 ? maxPerspectiveCacheEntries : 1 ;
+    _maxPerspectiveCacheEntries = maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0 ? maxPerspectiveCacheEntries : 2 ;
   }
 
   int get maxPerspectiveCacheEntries => _maxPerspectiveCacheEntries;
 
-  final Map<String, CanvasElement> _perspectiveCache = {} ;
+  final Map<String, FilterResult> _perspectiveCache = {} ;
 
   void clearPerspectiveCache() {
     _perspectiveCache.clear() ;
@@ -318,7 +338,16 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
     clearPerspectiveCache();
   }
 
-  CanvasElement getImageWithPerspective(List< Point<num> > points, double scale) {
+  bool isImageWithPerspectiveInCache(List< Point<num> > points, double scale) {
+    if (scale <= 0) return false ;
+
+    var cacheKey = '$scale > $points';
+
+    var imageWithPerspective = _perspectiveCache[cacheKey] ;
+    return imageWithPerspective != null ;
+  }
+
+  FilterResult getImageWithPerspective(List< Point<num> > points, double scale) {
     if (scale <= 0) return null ;
 
     var cacheKey = '$scale > $points';
@@ -329,7 +358,7 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
       var imageScaled = getImageScaled( scale ) ;
       var perspective = scalePoints(points , scale) ;
 
-      imageWithPerspective = applyPerspective(imageScaled, perspective, false) ;
+      imageWithPerspective = applyPerspective(imageScaled, perspective) ;
 
       ImageScaledCache.limitEntries(_perspectiveCache, _maxPerspectiveCacheEntries-1);
 

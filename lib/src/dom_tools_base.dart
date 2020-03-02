@@ -17,6 +17,27 @@ bool isInViewport(Element elem) {
   return rect.bottom > 0 && rect.right > 0 && rect.left < windowWidth && rect.top < windowHeight ;
 }
 
+bool isNodeInDOM(Node node) {
+  return document.body.contains(node) ;
+}
+
+bool isInDOM(dynamic element) {
+  if (element == null) return false ;
+
+  if (element is Node) {
+    return document.body.contains(element);
+  }
+  else if (element is List) {
+    for (var elem in element) {
+      var inDom = isInDOM(elem);
+      if (inDom) return true ;
+    }
+    return false ;
+  }
+
+  return false ;
+}
+
 ///////////////////////////
 
 CssStyleDeclaration defineCSS(CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS, [dynamic defaultCSS]) {
