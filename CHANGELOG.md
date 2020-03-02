@@ -1,5 +1,9 @@
 ## 1.2.0
 
+- CanvasImageViewer.cropPerspective.
+
+## 1.2.0
+
 - CanvasImageViewer support for perspective filter.
 - Caches: ImageScaledCache, ImagePerspectiveFilterCache.
 
