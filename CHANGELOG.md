@@ -1,3 +1,9 @@
+## 1.2.2
+
+- DataStorageType: browser transparent storage over IdbFactory or window.sessionStorage.
+- json_object_mapper: ^1.0.0
+- swiss_knife: ^2.3.1
+
 ## 1.2.1
 
 - CanvasImageViewer.cropPerspective.

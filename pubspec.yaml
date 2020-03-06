@@ -1,6 +1,6 @@
 name: dom_tools
 description: DOM rich elements and tools
-version: 1.2.1
+version: 1.2.2
 homepage: https://github.com/gmpassos/dom_tools
 
 environment:
@@ -8,6 +8,10 @@ environment:
 
 dependencies:
   intl: "^0.16.0"
+  json_object_mapper: ^1.0.0
+    #path: ../json_object_mapper
+  swiss_knife: ^2.3.1
+    #path: ../swiss_knife
 
 dev_dependencies:
   pedantic: ^1.8.0
