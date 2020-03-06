@@ -8,6 +8,8 @@ import 'dart:math';
 
 DivElement createDivInlineBlock() => DivElement()..style.display = 'inline-block';
 
+typedef FunctionTest = bool Function() ;
+
 bool isInViewport(Element elem) {
   var rect = elem.getBoundingClientRect();
 

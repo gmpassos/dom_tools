@@ -1,3 +1,12 @@
+## 1.2.3
+
+- CSS tools.
+- Document: markdown and coding highlight.
+- html_unescape: ^1.0.1+3
+- markdown: ^2.1.3
+- highlight: ^0.5.0
+- enum_to_string: ^1.0.8
+
 ## 1.2.2
 
 - DataStorageType: browser transparent storage over IdbFactory or window.sessionStorage.
