@@ -1,3 +1,11 @@
+## 1.2.4
+
+- CSSThemeSet
+- TrackElementInViewport (refactor)
+- TrackElementValue (new)
+- TrackElementResize (new): based in ResizeObserver or TrackElementValue depending of platform.
+- swiss_knife: ^2.3.4
+
 ## 1.2.3
 
 - CSS tools.

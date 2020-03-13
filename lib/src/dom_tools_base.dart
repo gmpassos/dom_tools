@@ -4,6 +4,8 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:math';
 
+import 'package:swiss_knife/swiss_knife.dart';
+
 ////////////////////////////////////////////////////////////////////////////////
 
 DivElement createDivInlineBlock() => DivElement()..style.display = 'inline-block';
@@ -97,120 +99,114 @@ bool _applyCSS(CssStyleDeclaration css, Element element) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class _ElementTrack {
+typedef ElementValueGetter<T> = T Function(Element element) ;
 
-  final TrackElementInViewport _trackElementInViewport ;
+class _ElementTrack<T> {
+
+  final TrackElementValue _trackElementValue ;
 
   final Element _element ;
+  final ElementValueGetter<T> _elementValueGetter ;
   final bool _periodicTracking ;
-  final OnElementEvent _onEnterViewport ;
-  final OnElementEvent _onLeaveViewPort;
+  final OnElementTrackValueEvent<T> _onTrackValueEvent ;
 
-  bool _lastCheck_viewing ;
+  T _lastCheck_value ;
 
-  _ElementTrack(this._trackElementInViewport, this._element, this._periodicTracking, this._onEnterViewport, this._onLeaveViewPort) ;
+  _ElementTrack(this._trackElementValue, this._element, this._elementValueGetter, this._periodicTracking, this._onTrackValueEvent) ;
 
-  bool _initialize() {
-    _lastCheck_viewing = isInViewport(_element) ;
+  T _initialize() {
+    _lastCheck_value = _elementValueGetter(_element) ;
 
-    if (_lastCheck_viewing) {
-      _notifyEnter();
-    }
+    _notifyValue(_lastCheck_value) ;
 
-    return _lastCheck_viewing ;
+    return _lastCheck_value ;
   }
 
   void check() {
-    var viewing = isInViewport(_element) ;
+    var value = _elementValueGetter(_element) ;
 
-    if (viewing) {
-      print(_element) ;
+    if ( !isEquals(value, _lastCheck_value) ) {
+      _notifyValue(value) ;
     }
 
-    if ( !_lastCheck_viewing ) {
-      if (viewing) {
-        _notifyEnter();
-      }
+    _lastCheck_value = value ;
+  }
+
+  void _notifyValue(T value) {
+    var keepTracking ;
+    try {
+      keepTracking = _onTrackValueEvent(_element, value) ;
+    }
+    catch(e,s) {
+      print(e) ;
+      print(s) ;
+      keepTracking = false ;
+    }
+
+    var untrack ;
+
+    if (keepTracking != null) {
+      untrack = !keepTracking ;
     }
     else {
-      if (!viewing) {
-        _notifyLeave() ;
-      }
+      untrack = !_periodicTracking ;
     }
 
-    _lastCheck_viewing = viewing;
-  }
-
-  void _notifyEnter() {
-    try {
-      if (_onEnterViewport != null) _onEnterViewport(_element) ;
+    if (untrack) {
+      _trackElementValue.untrack(_element);
     }
-    catch (e,s) {
-      print(e);
-      print(s);
-    }
-
-    if ( !_periodicTracking && _onLeaveViewPort == null ) _trackElementInViewport.untrack(_element) ;
-  }
-
-  void _notifyLeave() {
-    try {
-      if (_onLeaveViewPort != null) _onLeaveViewPort(_element) ;
-    }
-    catch (e,s) {
-      print(e);
-      print(s);
-    }
-
-    if ( !_periodicTracking ) _trackElementInViewport.untrack(_element) ;
   }
 
 }
 
-typedef OnElementEvent = void Function(Element element) ;
+typedef OnElementTrackValueEvent<T> = bool Function(Element element, T value) ;
 
-class TrackElementInViewport {
+class TrackElementValue {
 
   Duration _checkInterval ;
 
-  TrackElementInViewport( [Duration checkInterval] ) {
+  TrackElementValue( [Duration checkInterval] ) {
     _checkInterval = checkInterval ?? Duration(milliseconds: 250) ;
   }
 
   final Map<Element,_ElementTrack> _elements = {} ;
 
-  bool track( Element element , { bool periodicTracking, OnElementEvent onEnterViewport , OnElementEvent onLeaveViewPort }) {
-    if (element == null) return null ;
+  T track<T>( Element element , ElementValueGetter<T> elementValueGetter , OnElementTrackValueEvent<T> onTrackValueEvent , [ bool periodicTracking ] ) {
+    if (element == null || elementValueGetter == null || onTrackValueEvent == null) return null ;
+
     if ( _elements.containsKey(element) ) return null ;
 
-    if (onEnterViewport == null && onLeaveViewPort == null ) return null ;
     periodicTracking ??= false ;
 
-    var elementTrack = _ElementTrack(this, element, periodicTracking, onEnterViewport, onLeaveViewPort);
+    var elementTrack = _ElementTrack(this, element, elementValueGetter, periodicTracking, onTrackValueEvent);
     _elements[element] = elementTrack ;
 
-    var viewing = elementTrack._initialize() ;
+    var initialValue = elementTrack._initialize() ;
 
     _scheduleCheck() ;
 
-    return viewing ;
+    return initialValue ;
   }
 
-  bool untrack( Element elem ) {
+  T untrack<T>( Element elem ) {
     var removed = _elements.remove(elem) ;
 
+    _elementsProperties.remove(elem) ;
+
     if (_elements.isEmpty) {
-      _timer.cancel();
-      _timer = null ;
+      _cancelTimer();
     }
 
-    return removed != null ? removed._lastCheck_viewing : null ;
+    return removed != null ? removed._lastCheck_value : null ;
   }
 
   void checkElements() {
     if ( _elements.isEmpty ) return ;
 
-    for ( var elem in List.from(_elements.values) ) {
+    // ignore: omit_local_variable_types
+    List<_ElementTrack> values = List.from(_elements.values);
+
+    for ( var elem in values ) {
       elem.check() ;
     }
   }
@@ -221,14 +217,196 @@ class TrackElementInViewport {
     _timer ??= Timer.periodic( _checkInterval, _checkFromTimer );
   }
 
+  void _cancelTimer() {
+    if (_timer != null) {
+      _timer.cancel();
+      _timer = null;
+    }
+  }
+
   void _checkFromTimer(Timer timer) {
     if (_elements.isEmpty) {
-      _timer.cancel();
-      _timer = null ;
+      _cancelTimer();
     }
     else {
       checkElements();
     }
   }
 
+  final Map<Element , Map<String,dynamic>> _elementsProperties = {} ;
+
+  dynamic setProperty(Element element, String key, dynamic value) {
+    var elemProps = _elementsProperties[element] ;
+    if (elemProps == null) {
+      _elementsProperties[element] = elemProps = {} ;
+    }
+    var prev = elemProps[key] ;
+    elemProps[key] = value ;
+    return prev ;
+  }
+
+  dynamic getProperty(Element element, String key) {
+    var elemProps = _elementsProperties[element] ;
+    return elemProps != null ? elemProps[key] : null ;
+  }
+
 }
+
+typedef OnElementEvent = void Function(Element element) ;
+
+class TrackElementInViewport {
+
+  TrackElementValue _trackElementValue ;
+
+  TrackElementInViewport( [Duration checkInterval] ) {
+    _trackElementValue = TrackElementValue( checkInterval ) ;
+  }
+
+  bool track( Element element , { OnElementEvent onEnterViewport, OnElementEvent onLeaveViewport , bool periodicTracking } ) {
+    if (element == null || (onEnterViewport == null && onLeaveViewport == null)) return null ;
+
+    periodicTracking ??= false ;
+
+    var initValue = _trackElementValue.track(element, (elem) => isInViewport(elem) ,
+            (elem,show) {
+              if (show) {
+                _trackElementValue.setProperty(element, 'viewport', true) ;
+                if (onEnterViewport != null) onEnterViewport(element);
+                return periodicTracking || onLeaveViewport != null ;
+              }
+              else {
+                var alreadyViewed = _trackElementValue.getProperty(element, 'viewport') ?? false ;
+                if (onLeaveViewport != null) onLeaveViewport(element);
+                return !alreadyViewed || periodicTracking ;
+              }
+        }
+    );
+
+    return initValue == true ;
+  }
+
+  void untrack( Element element ) {
+    _trackElementValue.untrack(element) ;
+  }
+
+}
+
+class TrackElementResize {
+
+  TrackElementValue _trackElementValueInstance ;
+
+  TrackElementValue get _trackElementValue {
+    if (_trackElementValueInstance == null) {
+      _trackElementValueInstance = TrackElementValue() ;
+      window.onResize.listen( (e) => _onResizeWindow() ) ;
+    }
+
+    return _trackElementValueInstance ;
+  }
+
+  ResizeObserver _resizeObserverInstance ;
+  bool _resizeObserverInstanceError = false ;
+
+  ResizeObserver get _resizeObserver {
+    if (_resizeObserverInstanceError) return null ;
+
+    if (_resizeObserverInstance == null) {
+      try {
+        var observer = ResizeObserver(_onResizeObserver);
+        _resizeObserverInstance = observer ;
+      }
+      catch(e,s) {
+        _resizeObserverInstanceError = true ;
+
+        print(e);
+        print(s);
+      }
+    }
+
+    return _resizeObserverInstance ;
+  }
+
+  void track( Element element , OnElementEvent onResize ) {
+    var resizeObserver = _resizeObserver ;
+
+    if ( resizeObserver != null ) {
+      _track_ResizeObserver(resizeObserver, element, onResize) ;
+      return ;
+    }
+
+    var trackElementValue = _trackElementValue ;
+
+    if ( trackElementValue != null ) {
+      _track_elementValue(trackElementValue, element, onResize) ;
+      return ;
+    }
+
+    throw UnsupportedError("Can't track element resize") ;
+  }
+
+  void untrack( Element element ) {
+
+    var resizeObserver = _resizeObserver ;
+
+    if ( resizeObserver != null ) {
+      _untrack_ResizeObserver(resizeObserver, element) ;
+      return ;
+    }
+
+    var trackElementValue = _trackElementValue ;
+
+    if ( trackElementValue != null ) {
+      trackElementValue.untrack(element) ;
+      return ;
+    }
+
+    throw UnsupportedError("Can't track element resize") ;
+  }
+
+  final Map<Element,OnElementEvent> _resizeObserverListeners = {} ;
+
+  void _track_ResizeObserver( ResizeObserver resizeObserver, Element element , OnElementEvent onResize ) {
+    _resizeObserverListeners[element] = onResize ;
+    resizeObserver.observe(element) ;
+  }
+
+  void _untrack_ResizeObserver( ResizeObserver resizeObserver, Element element ) {
+    resizeObserver.unobserve(element) ;
+    _resizeObserverListeners.remove(element) ;
+  }
+
+  void _onResizeObserver(List<ResizeObserverEntry> entries, ResizeObserver observer) {
+    for (var entry in entries) {
+      var elem = entry.target ;
+      var listener = _resizeObserverListeners[elem] ;
+      if (listener != null) {
+        try {
+          listener(elem) ;
+        }
+        catch(e,s) {
+          print(e) ;
+          print(s) ;
+        }
+      }
+    }
+  }
+
+  void _track_elementValue( TrackElementValue trackElementValue , Element element , OnElementEvent onResize ) {
+
+    trackElementValue.track(element,
+        (e) => e.offset,
+        (e,v) {
+          onResize(e) ;
+          return true ;
+        },
+        true
+    );
+
+  }
+
+  void _onResizeWindow() {
+    _trackElementValueInstance.checkElements();
+  }
+
+}
+

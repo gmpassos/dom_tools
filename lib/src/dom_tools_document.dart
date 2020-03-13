@@ -9,7 +9,7 @@ import 'dom_tools_css.dart';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const CODE_THEME_1 = {
+const CODE_THEME_0 = {
   'comment': TextStyle(color: StyleColor(0xffd4d0ab)),
   'quote': TextStyle(color: StyleColor(0xffd4d0ab)),
   'variable': TextStyle(color: StyleColor(0xffffa07a)),
@@ -44,7 +44,7 @@ const CODE_THEME_1 = {
 };
 
 
-const CODE_THEME_2 = {
+const CODE_THEME_1 = {
   'root':
   TextStyle(color: StyleColor(0xff000000), backgroundColor: StyleColor(0xffffffff)),
   'subst': TextStyle(fontWeight: FontWeight.normal, color: StyleColor(0xff000000)),
@@ -89,7 +89,7 @@ const CODE_THEME_2 = {
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
-const CODE_THEME_3 = {
+const CODE_THEME_2 = {
   'comment': TextStyle(color: StyleColor(0xff7e7887)),
   'quote': TextStyle(color: StyleColor(0xff7e7887)),
   'variable': TextStyle(color: StyleColor(0xffbe4678)),
@@ -125,51 +125,7 @@ const CODE_THEME_3 = {
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
-const CODE_THEME_ID_DEFAULT = 3 ;
-
-////////////////////////////////////////////////////////////////////////////////
-
-Map<String, CSSValue> getCSSCodeTheme(int themeID) {
-
-  switch ( themeID ) {
-    case 1: return CODE_THEME_1 ;
-    case 2: return CODE_THEME_2 ;
-    case 3: return CODE_THEME_3 ;
-    default: return null ;
-  }
-
-}
-
-const String CODE_HIGHLIGHT_CSS_PREFIX = 'hljs-' ;
-
-bool _loadedCodeTheme = false ;
-
-void loadCSSCodeTheme(Map<String, CSSValue> css) {
-  loadCSS(CODE_HIGHLIGHT_CSS_PREFIX, CODE_THEME_3);
-  _loadedCodeTheme = true ;
-}
-
-void _ensureCodeThemeLoaded() {
-  if (!_loadedCodeTheme) {
-    loadCodeTheme(CODE_THEME_ID_DEFAULT);
-  }
-}
-
-int loadCodeTheme(int themeID) {
-
-  var cssCodeTheme = getCSSCodeTheme(themeID) ;
-
-  if (cssCodeTheme != null) {
-    loadCSSCodeTheme(cssCodeTheme) ;
-    return themeID ;
-  }
-  else {
-    cssCodeTheme = getCSSCodeTheme(CODE_THEME_ID_DEFAULT) ;
-    loadCSSCodeTheme(cssCodeTheme) ;
-    return CODE_THEME_ID_DEFAULT ;
-  }
-
-}
+final CSSThemeSet CODE_THEME = CSSThemeSet('hljs-', [CODE_THEME_0, CODE_THEME_1, CODE_THEME_2], 2) ;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -184,7 +140,7 @@ String codeToHighlightHtml( String code, { String language, bool normalize = tru
     result = highlight.parse(code, language: language);
   }
 
-  _ensureCodeThemeLoaded();
+  CODE_THEME.ensureThemeLoaded() ;
 
   return result != null ? result.toHtml() : null ;
 }
