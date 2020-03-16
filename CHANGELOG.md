@@ -1,3 +1,9 @@
+## 1.2.5
+
+- isOrientationInPortraitMode(), isOrientationInLandscapeMode()
+- onOrientationchange()
+- swiss_knife: ^2.3.7
+
 ## 1.2.4
 
 - CSSThemeSet

@@ -21,6 +21,34 @@ bool isInViewport(Element elem) {
   return rect.bottom > 0 && rect.right > 0 && rect.left < windowWidth && rect.top < windowHeight ;
 }
 
+bool isOrientationInPortraitMode() {
+  return !isOrientationInLandscapeMode() ;
+}
+
+bool isOrientationInLandscapeMode() {
+  var orientation = window.orientation;
+  if (orientation == null) return false ;
+
+  if ( orientation == 90 || orientation == -90 ) {
+    return true ;
+  }
+  else {
+    return false ;
+  }
+}
+
+bool onOrientationchange( EventListener listener ) {
+  try {
+    window.addEventListener('orientationchange', listener ) ;
+    return true ;
+  }
+  catch(e,s) {
+    print(e);
+    print(s);
+    return false ;
+  }
+}
+
 bool isNodeInDOM(Node node) {
   return document.body.contains(node) ;
 }
