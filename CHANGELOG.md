@@ -1,3 +1,7 @@
+## 1.2.6
+
+- nodeTreeContains(), nodeTreeContainsAny()
+
 ## 1.2.5
 
 - isOrientationInPortraitMode(), isOrientationInLandscapeMode()

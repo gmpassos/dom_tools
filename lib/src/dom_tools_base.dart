@@ -70,6 +70,16 @@ bool isInDOM(dynamic element) {
   return false ;
 }
 
+
+bool nodeTreeContains( Node node , Node target ) {
+  return nodeTreeContainsAny( node , [target] ) ;
+}
+
+bool nodeTreeContainsAny( Node node , Iterable<Node> list ) {
+  if (list == null || list.isEmpty) return false ;
+  return list.firstWhere( (e) => e == node || node.contains(e) , orElse: () => null ) != null ;
+}
+
 ///////////////////////////
 
 CssStyleDeclaration defineCSS(CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS, [dynamic defaultCSS]) {
