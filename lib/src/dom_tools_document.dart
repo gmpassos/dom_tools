@@ -3,8 +3,8 @@ import 'dart:html';
 
 import 'package:highlight/highlight.dart' ;
 import 'package:markdown/markdown.dart' as mk ;
-import 'package:swiss_knife/swiss_knife_browser.dart';
 
+import 'dom_tools_base.dart';
 import 'dom_tools_css.dart';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -184,11 +184,13 @@ String normalizeIdent(String text) {
 }
 
 DivElement markdownToDiv( String markdown, { bool normalize = true , Iterable<mk.BlockSyntax> blockSyntaxes, Iterable<mk.InlineSyntax> inlineSyntaxes, mk.ExtensionSet extensionSet, mk.Resolver linkResolver, mk.Resolver imageLinkResolver, bool inlineOnly = false } ) {
+  if ( markdown == null || markdown.isEmpty ) return createDivInline() ;
   var html = markdownToHtml(markdown, blockSyntaxes: blockSyntaxes, inlineSyntaxes: inlineSyntaxes, extensionSet: extensionSet, linkResolver: linkResolver, imageLinkResolver: imageLinkResolver, inlineOnly: inlineOnly);
   return createDivInline(html) ;
 }
 
 String markdownToHtml( String markdown, { bool normalize = true , Iterable<mk.BlockSyntax> blockSyntaxes, Iterable<mk.InlineSyntax> inlineSyntaxes, mk.ExtensionSet extensionSet, mk.Resolver linkResolver, mk.Resolver imageLinkResolver, bool inlineOnly = false } ) {
+  if ( markdown == null || markdown.isEmpty ) return '';
   if ( normalize != null && normalize ) markdown = normalizeIdent(markdown) ;
   return mk.markdownToHtml(markdown, blockSyntaxes: blockSyntaxes, inlineSyntaxes: inlineSyntaxes, extensionSet: extensionSet, linkResolver: linkResolver, imageLinkResolver: imageLinkResolver, inlineOnly: inlineOnly) ;
 }

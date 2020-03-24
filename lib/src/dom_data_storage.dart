@@ -1,8 +1,9 @@
+
 import 'dart:async';
 import 'dart:html';
 import 'dart:indexed_db';
 
-import 'package:swiss_knife/swiss_knife_browser.dart';
+import 'package:swiss_knife/swiss_knife.dart';
 import 'package:json_object_mapper/json_object_mapper.dart';
 
 ////////////////////////////////////

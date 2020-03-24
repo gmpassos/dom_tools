@@ -1,3 +1,17 @@
+## 1.2.7
+
+- createDiv(), createDivInline(), createHTML()
+- setElementInnerHTML(), appendElementInnerHTML() (with NodeValidatorBuilder).
+- scrollToTop(), scrollToTopAsync(), scrollToBottom(), scrollToLeft(), scrollToRight()
+- setZoom(), resetZoom(), setMetaViewportScale()
+- getElementAttribute(), getElementAttributeRegExp(), getElementAttributeStr()
+- getHrefBaseHost(), getHrefHostAndPort(), getHrefHost(), getHrefPort(), getHrefScheme()
+- isLocalhostHref(), isIPHref(), isIP(), clearSelections(), toHTML(Element)
+- elementMatchesAttributes(), getElementsWithAttributes()
+- isMobileAppStatusBarTranslucent()
+- addJScript(), evalJS(), mapJSFunction(), callObjectMethod(), disableScrolling(), enableScrolling(), disableZooming()
+- swiss_knife: ^2.3.9
+
 ## 1.2.6
 
 - nodeTreeContains(), nodeTreeContainsAny()
