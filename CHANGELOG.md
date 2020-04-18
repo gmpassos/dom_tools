@@ -1,3 +1,8 @@
+## 1.2.8
+
+- addJScriptSource()
+- markdownToHtml(): markdown now accepts attributes for url. For example: `[GitHub](https://github.com/){:target="_blank"}`
+
 ## 1.2.7
 
 - createDiv(), createDivInline(), createHTML()

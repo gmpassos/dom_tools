@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:html';
 import 'dart:js';
 
@@ -18,12 +19,50 @@ bool addJScript(String scriptCode) {
   */
 
   HeadElement head = querySelector('head') ;
-  var script = ScriptElement() ;
-  script.type = 'text/javascript';
-  script.text = scriptCode ;
+
+  var script = ScriptElement()
+    ..type = 'text/javascript'
+    ..text = scriptCode
+  ;
+
   head.children.add(script);
 
   return true ;
+}
+
+Map<String, Future<bool> > _addedJScriptsSources = {} ;
+
+Future<bool> addJScriptSource(String scriptSource) async {
+  var prevCall = _addedJScriptsSources[scriptSource] ;
+  if ( prevCall != null ) return prevCall ;
+
+  /*
+  print("addJScriptSource: <<<");
+  print(scriptCode) ;
+  print(">>>") ;
+  */
+
+  HeadElement head = querySelector('head') ;
+
+  var script = ScriptElement()
+    ..type = 'text/javascript'
+    ..src = scriptSource
+  ;
+
+  var completer = Completer<bool>() ;
+
+  script.onLoad.listen( (e) {
+    completer.complete(true) ;
+  } , onError: (e) {
+    completer.complete(false) ;
+  } ) ;
+
+  head.children.add(script);
+
+  var call = completer.future ;
+  _addedJScriptsSources[scriptSource] = call ;
+
+  return call ;
 }
 
 void evalJS(String scriptCode) {

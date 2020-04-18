@@ -3,6 +3,7 @@ import 'dart:html';
 
 import 'package:highlight/highlight.dart' ;
 import 'package:markdown/markdown.dart' as mk ;
+import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
 import 'dom_tools_css.dart';
@@ -192,6 +193,12 @@ DivElement markdownToDiv( String markdown, { bool normalize = true , Iterable<mk
 String markdownToHtml( String markdown, { bool normalize = true , Iterable<mk.BlockSyntax> blockSyntaxes, Iterable<mk.InlineSyntax> inlineSyntaxes, mk.ExtensionSet extensionSet, mk.Resolver linkResolver, mk.Resolver imageLinkResolver, bool inlineOnly = false } ) {
   if ( markdown == null || markdown.isEmpty ) return '';
   if ( normalize != null && normalize ) markdown = normalizeIdent(markdown) ;
-  return mk.markdownToHtml(markdown, blockSyntaxes: blockSyntaxes, inlineSyntaxes: inlineSyntaxes, extensionSet: extensionSet, linkResolver: linkResolver, imageLinkResolver: imageLinkResolver, inlineOnly: inlineOnly) ;
+  var markdownHtml = mk.markdownToHtml(markdown, blockSyntaxes: blockSyntaxes, inlineSyntaxes: inlineSyntaxes, extensionSet: extensionSet, linkResolver: linkResolver, imageLinkResolver: imageLinkResolver, inlineOnly: inlineOnly);
+
+  // allow attributes for url. For example:
+  // [GitHub](https://github.com/){:target="_blank"}
+  markdownHtml = regExpReplaceAll(RegExp(r'(<a.*?)(>.*?</a>){:(.*?)}', multiLine: false, caseSensitive: false), markdownHtml, r'$1 $3$2') ;
+
+  return markdownHtml ;
 }
 
