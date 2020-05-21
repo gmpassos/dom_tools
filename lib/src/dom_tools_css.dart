@@ -1,7 +1,92 @@
 
+import 'dart:async';
 import 'dart:html';
 
+import 'package:dom_tools/dom_tools.dart';
 import 'package:enum_to_string/enum_to_string.dart';
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+Map<String, Future<bool>> _addedCssSources = {} ;
+
+Future<bool> addCssSource(String cssSource) async {
+  var linkInDom = getLinkElementByHref(cssSource);
+
+  var prevCall = _addedCssSources[cssSource] ;
+
+  if ( prevCall != null ) {
+    if (linkInDom != null) {
+      return prevCall ;
+    }
+    else {
+      var removed = _addedCssSources.remove(cssSource) ;
+      assert(removed != null) ;
+    }
+  }
+
+  if (linkInDom != null) {
+    return true ;
+  }
+
+  print('ADDING <LINK>: $cssSource') ;
+
+  HeadElement head = querySelector('head') ;
+
+  var script = LinkElement()
+    ..rel = 'stylesheet'
+    ..href = cssSource
+  ;
+
+  var completer = Completer<bool>() ;
+
+  script.onLoad.listen( (e) {
+    completer.complete(true) ;
+  } , onError: (e) {
+    completer.complete(false) ;
+  } ) ;
+
+  head.children.add(script);
+
+  var call = completer.future ;
+  _addedCssSources[cssSource] = call ;
+
+  return call ;
+}
+
+CssStyleDeclaration getComputedStyle( { Element parent, Element element, String classes , String style , bool hidden } ) {
+  parent ??= document.body ;
+  hidden ??= true ;
+
+  element ??= DivElement() ;
+
+  element.hidden = hidden ;
+
+  if (classes != null && classes.isNotEmpty) {
+    var allClasses = classes.split(RegExp(r'\s+')).where( (s) => s.isNotEmpty ).toList() ;
+    for (var c in allClasses) {
+      element.classes.add(c) ;
+    }
+  }
+
+  if (style != null && style.isNotEmpty) {
+    element.style.cssText = style ;
+  }
+
+  parent.children.add(element) ;
+
+  var computedStyle = element.getComputedStyle() ;
+  var cssText = computedStyle.cssText;
+
+  var computedStyle2 = CssStyleDeclaration() ;
+  computedStyle2.cssText = cssText ;
+
+  element.remove() ;
+
+  return computedStyle2 ;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 enum FontStyle {
   normal,
@@ -73,6 +158,7 @@ class TextStyle implements CSSValue {
 abstract class CSSValue {
   String cssValue() ;
 }
+
 
 Map<String,Map<dynamic,bool>> _loadedThemesByPrefix = {} ;
 

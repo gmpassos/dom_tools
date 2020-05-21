@@ -7,8 +7,7 @@ import 'package:swiss_knife/swiss_knife.dart';
 import 'dom_tools_base.dart';
 
 
-
-typedef ElementValueGetter<T> = T Function(Element element) ;
+////////////////////////////////////////////////////////////////////////////////
 
 class _ElementTrack<T> {
 

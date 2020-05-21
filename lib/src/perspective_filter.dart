@@ -231,10 +231,10 @@ class ImagePerspectiveFilter {
     var outArea = outWidth * outHeight * 4;
     var outWidth4 = outWidth * 4;
 
-    Float32List out = Float32List(2) ;
-    Uint8ClampedList outPixels = Uint8ClampedList(outArea) ;
+    var out = Float32List(2) ;
+    var outPixels = Uint8ClampedList(outArea) ;
 
-    Uint8ClampedList pNW = Uint8ClampedList(4) ;
+    var pNW = Uint8ClampedList(4) ;
 
     for (var y = 0; y < outHeight; y++) {
       var outLineIdx = (outWidth * 4) * y;

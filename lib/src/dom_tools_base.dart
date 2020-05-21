@@ -8,8 +8,94 @@ import 'package:swiss_knife/swiss_knife.dart';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-DivElement createDivInlineBlock() => DivElement()..style.display = 'inline-block';
+typedef ElementValueGetter<T> = T Function(Element element) ;
 
+Element getElementByValues<V>(String tag, ElementValueGetter getter, List<V> values ) {
+  if (tag == null || tag.isEmpty) return null ;
+  if ( values == null || values.isEmpty ) return null ;
+  values.removeWhere( (v) => v == null ) ;
+  if ( values.isEmpty ) return null ;
+
+  var allLinks = document.querySelectorAll(tag) ;
+  if (allLinks == null || allLinks.isEmpty) return null ;
+
+  var fond = allLinks.firstWhere(
+          (l) {
+        var elemValue = getter(l) ;
+        return values.contains(elemValue) ;
+      }
+      , orElse: () => null
+  ) ;
+
+  return fond ;
+}
+
+String getElementHref(Element element) {
+  if ( element is LinkElement ) return element.href ;
+  if ( element is AnchorElement ) return element.href ;
+  if ( element is BaseElement ) return element.href ;
+  if ( element is AreaElement ) return element.href ;
+
+  return null ;
+}
+
+String getElementSrc(Element element) {
+  if ( element is ImageElement ) return element.src ;
+  if ( element is ScriptElement ) return element.src ;
+  if ( element is InputElement ) return element.src ;
+
+  if ( element is MediaElement ) return element.src ;
+  if ( element is EmbedElement ) return element.src ;
+
+  if ( element is IFrameElement ) return element.src ;
+  if ( element is SourceElement ) return element.src ;
+  if ( element is TrackElement ) return element.src ;
+
+  if ( element is ImageButtonInputElement ) return element.src ;
+
+  return null ;
+}
+
+Element getElementByHref(String tag, String href) {
+  if ( href == null || href.isEmpty ) return null ;
+  var resolvedURL = resolveUri(href).toString() ;
+  return getElementByValues(tag, getElementHref, [href, resolvedURL]) ;
+}
+
+Element getElementBySrc(String tag, String src) {
+  if ( src == null || src.isEmpty ) return null ;
+
+  var values = [src];
+
+  if ( !src.startsWith('data:') ) {
+    var resolvedURL = resolveUri(src).toString() ;
+    values.add(resolvedURL);
+  }
+
+  return getElementByValues(tag, getElementSrc, values) ;
+}
+
+AnchorElement getAnchorElementByHref(String href) {
+  return getElementByHref('a', href) ;
+}
+
+LinkElement getLinkElementByHref(String href) {
+  return getElementByHref('link', href) ;
+}
+
+ScriptElement getScriptElementBySrc(String src) {
+  return getElementBySrc('script', src) ;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Future<bool> elementOnLoad(ImageElement img) {
+  var completer = Completer<bool>() ;
+  img.onLoad.listen( (e) => completer.complete(true) , onError: (e) => completer.complete(false) ) ;
+  return completer.future ;
+}
+
+DivElement createDivInlineBlock() => DivElement()..style.display = 'inline-block';
 
 DivElement createDiv([bool inline = false, String html]) {
   var div = DivElement() ;
@@ -27,6 +113,26 @@ DivElement createDivInline([String html]) {
   return createDiv(true, html);
 }
 
+SpanElement createSpan([String html]) {
+  var span = SpanElement() ;
+
+  if (html != null) {
+    setElementInnerHTML(span, html);
+  }
+
+  return span ;
+}
+
+LabelElement createLabel([String html]) {
+  var label = LabelElement() ;
+
+  if (html != null) {
+    setElementInnerHTML(label, html);
+  }
+
+  return label ;
+}
+
 Element createHTML([String html]) {
   var div = createDiv(true, html);
   if ( div.childNodes.isEmpty ) return div ;
@@ -36,10 +142,15 @@ Element createHTML([String html]) {
   return childNode ;
 }
 
-const _HTML_TAG_A_ALLOWED_ATTRS = ['style', 'navigate', 'action', 'capture', 'uilayout', 'oneventkeypress', 'oneventclick', 'href', 'target'] ;
-const _HTML_ELEMENTS_ALLOWED_ATTRS = ['style', 'src', 'field', 'navigate', 'action', 'capture', 'uilayout', 'oneventkeypress', 'oneventclick'] ;
+const _HTML_BASIC_ATTRS = ['style', 'capture', 'type', 'src', 'href', 'target'] ;
+const _HTML_CONTROL_ATTRS = ['data-toggle', 'data-target', 'aria-controls', 'aria-expanded', 'aria-label'] ;
+
+const _HTML_EXTENDED_ATTRS = ['field', 'navigate', 'action', 'uilayout', 'oneventkeypress', 'oneventclick'] ;
+
+const _HTML_ELEMENTS_ALLOWED_ATTRS = [ ..._HTML_BASIC_ATTRS , ..._HTML_CONTROL_ATTRS , ..._HTML_EXTENDED_ATTRS ] ;
 
 AnyUriPolicy _anyUriPolicy = AnyUriPolicy() ;
+
 
 class AnyUriPolicy implements UriPolicy {
   @override
@@ -51,14 +162,21 @@ class AnyUriPolicy implements UriPolicy {
 NodeValidatorBuilder _nodeValidatorBuilder = NodeValidatorBuilder()
   ..allowTextElements()
   ..allowHtml5()
-  ..allowElement('a', attributes: _HTML_TAG_A_ALLOWED_ATTRS)
+  ..allowSvg()
+  ..allowElement('a', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+  ..allowElement('nav', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('div', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+  ..allowElement('li', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+  ..allowElement('ul', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+  ..allowElement('ol', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('span', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('img', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('textarea', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('input', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+  ..allowElement('label', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('button', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowElement('iframe', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+  ..allowElement('svg', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowImages(_anyUriPolicy)
   ..allowNavigation(_anyUriPolicy)
   ..allowInlineStyles()
@@ -279,58 +397,7 @@ String getElementAttributeStr(Element element, String key) {
   return null ;
 }
 
-String getHrefBaseHost( [bool ignorePort80 = true] ) {
-  return getHrefScheme() +'://'+ getHrefHostAndPort(ignorePort80) ;
-}
 
-String getHrefHostAndPort( [bool ignorePort80 = true] ) {
-  var href = window.location.href;
-  var uri = Uri.parse(href);
-
-  ignorePort80 ??= true ;
-
-  if ( ignorePort80 && uri.port == 80 ) {
-    return uri.host ;
-  }
-
-  return '${ uri.host }:${ uri.port }' ;
-}
-
-String getHrefHost() {
-  var href = window.location.href;
-  var uri = Uri.parse(href);
-  return uri.host;
-}
-
-int getHrefPort() {
-  var href = window.location.href;
-  var uri = Uri.parse(href);
-  return uri.port;
-}
-
-String getHrefScheme() {
-  var href = window.location.href;
-  var uri = Uri.parse(href);
-  return uri.scheme;
-}
-
-RegExp _regExp_localhostHref = RegExp('^(?:localhost|127\\.0\\.0\\.1)\$') ;
-
-bool isLocalhostHref() {
-  var host = getHrefHost();
-  return _regExp_localhostHref.hasMatch( host ) ;
-}
-
-RegExp _regExp_IpHref = RegExp('^\\d+\\.\\d+\\.\\d+\\.\\d+\$') ;
-
-bool isIPHref() {
-  var host = getHrefHost();
-  return isIP( host ) ;
-}
-
-bool isIP(String host) {
-  return _regExp_IpHref.hasMatch( host ) ;
-}
 
 void clearSelections() {
   var selection = window.getSelection() ;

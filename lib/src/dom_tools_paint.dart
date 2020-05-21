@@ -183,8 +183,9 @@ class Color {
 
   // See <https://www.w3.org/TR/WCAG20/#relativeluminancedef>
   static double _linearizeColorComponent(double component) {
-    if (component <= 0.03928)
+    if (component <= 0.03928) {
       return component / 12.92;
+    }
     return math.pow((component + 0.055) / 1.055, 2.4) as double;
   }
 
@@ -196,9 +197,9 @@ class Color {
   /// See <https://en.wikipedia.org/wiki/Relative_luminance>.
   double computeLuminance() {
     // See <https://www.w3.org/TR/WCAG20/#relativeluminancedef>
-    final double R = _linearizeColorComponent(red / 0xFF);
-    final double G = _linearizeColorComponent(green / 0xFF);
-    final double B = _linearizeColorComponent(blue / 0xFF);
+    var R = _linearizeColorComponent(red / 0xFF);
+    var G = _linearizeColorComponent(green / 0xFF);
+    var B = _linearizeColorComponent(blue / 0xFF);
     return 0.2126 * R + 0.7152 * G + 0.0722 * B;
   }
 
@@ -211,12 +212,12 @@ class Color {
   /// operations for two things that are solid colors with the same shape, but
   /// overlay each other: instead, just paint one with the combined color.
   static Color alphaBlend(Color foreground, Color background) {
-    final int alpha = foreground.alpha;
+    var alpha = foreground.alpha;
     if (alpha == 0x00) { // Foreground completely transparent.
       return background;
     }
-    final int invAlpha = 0xff - alpha;
-    int backAlpha = background.alpha;
+    var invAlpha = 0xff - alpha;
+    var backAlpha = background.alpha;
     if (backAlpha == 0xff) { // Opaque background case
       return Color.fromARGB(
         0xff,
@@ -226,7 +227,7 @@ class Color {
       );
     } else { // General case
       backAlpha = (backAlpha * invAlpha) ~/ 0xff;
-      final int outAlpha = alpha + backAlpha;
+      var outAlpha = alpha + backAlpha;
       assert(outAlpha != 0x00);
       return Color.fromARGB(
         outAlpha,
@@ -542,10 +543,10 @@ class CanvasImageViewer {
   ImageFilter _imageFilter ;
 
   ViewerValue<Rectangle<num>> _clip ;
-  ViewerValue<List<Rectangle<num>>> _rectangles ;
-  ViewerValue<List<Point<num>>> _points ;
-  ViewerValue<List<Point<num>>> _perspective ;
-  ViewerValue<num> _gridSize ;
+  final ViewerValue<List<Rectangle<num>>> _rectangles ;
+  final ViewerValue<List<Point<num>>> _points ;
+  final ViewerValue<List<Point<num>>> _perspective ;
+  final ViewerValue<num> _gridSize ;
 
   bool _cropPerspective ;
 
@@ -1006,13 +1007,8 @@ class CanvasImageViewer {
       }
 
       if ( point != pointFixed ) {
-        var boundsPrev = bounds;
-
         pointsAdjusted[targetIdx] = pointFixed;
         bounds = _getPointsBounds(pointsAdjusted);
-
-        //print('    [$targetIdx] $target -> $point -> $pointFixed ; $boundsPrev -> $bounds');
-
         point = pointFixed ;
       }
     }
@@ -1479,4 +1475,41 @@ class CanvasImageViewer {
 }
 
 
+CanvasElement toCanvasElement( CanvasImageSource imageSource , int width, int height ) {
+  var canvas = CanvasElement( width: width , height: height ) ;
+  CanvasRenderingContext2D context = canvas.getContext('2d');
 
+  context.drawImage(imageSource, 0, 0);
+
+  return canvas ;
+}
+
+ImageElement canvasToImageElement( CanvasElement canvas , [String mimeType, num quality] ) {
+  mimeType ??= 'image/png' ;
+  quality ??= 0.99 ;
+
+  var dataUrl = canvas.toDataUrl(mimeType) ;
+  var img = ImageElement(src: dataUrl) ;
+  img.width = canvas.width ;
+  img.height = canvas.height ;
+  return img ;
+}
+
+CanvasElement rotateImageElement( ImageElement image, [ angleDegree = 90 ] ) {
+  var w = image.width ;
+  var h = image.height ;
+  return rotateCanvasImageSource( image , w, h, angleDegree) ;
+}
+
+CanvasElement rotateCanvasImageSource( CanvasImageSource image , int width, int height, [ angleDegree = 90 ]) {
+  angleDegree ??= 90 ;
+
+  var canvas = CanvasElement( width: height , height: width ) ;
+  CanvasRenderingContext2D context = canvas.getContext('2d');
+
+  context.translate(canvas.width/2 , canvas.height/2);
+  context.rotate(angleDegree*math.pi/180);
+  context.drawImage(image,-width/2,-height/2);
+
+  return canvas ;
+}

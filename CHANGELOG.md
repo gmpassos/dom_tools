@@ -1,3 +1,17 @@
+## 1.2.9
+
+- getElementHref(), getElementSrc().
+- getElementByValues(), getElementByHref(), getElementBySrc().
+- getAnchorElementByHref(), getLinkElementByHref(), getScriptElementBySrc().
+- elementOnLoad().
+- toCanvasElement(), canvasToImageElement(), rotateImageElement(), rotateCanvasImageSource().
+- NodeValidatorBuilder: Added tags svg, nav, li, ul, ol, label.
+- addJavaScriptCode(), addJavaScriptSource().
+- addCssSource(), getComputedStyle().
+- showDialogText(), showDialogHTML(), showDialogImage(), showDialogElement().
+- swiss_knife: ^2.4.0
+- highlight: ^0.6.0
+
 ## 1.2.8
 
 - addJScriptSource()

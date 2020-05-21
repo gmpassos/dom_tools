@@ -5,44 +5,76 @@ import 'dart:js';
 
 import 'dart:js_util';
 
+import 'dom_tools_base.dart';
 
-Map<String,bool> _addedJScripts = {} ;
+////////////////////////////////////////////////////////////////////////////////
 
-bool addJScript(String scriptCode) {
-  if ( _addedJScripts.containsKey(scriptCode) ) return false ;
-  _addedJScripts[scriptCode] = true ;
+Map<String, Future<bool> > _addedJavaScriptCodes = {} ;
 
-  /*
-  print("addJScript: <<<");
-  print(scriptCode) ;
-  print(">>>") ;
-  */
-
-  HeadElement head = querySelector('head') ;
-
-  var script = ScriptElement()
-    ..type = 'text/javascript'
-    ..text = scriptCode
-  ;
-
-  head.children.add(script);
-
-  return true ;
-}
-
-Map<String, Future<bool> > _addedJScriptsSources = {} ;
-
-Future<bool> addJScriptSource(String scriptSource) async {
-  var prevCall = _addedJScriptsSources[scriptSource] ;
+Future<bool> addJavaScriptCode(String scriptCode) async {
+  var prevCall = _addedJavaScriptCodes[scriptCode] ;
   if ( prevCall != null ) return prevCall ;
 
-  /*
-  print("addJScriptSource: <<<");
-  print(scriptCode) ;
-  print(">>>") ;
-  */
+  Future<bool> future ;
 
-  HeadElement head = querySelector('head') ;
+  try {
+    HeadElement head = querySelector('head') ;
+
+    var script = ScriptElement()
+      ..type = 'text/javascript'
+      ..text = scriptCode
+    ;
+
+    head.children.add(script);
+
+    future = Future.value(true) ;
+  }
+  catch (e,s) {
+    print(e);
+    print(s);
+    future = Future.value(false) ;
+  }
+
+  _addedJavaScriptsSources[scriptCode] = future ;
+
+  return future ;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+Map<String, Future<bool> > _addedJavaScriptsSources = {} ;
+
+Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
+  var scriptInDom = getScriptElementBySrc(scriptSource);
+
+  var prevCall = _addedJavaScriptsSources[scriptSource] ;
+
+  if ( prevCall != null ) {
+    if (scriptInDom != null) {
+      return prevCall ;
+    }
+    else {
+      var removed = _addedJavaScriptsSources.remove(scriptSource) ;
+      assert(removed != null) ;
+    }
+  }
+
+  if (scriptInDom != null) {
+    return true ;
+  }
+
+  addToBody ??= false ;
+
+  print('ADDING <SCRIPT>: $scriptSource > into body: $addToBody') ;
+
+  Element parent ;
+  if ( addToBody ) {
+    parent = querySelector('body') ;
+  }
+  else {
+    parent = querySelector('head') ;
+  }
 
   var script = ScriptElement()
     ..type = 'text/javascript'
@@ -57,15 +89,32 @@ Future<bool> addJScriptSource(String scriptSource) async {
     completer.complete(false) ;
   } ) ;
 
-  head.children.add(script);
+  parent.children.add(script);
 
   var call = completer.future ;
-  _addedJScriptsSources[scriptSource] = call ;
+  _addedJavaScriptsSources[scriptSource] = call ;
 
   return call ;
 }
 
-void evalJS(String scriptCode) {
+
+////////////////////////////////////////////////////////////////////////////////
+
+Future<bool> addJSFunction(String name, List<String> parameters, String body) {
+  if (name == null || name.isEmpty) throw ArgumentError('Empty name') ;
+  parameters ??= [] ;
+  body ??= '' ;
+
+  var args = parameters.join(' , ') ;
+  var code = '$name = function( $args ) {\n$body\n}' ;
+
+  return addJavaScriptCode(code) ;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+dynamic evalJS(String scriptCode) {
   context.callMethod('eval', [scriptCode]);
 }
 
@@ -86,7 +135,7 @@ void mapJSFunction(String jsFunctionName, MappedFunction f) {
     
   ''';
 
-  addJScript(scriptCode) ;
+  addJavaScriptCode(scriptCode) ;
 
   var setter = context[setterName] as JsFunction ;
 
@@ -96,6 +145,10 @@ void mapJSFunction(String jsFunctionName, MappedFunction f) {
 
 dynamic callObjectMethod(dynamic o, String method, [List args]) {
   return callMethod(o, method, args);
+}
+
+dynamic callFunction(String method, [List args]) {
+  return context.callMethod(method, args);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,7 +165,7 @@ void disableScrolling() {
   
   ''';
 
-  addJScript(scriptCode) ;
+  addJavaScriptCode(scriptCode) ;
 
   evalJS('''
     window.addEventListener('scroll', UI__BlcokScroll__, { passive: false });
@@ -170,6 +223,6 @@ void disableZooming() {
   
   ''';
 
-  addJScript(scriptCode) ;
+  addJavaScriptCode(scriptCode) ;
 
 }

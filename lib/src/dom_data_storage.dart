@@ -220,6 +220,8 @@ class _LocalSimpleStorage extends _SimpleStorage {
 
 class _DBSimpleStorage extends _SimpleStorage {
 
+  static final String INDEXED_DB_NAME = 'dom_tools__simple_storage' ;
+
   static bool get isSupported {
     return IdbFactory.supported ;
   }
@@ -232,7 +234,7 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   void _openVersioned() {
-    _open = window.indexedDB.open('bones_ui__simplestorage', version: 1, onUpgradeNeeded: _initializeDatabase) ;
+    _open = window.indexedDB.open(INDEXED_DB_NAME, version: 1, onUpgradeNeeded: _initializeDatabase) ;
     _open.then( _setDB ).catchError( _onOpenVersionedError ) ;
   }
 
@@ -264,7 +266,6 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   static final String OBJ_STORE = 'objs' ;
-  static final String OBJ_STORE_INDEX = 'objs_idx' ;
 
   void _initializeDatabase(VersionChangeEvent e) {
     Database db = e.target.result;
