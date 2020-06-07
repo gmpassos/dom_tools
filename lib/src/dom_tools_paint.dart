@@ -1481,8 +1481,12 @@ class CanvasImageViewer {
 
   void _renderGrid(CanvasRenderingContext2D context, Point<num> translate,
       num gridSize, Color color, int lineWidth) {
-    if (gridSize == null || gridSize <= 0 || lineWidth == null || lineWidth < 1)
+    if (gridSize == null ||
+        gridSize <= 0 ||
+        lineWidth == null ||
+        lineWidth < 1) {
       return;
+    }
 
     _translate(context, null);
 

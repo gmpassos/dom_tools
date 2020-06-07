@@ -194,8 +194,10 @@ class TrackElementInViewport {
       {OnElementEvent onEnterViewport,
       OnElementEvent onLeaveViewport,
       bool periodicTracking}) {
-    if (element == null || (onEnterViewport == null && onLeaveViewport == null))
+    if (element == null ||
+        (onEnterViewport == null && onLeaveViewport == null)) {
       return null;
+    }
 
     periodicTracking ??= false;
 

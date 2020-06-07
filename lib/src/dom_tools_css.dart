@@ -175,10 +175,12 @@ class TextStyle implements CSSValue {
     if (color != null) str += 'color: $color ;';
     if (backgroundColor != null) str += 'background-color: $backgroundColor ;';
 
-    if (fontStyle != null)
+    if (fontStyle != null) {
       str += 'font-style: ${EnumToString.parse(fontStyle)} ;';
-    if (fontWeight != null)
+    }
+    if (fontWeight != null) {
       str += 'font-weight: ${EnumToString.parse(fontWeight)} ;';
+    }
 
     if (borderColor != null) str += 'border-color: $borderColor ;';
     if (borderRadius != null) str += 'border-radius: $borderRadius;';

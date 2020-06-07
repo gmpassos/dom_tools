@@ -1,3 +1,8 @@
+## 1.3.1
+
+- Added example.
+- dartfmt
+
 ## 1.3.0
 
 - addCssSource( insertIndex ): a new parameter for index insertion.
