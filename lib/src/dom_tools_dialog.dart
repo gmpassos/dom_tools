@@ -1,4 +1,3 @@
-
 import 'dart:html';
 
 import 'package:dom_tools/dom_tools.dart';
@@ -11,14 +10,15 @@ import 'dom_tools_base.dart';
 /// [text] The text to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogText( String text , { double transparency , String padding } ) {
-  if ( text == null || text.isEmpty ) return null ;
+DivElement showDialogText(String text, {double transparency, String padding}) {
+  if (text == null || text.isEmpty) return null;
 
-  var element = SpanElement() ;
+  var element = SpanElement();
 
-  element.text = text ;
+  element.text = text;
 
-  return showDialogElement( element , transparency: transparency, padding: padding ) ;
+  return showDialogElement(element,
+      transparency: transparency, padding: padding);
 }
 
 /// Shows a [html] dialog.
@@ -26,30 +26,28 @@ DivElement showDialogText( String text , { double transparency , String padding 
 /// [html] The HTML to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogHTML( String html , { double transparency , String padding } ) {
-  if ( html == null || html.isEmpty ) return null ;
+DivElement showDialogHTML(String html, {double transparency, String padding}) {
+  if (html == null || html.isEmpty) return null;
 
-  var element = SpanElement() ;
+  var element = SpanElement();
 
-  setElementInnerHTML( element , html ) ;
+  setElementInnerHTML(element, html);
 
-  return showDialogElement( element , transparency: transparency, padding: padding ) ;
+  return showDialogElement(element,
+      transparency: transparency, padding: padding);
 }
 
 /// Shows an image ([src]) dialog.
 ///
 /// [src] The image source.
-void showDialogImage( String src ) {
-
+void showDialogImage(String src) {
   var img = ImageElement()
     ..src = src
     ..style.width = '95%'
     ..style.height = 'auto'
-    ..style.objectFit = 'contain'
-  ;
+    ..style.objectFit = 'contain';
 
-  showDialogElement( img ) ;
-
+  showDialogElement(img);
 }
 
 /// Shows an [Element] dialog.
@@ -57,8 +55,9 @@ void showDialogImage( String src ) {
 /// [content] The element to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogElement( Element content , { double transparency , String padding } ) {
-  if ( transparency == null || transparency <= 0 ) transparency = 0.90 ;
+DivElement showDialogElement(Element content,
+    {double transparency, String padding}) {
+  if (transparency == null || transparency <= 0) transparency = 0.90;
 
   padding ??= '2vh 0 0 0';
 
@@ -73,8 +72,7 @@ DivElement showDialogElement( Element content , { double transparency , String p
     ..style.overflow = 'auto'
     ..style.backgroundColor = 'rgba(0,0,0, $transparency)'
     ..style.textAlign = 'center'
-    ..style.setProperty('backdrop-filter', 'blur(6px)')
-  ;
+    ..style.setProperty('backdrop-filter', 'blur(6px)');
 
   var close = SpanElement()
     ..innerHtml = '&times;'
@@ -83,47 +81,46 @@ DivElement showDialogElement( Element content , { double transparency , String p
     ..style.fontWeight = 'bold'
     ..style.color = 'rgba(255,255,255,0.8)'
     ..style.margin = '0px 20px 10px 10px'
-    ..style.cursor = 'pointer'
-  ;
+    ..style.cursor = 'pointer';
 
-  close.onClick.listen( (e) {
-    dialog.style.display = 'none' ;
+  close.onClick.listen((e) {
+    dialog.style.display = 'none';
     dialog.remove();
-  } );
+  });
 
-  dialog.children.add( close ) ;
+  dialog.children.add(close);
 
-  String src ;
-  String title ;
-  var isImage = false ;
+  String src;
+  String title;
+  var isImage = false;
 
   if (content is ImageElement) {
-    src = content.src ;
-    title = content.title ;
-    isImage = true ;
+    src = content.src;
+    title = content.title;
+    isImage = true;
+  } else if (content is VideoElement) {
+    src = content.src;
+    title = content.title;
   }
-  else if (content is VideoElement) {
-    src = content.src ;
-    title = content.title ;
-  }
 
-  AnchorElement download ;
+  AnchorElement download;
 
-  if ( src != null ) {
-    String file ;
+  if (src != null) {
+    String file;
 
-    if ( src.startsWith('data:') ) {
-      var mimeType = DataURLBase64.parseMimeType( src ) ;
+    if (src.startsWith('data:')) {
+      var mimeType = DataURLBase64.parseMimeType(src);
 
       if (mimeType != null) {
-        file = title != null && title.isNotEmpty && title.length <= 50 ? mimeType.fileName(title) : mimeType.fileNameTimeMillis() ;
+        file = title != null && title.isNotEmpty && title.length <= 50
+            ? mimeType.fileName(title)
+            : mimeType.fileNameTimeMillis();
       }
-    }
-    else {
-      file = getPathFileName(src) ;
+    } else {
+      file = getPathFileName(src);
     }
 
-    if (file == null || file.isEmpty) file = 'file.download' ;
+    if (file == null || file.isEmpty) file = 'file.download';
 
     download = AnchorElement(href: src)
       ..download = file
@@ -135,13 +132,12 @@ DivElement showDialogElement( Element content , { double transparency , String p
       ..style.color = 'rgba(255,255,255,0.8)'
       ..style.margin = '4px 10px 10px 10px'
       ..title = 'Download'
-      ..style.cursor = 'pointer'
-    ;
+      ..style.cursor = 'pointer';
 
     dialog.children.add(download);
   }
 
-  if ( isImage ) {
+  if (isImage) {
     var rotate = SpanElement()
       ..innerHtml = '&#10549;'
       ..style.float = 'right'
@@ -151,46 +147,45 @@ DivElement showDialogElement( Element content , { double transparency , String p
       ..style.color = 'rgba(255,255,255,0.8)'
       ..style.margin = '4px 10px 10px 10px'
       ..title = 'Rotate Right'
-      ..style.cursor = 'pointer'
-    ;
+      ..style.cursor = 'pointer';
 
-    rotate.onClick.listen( (e) {
-      var img = dialog.children.where( (e) => e is ImageElement || e is CanvasImageSource ).first ;
+    rotate.onClick.listen((e) {
+      var img = dialog.children
+          .where((e) => e is ImageElement || e is CanvasImageSource)
+          .first;
 
-      CanvasElement canvasRotated ;
+      CanvasElement canvasRotated;
 
       if (img is CanvasElement) {
-        canvasRotated = rotateCanvasImageSource(img , img.width , img.height) ;
-      }
-      else if (img is ImageElement) {
-        canvasRotated = rotateCanvasImageSource(img , img.naturalWidth , img.naturalHeight) ;
+        canvasRotated = rotateCanvasImageSource(img, img.width, img.height);
+      } else if (img is ImageElement) {
+        canvasRotated =
+            rotateCanvasImageSource(img, img.naturalWidth, img.naturalHeight);
       }
 
-      var imgRotated = canvasToImageElement(canvasRotated) ;
-      imgRotated.style.cssText = img.style.cssText ;
+      var imgRotated = canvasToImageElement(canvasRotated);
+      imgRotated.style.cssText = img.style.cssText;
 
       if (download != null) {
-        download.href = imgRotated.src ;
+        download.href = imgRotated.src;
       }
 
-      var idx = dialog.children.indexOf(img) ;
-      assert(idx >= 0) ;
-      img.remove() ;
-      dialog.children.insert(idx, imgRotated) ;
-    } );
+      var idx = dialog.children.indexOf(img);
+      assert(idx >= 0);
+      img.remove();
+      dialog.children.insert(idx, imgRotated);
+    });
 
-    dialog.children.add( rotate ) ;
+    dialog.children.add(rotate);
   }
 
   content
     ..style.maxWidth = '98vw'
-    ..style.maxHeight = '90vh'
-  ;
+    ..style.maxHeight = '90vh';
 
-  dialog.children.add( content ) ;
+  dialog.children.add(content);
 
-  document.body.children.add( dialog ) ;
+  document.body.children.add(dialog);
 
-  return dialog ;
+  return dialog;
 }
-

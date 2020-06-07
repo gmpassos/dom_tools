@@ -1,46 +1,41 @@
-
 import 'dart:async';
 import 'dart:html';
 import 'dart:js';
-
 import 'dart:js_util';
 
 import 'dom_tools_base.dart';
 
-Map<String, Future<bool> > _addedJavaScriptCodes = {} ;
+Map<String, Future<bool>> _addedJavaScriptCodes = {};
 
 /// Adds a JavaScript code ([scriptCode]) into DOM.
 Future<bool> addJavaScriptCode(String scriptCode) async {
-  var prevCall = _addedJavaScriptCodes[scriptCode] ;
-  if ( prevCall != null ) return prevCall ;
+  var prevCall = _addedJavaScriptCodes[scriptCode];
+  if (prevCall != null) return prevCall;
 
-  Future<bool> future ;
+  Future<bool> future;
 
   try {
-    HeadElement head = querySelector('head') ;
+    HeadElement head = querySelector('head');
 
     var script = ScriptElement()
       ..type = 'text/javascript'
-      ..text = scriptCode
-    ;
+      ..text = scriptCode;
 
     head.children.add(script);
 
-    future = Future.value(true) ;
-  }
-  catch (e,s) {
+    future = Future.value(true);
+  } catch (e, s) {
     print(e);
     print(s);
-    future = Future.value(false) ;
+    future = Future.value(false);
   }
 
-  _addedJavaScriptsSources[scriptCode] = future ;
+  _addedJavaScriptsSources[scriptCode] = future;
 
-  return future ;
+  return future;
 }
 
-
-Map<String, Future<bool> > _addedJavaScriptsSources = {} ;
+Map<String, Future<bool>> _addedJavaScriptsSources = {};
 
 /// Adds a JavaScript path ([scriptSource]] into DOM.
 ///
@@ -48,53 +43,50 @@ Map<String, Future<bool> > _addedJavaScriptsSources = {} ;
 Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
   var scriptInDom = getScriptElementBySRC(scriptSource);
 
-  var prevCall = _addedJavaScriptsSources[scriptSource] ;
+  var prevCall = _addedJavaScriptsSources[scriptSource];
 
-  if ( prevCall != null ) {
+  if (prevCall != null) {
     if (scriptInDom != null) {
-      return prevCall ;
-    }
-    else {
-      var removed = _addedJavaScriptsSources.remove(scriptSource) ;
-      assert(removed != null) ;
+      return prevCall;
+    } else {
+      var removed = _addedJavaScriptsSources.remove(scriptSource);
+      assert(removed != null);
     }
   }
 
   if (scriptInDom != null) {
-    return true ;
+    return true;
   }
 
-  addToBody ??= false ;
+  addToBody ??= false;
 
-  print('ADDING <SCRIPT>: $scriptSource > into body: $addToBody') ;
+  print('ADDING <SCRIPT>: $scriptSource > into body: $addToBody');
 
-  Element parent ;
-  if ( addToBody ) {
-    parent = querySelector('body') ;
-  }
-  else {
-    parent = querySelector('head') ;
+  Element parent;
+  if (addToBody) {
+    parent = querySelector('body');
+  } else {
+    parent = querySelector('head');
   }
 
   var script = ScriptElement()
     ..type = 'text/javascript'
-    ..src = scriptSource
-  ;
+    ..src = scriptSource;
 
-  var completer = Completer<bool>() ;
+  var completer = Completer<bool>();
 
-  script.onLoad.listen( (e) {
-    completer.complete(true) ;
-  } , onError: (e) {
-    completer.complete(false) ;
-  } ) ;
+  script.onLoad.listen((e) {
+    completer.complete(true);
+  }, onError: (e) {
+    completer.complete(false);
+  });
 
   parent.children.add(script);
 
-  var call = completer.future ;
-  _addedJavaScriptsSources[scriptSource] = call ;
+  var call = completer.future;
+  _addedJavaScriptsSources[scriptSource] = call;
 
-  return call ;
+  return call;
 }
 
 /// Adds a JavaScript function into DOM.
@@ -103,14 +95,14 @@ Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
 /// [parameters] Parameters names of the function.
 /// [body] Content of the function.
 Future<bool> addJSFunction(String name, List<String> parameters, String body) {
-  if (name == null || name.isEmpty) throw ArgumentError('Empty name') ;
-  parameters ??= [] ;
-  body ??= '' ;
+  if (name == null || name.isEmpty) throw ArgumentError('Empty name');
+  parameters ??= [];
+  body ??= '';
 
-  var args = parameters.join(' , ') ;
-  var code = '$name = function( $args ) {\n$body\n}' ;
+  var args = parameters.join(' , ');
+  var code = '$name = function( $args ) {\n$body\n}';
 
-  return addJavaScriptCode(code) ;
+  return addJavaScriptCode(code);
 }
 
 /// Call `eval()` with the content of [scriptCode] and returns the result.
@@ -118,14 +110,14 @@ dynamic evalJS(String scriptCode) {
   context.callMethod('eval', [scriptCode]);
 }
 
-typedef MappedFunction = void Function(dynamic o) ;
+typedef MappedFunction = void Function(dynamic o);
 
 /// Maps a JavaScript function to a Dart function.
 ///
 /// [jsFunctionName] Name of the functin.
 /// [f] Dart function to map.
 void mapJSFunction(String jsFunctionName, MappedFunction f) {
-  context[jsFunctionName] = f ;
+  context[jsFunctionName] = f;
 }
 
 /// Calls JavaScript a [method] in object [o] with [args].
@@ -138,7 +130,7 @@ dynamic callFunction(String method, [List args]) {
   return context.callMethod(method, args);
 }
 
-String _JS_FUNCTION_BLOCK_SCROLLING = 'UI__BlockScroll__' ;
+String _JS_FUNCTION_BLOCK_SCROLLING = 'UI__BlockScroll__';
 
 /// Disables scrolling in browser.
 void disableScrolling() {
@@ -153,15 +145,12 @@ void disableScrolling() {
   
   ''';
 
-  addJavaScriptCode(scriptCode) ;
+  addJavaScriptCode(scriptCode);
 
   evalJS('''
     window.addEventListener('scroll', $_JS_FUNCTION_BLOCK_SCROLLING, { passive: false });
-  ''') ;
-
+  ''');
 }
-
-
 
 /// Enables scrolling in browser.
 void enableScrolling() {
@@ -169,12 +158,11 @@ void enableScrolling() {
     if ( window.$_JS_FUNCTION_BLOCK_SCROLLING != null ) {
       window.removeEventListener('scroll', $_JS_FUNCTION_BLOCK_SCROLLING);  
     }
-  ''') ;
+  ''');
 }
 
 /// Disables zooming in browser.
 void disableZooming() {
-
   var scriptCode = '''
   
   if ( window.UIConsole == null ) {
@@ -214,6 +202,5 @@ void disableZooming() {
   
   ''';
 
-  addJavaScriptCode(scriptCode) ;
-
+  addJavaScriptCode(scriptCode);
 }

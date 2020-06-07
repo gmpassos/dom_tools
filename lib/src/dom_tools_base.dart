@@ -1,5 +1,3 @@
-
-
 import 'dart:async';
 import 'dart:html';
 import 'dart:math';
@@ -7,108 +5,108 @@ import 'dart:math';
 import 'package:swiss_knife/swiss_knife.dart';
 
 /// Returns a value from an [Element].
-typedef ElementValueGetter<T> = T Function(Element element) ;
+typedef ElementValueGetter<T> = T Function(Element element);
 
 /// selects in DOM an [Element] with [tag] and one of [values] provided by [getter].
-Element getElementByValues<V>(String tag, ElementValueGetter getter, List<V> values ) {
-  if (tag == null || tag.isEmpty) return null ;
-  if ( values == null || values.isEmpty ) return null ;
-  values.removeWhere( (v) => v == null ) ;
-  if ( values.isEmpty ) return null ;
+Element getElementByValues<V>(
+    String tag, ElementValueGetter getter, List<V> values) {
+  if (tag == null || tag.isEmpty) return null;
+  if (values == null || values.isEmpty) return null;
+  values.removeWhere((v) => v == null);
+  if (values.isEmpty) return null;
 
-  var allLinks = document.querySelectorAll(tag) ;
-  if (allLinks == null || allLinks.isEmpty) return null ;
+  var allLinks = document.querySelectorAll(tag);
+  if (allLinks == null || allLinks.isEmpty) return null;
 
-  var fond = allLinks.firstWhere(
-          (l) {
-        var elemValue = getter(l) ;
-        return values.contains(elemValue) ;
-      }
-      , orElse: () => null
-  ) ;
+  var fond = allLinks.firstWhere((l) {
+    var elemValue = getter(l);
+    return values.contains(elemValue);
+  }, orElse: () => null);
 
-  return fond ;
+  return fond;
 }
 
 /// Returns `href` value for different [Element] types.
 String getElementHREF(Element element) {
-  if ( element is LinkElement ) return element.href ;
-  if ( element is AnchorElement ) return element.href ;
-  if ( element is BaseElement ) return element.href ;
-  if ( element is AreaElement ) return element.href ;
+  if (element is LinkElement) return element.href;
+  if (element is AnchorElement) return element.href;
+  if (element is BaseElement) return element.href;
+  if (element is AreaElement) return element.href;
 
-  return null ;
+  return null;
 }
 
 /// Returns `src` value for different [Element] types.
 String getElementSRC(Element element) {
-  if ( element is ImageElement ) return element.src ;
-  if ( element is ScriptElement ) return element.src ;
-  if ( element is InputElement ) return element.src ;
+  if (element is ImageElement) return element.src;
+  if (element is ScriptElement) return element.src;
+  if (element is InputElement) return element.src;
 
-  if ( element is MediaElement ) return element.src ;
-  if ( element is EmbedElement ) return element.src ;
+  if (element is MediaElement) return element.src;
+  if (element is EmbedElement) return element.src;
 
-  if ( element is IFrameElement ) return element.src ;
-  if ( element is SourceElement ) return element.src ;
-  if ( element is TrackElement ) return element.src ;
+  if (element is IFrameElement) return element.src;
+  if (element is SourceElement) return element.src;
+  if (element is TrackElement) return element.src;
 
-  if ( element is ImageButtonInputElement ) return element.src ;
+  if (element is ImageButtonInputElement) return element.src;
 
-  return null ;
+  return null;
 }
 
 /// Selects an [Element] in DOM with [tag] and [href].
 Element getElementByHREF(String tag, String href) {
-  if ( href == null || href.isEmpty ) return null ;
-  var resolvedURL = resolveUri(href).toString() ;
-  return getElementByValues(tag, getElementHREF, [href, resolvedURL]) ;
+  if (href == null || href.isEmpty) return null;
+  var resolvedURL = resolveUri(href).toString();
+  return getElementByValues(tag, getElementHREF, [href, resolvedURL]);
 }
 
 /// Selects an [Element] in DOM with [tag] and [src].
 Element getElementBySRC(String tag, String src) {
-  if ( src == null || src.isEmpty ) return null ;
+  if (src == null || src.isEmpty) return null;
 
   var values = [src];
 
-  if ( !src.startsWith('data:') ) {
-    var resolvedURL = resolveUri(src).toString() ;
+  if (!src.startsWith('data:')) {
+    var resolvedURL = resolveUri(src).toString();
     values.add(resolvedURL);
   }
 
-  return getElementByValues(tag, getElementSRC, values) ;
+  return getElementByValues(tag, getElementSRC, values);
 }
 
 /// Selects an [AnchorElement] in DOM with [href].
 AnchorElement getAnchorElementByHREF(String href) {
-  return getElementByHREF('a', href) ;
+  return getElementByHREF('a', href);
 }
 
 /// Selects an [LinkElement] in DOM with [href].
 LinkElement getLinkElementByHREF(String href) {
-  return getElementByHREF('link', href) ;
+  return getElementByHREF('link', href);
 }
 
 /// Selects an [ScriptElement] in DOM with [src].
 ScriptElement getScriptElementBySRC(String src) {
-  return getElementBySRC('script', src) ;
+  return getElementBySRC('script', src);
 }
 
 /// Returns a [Future<bool>] for when [img] loads.
 Future<bool> elementOnLoad(ImageElement img) {
-  var completer = Completer<bool>() ;
-  img.onLoad.listen( (e) => completer.complete(true) , onError: (e) => completer.complete(false) ) ;
-  return completer.future ;
+  var completer = Completer<bool>();
+  img.onLoad.listen((e) => completer.complete(true),
+      onError: (e) => completer.complete(false));
+  return completer.future;
 }
 
 /// Creates a `div` with `display: inline-block`.
-DivElement createDivInlineBlock() => DivElement()..style.display = 'inline-block';
+DivElement createDivInlineBlock() =>
+    DivElement()..style.display = 'inline-block';
 
 /// Creates a `div`.
 /// [inline] If [true] sets `display: inline-block`.
 /// [html] The HTML to parse as content.
 DivElement createDiv([bool inline = false, String html]) {
-  var div = DivElement() ;
+  var div = DivElement();
 
   if (inline) div.style.display = 'inline-block';
 
@@ -116,7 +114,7 @@ DivElement createDiv([bool inline = false, String html]) {
     setElementInnerHTML(div, html);
   }
 
-  return div ;
+  return div;
 }
 
 /// Creates a `div` with `display: inline-block`.
@@ -130,53 +128,71 @@ DivElement createDivInline([String html]) {
 ///
 /// [html] The HTML to parse as content.
 SpanElement createSpan([String html]) {
-  var span = SpanElement() ;
+  var span = SpanElement();
 
   if (html != null) {
     setElementInnerHTML(span, html);
   }
 
-  return span ;
+  return span;
 }
-
 
 /// Creates a `label` element.
 ///
 /// [html] The HTML to parse as content.
 LabelElement createLabel([String html]) {
-  var label = LabelElement() ;
+  var label = LabelElement();
 
   if (html != null) {
     setElementInnerHTML(label, html);
   }
 
-  return label ;
+  return label;
 }
 
 /// Creates a HTML [Element]. Returns 1st node form parsed HTML.
 Element createHTML([String html]) {
   var div = createDiv(true, html);
-  if ( div.childNodes.isEmpty ) return div ;
+  if (div.childNodes.isEmpty) return div;
 
-  var childNode = div.childNodes.firstWhere( (e) => e is Element , orElse: () => null ) ;
+  var childNode =
+      div.childNodes.firstWhere((e) => e is Element, orElse: () => null);
 
-  return childNode ;
+  return childNode;
 }
 
-const _HTML_BASIC_ATTRS = ['style', 'capture', 'type', 'src', 'href', 'target'] ;
-const _HTML_CONTROL_ATTRS = ['data-toggle', 'data-target', 'aria-controls', 'aria-expanded', 'aria-label'] ;
+const _HTML_BASIC_ATTRS = ['style', 'capture', 'type', 'src', 'href', 'target'];
 
-const _HTML_EXTENDED_ATTRS = ['field', 'navigate', 'action', 'uilayout', 'oneventkeypress', 'oneventclick'] ;
+const _HTML_CONTROL_ATTRS = [
+  'data-toggle',
+  'data-target',
+  'aria-controls',
+  'aria-expanded',
+  'aria-label'
+];
 
-const _HTML_ELEMENTS_ALLOWED_ATTRS = [ ..._HTML_BASIC_ATTRS , ..._HTML_CONTROL_ATTRS , ..._HTML_EXTENDED_ATTRS ] ;
+const _HTML_EXTENDED_ATTRS = [
+  'field',
+  'navigate',
+  'action',
+  'uilayout',
+  'oneventkeypress',
+  'oneventclick'
+];
 
-AnyUriPolicy _anyUriPolicy = AnyUriPolicy() ;
+const _HTML_ELEMENTS_ALLOWED_ATTRS = [
+  ..._HTML_BASIC_ATTRS,
+  ..._HTML_CONTROL_ATTRS,
+  ..._HTML_EXTENDED_ATTRS
+];
+
+AnyUriPolicy _anyUriPolicy = AnyUriPolicy();
 
 /// Allows anu [Uri] policy.
 class AnyUriPolicy implements UriPolicy {
   @override
   bool allowsUri(String uri) {
-    return true ;
+    return true;
   }
 }
 
@@ -200,17 +216,16 @@ NodeValidatorBuilder _nodeValidatorBuilder = NodeValidatorBuilder()
   ..allowElement('svg', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
   ..allowImages(_anyUriPolicy)
   ..allowNavigation(_anyUriPolicy)
-  ..allowInlineStyles()
-;
+  ..allowInlineStyles();
 
 /// Sets the inner HTML of [element] with parsed result of [html].
 void setElementInnerHTML(Element element, String html) {
-  element.setInnerHtml(html, validator: _nodeValidatorBuilder) ;
+  element.setInnerHtml(html, validator: _nodeValidatorBuilder);
 }
 
 /// Appends to the inner HTML of [element] with parsed result of [html].
 void appendElementInnerHTML(Element element, String html) {
-  element.appendHtml(html, validator: _nodeValidatorBuilder) ;
+  element.appendHtml(html, validator: _nodeValidatorBuilder);
 }
 
 /// Scrolls viewport to the top with a delay.
@@ -218,21 +233,21 @@ void appendElementInnerHTML(Element element, String html) {
 /// [delayMs] Delay in milliseconds.
 void scrollToTopDelayed(int delayMs) {
   if (delayMs < 1) {
-    scrollToTop() ;
-  }
-  else {
+    scrollToTop();
+  } else {
     Future.delayed(Duration(milliseconds: delayMs), scrollToTop);
   }
 }
 
 /// Scrolls viewport to the top.
 void scrollToTop() {
-  window.scrollTo(window.scrollX,0, {'behavior': 'smooth'});
+  window.scrollTo(window.scrollX, 0, {'behavior': 'smooth'});
 }
 
 /// Scrolls viewport to the bottom.
 void scrollToBottom() {
-  window.scrollTo(window.scrollX, document.body.scrollHeight, {'behavior': 'smooth'});
+  window.scrollTo(
+      window.scrollX, document.body.scrollHeight, {'behavior': 'smooth'});
 }
 
 /// Scrolls viewport to the left border.
@@ -242,26 +257,28 @@ void scrollToLeft() {
 
 /// Scrolls viewport to the right border.
 void scrollToRight() {
-  window.scrollTo(document.body.scrollWidth, window.scrollY, {'behavior': 'smooth'});
+  window.scrollTo(
+      document.body.scrollWidth, window.scrollY, {'behavior': 'smooth'});
 }
 
 /// Resets viewport zoom.
 void resetZoom() {
-  _resetZoomImpl(0) ;
+  _resetZoomImpl(0);
 }
 
-bool _resettingZoom = false ;
-bool _resettingViewportScale = false ;
+bool _resettingZoom = false;
+
+bool _resettingViewportScale = false;
 
 void _resetZoomImpl(int retry) {
   if (_resettingZoom || _resettingViewportScale) {
     if (retry < 100) {
       Future.delayed(Duration(milliseconds: 10), () => _resetZoomImpl(retry++));
     }
-    return ;
+    return;
   }
 
-  if ( !_resettingZoom ) {
+  if (!_resettingZoom) {
     _resettingZoom = true;
 
     var prev = document.body.style.zoom;
@@ -269,160 +286,156 @@ void _resetZoomImpl(int retry) {
 
     Future.delayed(Duration(milliseconds: 10), () {
       setZoom(prev);
-      _resettingZoom = false ;
+      _resettingZoom = false;
     });
   }
 
-  if ( !_resettingViewportScale ) {
-    _resettingViewportScale = true ;
+  if (!_resettingViewportScale) {
+    _resettingViewportScale = true;
 
-    var metaViewportList = getMetaTagsWithName('viewport') ;
+    var metaViewportList = getMetaTagsWithName('viewport');
 
-    if ( metaViewportList.isNotEmpty ) {
-      var metaViewport =  metaViewportList[0] ;
-      var content = metaViewport.getAttribute('content') ;
+    if (metaViewportList.isNotEmpty) {
+      var metaViewport = metaViewportList[0];
+      var content = metaViewport.getAttribute('content');
 
-      setMetaViewportScale( minimumScale: '*' , maximumScale: '*') ;
+      setMetaViewportScale(minimumScale: '*', maximumScale: '*');
 
-      Future.delayed( Duration( milliseconds: 10) , () {
+      Future.delayed(Duration(milliseconds: 10), () {
         metaViewport.setAttribute('content', content);
-        _resettingViewportScale = false ;
-      } ) ;
+        _resettingViewportScale = false;
+      });
     }
   }
 }
 
 /// Sets the viewport [zoom].
 void setZoom(String zoom) {
-  document.body.style.zoom = zoom ;
+  document.body.style.zoom = zoom;
 }
 
 /// Sets the `meta` viewport with [minimumScale] and [maximumScale].
-bool setMetaViewportScale( { String minimumScale, String maximumScale } ) {
-  if (minimumScale == null && maximumScale == null) return false ;
+bool setMetaViewportScale({String minimumScale, String maximumScale}) {
+  if (minimumScale == null && maximumScale == null) return false;
 
-  var metaViewportList = getMetaTagsWithName('viewport') ;
-  if ( metaViewportList.isEmpty ) return false ;
+  var metaViewportList = getMetaTagsWithName('viewport');
+  if (metaViewportList.isEmpty) return false;
 
-  var metaViewport =  metaViewportList[0] ;
+  var metaViewport = metaViewportList[0];
 
-  var content = metaViewport.getAttribute('content') ;
-  var params = parseMetaContent(content) ;
+  var content = metaViewport.getAttribute('content');
+  var params = parseMetaContent(content);
 
-  var defaultScale = params['initial-scale'] ?? '1.0' ;
+  var defaultScale = params['initial-scale'] ?? '1.0';
 
-  var changed = false ;
+  var changed = false;
 
   if (maximumScale != null) {
-    minimumScale = minimumScale.trim() ;
+    minimumScale = minimumScale.trim();
     if (minimumScale.isEmpty || minimumScale == '*') {
       minimumScale = defaultScale;
     }
 
-    params['minimum-scale'] = minimumScale ;
-    changed = true ;
+    params['minimum-scale'] = minimumScale;
+    changed = true;
   }
 
   if (maximumScale != null) {
-    maximumScale = maximumScale.trim() ;
+    maximumScale = maximumScale.trim();
     if (maximumScale.isEmpty || maximumScale == '*') {
       maximumScale = defaultScale;
     }
 
-    params['maximum-scale'] = maximumScale ;
-    changed = true ;
+    params['maximum-scale'] = maximumScale;
+    changed = true;
   }
 
   if (changed) {
     var content2 = buildMetaContent(params);
     metaViewport.setAttribute('content', content2);
-    return true ;
+    return true;
   }
 
-  return false ;
+  return false;
 }
 
 /// Parses a `meta` content to [Map<String,String>].
-Map<String,String> parseMetaContent(String content) {
-  var parts = content.split(RegExp(r'\s*,\s*')) ;
+Map<String, String> parseMetaContent(String content) {
+  var parts = content.split(RegExp(r'\s*,\s*'));
 
   // ignore: omit_local_variable_types
-  Map<String,String> map = {} ;
+  Map<String, String> map = {};
 
   for (var p in parts) {
-    var pair = split(p, '=', 2) ;
+    var pair = split(p, '=', 2);
 
     if (pair.length == 1) {
-      map[ p ] = null ;
-    }
-    else {
-      var key = pair[0].trim() ;
-      var val = pair[1].trim() ;
-      map[ key ] = val;
+      map[p] = null;
+    } else {
+      var key = pair[0].trim();
+      var val = pair[1].trim();
+      map[key] = val;
     }
   }
 
-  return map ;
+  return map;
 }
 
 /// Builds a `meta` content from [map].
-String buildMetaContent(Map<String,String> map) {
-  var content = '' ;
+String buildMetaContent(Map<String, String> map) {
+  var content = '';
 
   for (var entry in map.entries) {
-    var key = entry.key ;
-    var val = entry.value ;
+    var key = entry.key;
+    var val = entry.value;
 
     if (content.isNotEmpty) {
-      content += ', ' ;
+      content += ', ';
     }
 
     if (val == null) {
-      content += key ;
-    }
-    else {
-      content += '$key=$val' ;
+      content += key;
+    } else {
+      content += '$key=$val';
     }
   }
 
-
-  return content ;
+  return content;
 }
 
 /// Returns [element] attribute with [key].
 ///
 /// [key] Can be a [RegExp] or a [String].
 String getElementAttribute(Element element, dynamic key) {
-  if (element == null || key == null) return null ;
+  if (element == null || key == null) return null;
 
   if (key is RegExp) {
-    return getElementAttributeRegExp(element , key) ;
-  }
-  else {
-    return getElementAttributeStr(element , key.toString()) ;
+    return getElementAttributeRegExp(element, key);
+  } else {
+    return getElementAttributeStr(element, key.toString());
   }
 }
 
 /// Returns [element] attribute with [RegExp] [key].
 String getElementAttributeRegExp(Element element, RegExp key) {
-  if (element == null || key == null) return null ;
+  if (element == null || key == null) return null;
 
   var attrs = element.attributes;
 
   for (var k in attrs.keys) {
-    if ( key.hasMatch(k) ) {
-      return attrs[k] ;
+    if (key.hasMatch(k)) {
+      return attrs[k];
     }
   }
 
-  return null ;
+  return null;
 }
 
 /// Returns [element] attribute with [String] [key].
 String getElementAttributeStr(Element element, String key) {
-  if (element == null || key == null) return null ;
+  if (element == null || key == null) return null;
 
-  var val = element.getAttribute(key) ;
+  var val = element.getAttribute(key);
   if (val != null) return val;
 
   key = key.trim();
@@ -432,17 +445,16 @@ String getElementAttributeStr(Element element, String key) {
 
   for (var k in attrs.keys) {
     if (k.toLowerCase() == key) {
-      return attrs[k] ;
+      return attrs[k];
     }
   }
 
-  return null ;
+  return null;
 }
-
 
 /// Clears selected text in vieport.
 void clearSelections() {
-  var selection = window.getSelection() ;
+  var selection = window.getSelection();
 
   if (selection != null) {
     selection.removeAllRanges();
@@ -451,149 +463,148 @@ void clearSelections() {
 
 /// Converts [element] to HTML.
 String toHTML(Element element) {
-  return _toHTML_any(element) ;
+  return _toHTML_any(element);
 }
 
 String _toHTML_any(Element e) {
   var html = '';
 
-  html += '<' ;
-  html += e.tagName ;
+  html += '<';
+  html += e.tagName;
 
   for (var attr in e.attributes.keys) {
-    var val = e.attributes[attr] ;
+    var val = e.attributes[attr];
     if (val != null) {
       if (val.contains("'")) {
-        html += ' attr=\"$val\"' ;
+        html += ' attr=\"$val\"';
+      } else {
+        html += " attr='$val'";
       }
-      else {
-        html += " attr='$val'" ;
-      }
-    }
-    else {
-      html += ' attr' ;
+    } else {
+      html += ' attr';
     }
   }
 
-  html += '>' ;
+  html += '>';
 
-  if ( e.innerHtml != null && e.innerHtml.isNotEmpty ) {
-
-    if ( e is SelectElement ) {
-      html += _toHTML_innerHtml_Select(e) ;
+  if (e.innerHtml != null && e.innerHtml.isNotEmpty) {
+    if (e is SelectElement) {
+      html += _toHTML_innerHtml_Select(e);
+    } else {
+      html += e.innerHtml;
     }
-    else {
-      html += e.innerHtml ;
-    }
-
   }
 
-  html += '</${ e.tagName }>' ;
+  html += '</${e.tagName}>';
 
-  return html ;
+  return html;
 }
 
 String _toHTML_innerHtml_Select(SelectElement e) {
-  var html = '' ;
+  var html = '';
 
   for (var o in e.options) {
-    html += "<option value='${o.value}' ${ o.selected ? ' selected' : ''}>${o.label}</option>";
+    html +=
+        "<option value='${o.value}' ${o.selected ? ' selected' : ''}>${o.label}</option>";
   }
 
-  return html ;
+  return html;
 }
 
-
-typedef FunctionTest = bool Function() ;
+typedef FunctionTest = bool Function();
 
 /// Returns [true] if [element] is visible in viewport.
 bool isInViewport(Element element) {
   var rect = element.getBoundingClientRect();
 
-  var windowWidth = min( window.innerWidth, document.documentElement.clientWidth ) ;
-  var windowHeight = min( window.innerHeight, document.documentElement.clientHeight ) ;
+  var windowWidth =
+      min(window.innerWidth, document.documentElement.clientWidth);
+  var windowHeight =
+      min(window.innerHeight, document.documentElement.clientHeight);
 
-  return rect.bottom > 0 && rect.right > 0 && rect.left < windowWidth && rect.top < windowHeight ;
+  return rect.bottom > 0 &&
+      rect.right > 0 &&
+      rect.left < windowWidth &&
+      rect.top < windowHeight;
 }
 
 /// Returns [true] if device orientation is in Portrait mode.
 bool isOrientationInPortraitMode() {
-  return !isOrientationInLandscapeMode() ;
+  return !isOrientationInLandscapeMode();
 }
 
 /// Returns [true] if device orientation is in Landscape mode.
 bool isOrientationInLandscapeMode() {
   var orientation = window.orientation;
-  if (orientation == null) return false ;
+  if (orientation == null) return false;
 
-  if ( orientation == 90 || orientation == -90 ) {
-    return true ;
-  }
-  else {
-    return false ;
+  if (orientation == 90 || orientation == -90) {
+    return true;
+  } else {
+    return false;
   }
 }
 
 /// Attaches [listener] to `orientationchange` event.
-bool onOrientationchange( EventListener listener ) {
+bool onOrientationchange(EventListener listener) {
   try {
-    window.addEventListener('orientationchange', listener ) ;
-    return true ;
-  }
-  catch(e,s) {
+    window.addEventListener('orientationchange', listener);
+    return true;
+  } catch (e, s) {
     print(e);
     print(s);
-    return false ;
+    return false;
   }
 }
 
 /// Returns [true] if [node] is in DOM tree.
 bool isNodeInDOM(Node node) {
-  return document.body.contains(node) ;
+  return document.body.contains(node);
 }
 
 /// Returns [true] if [element] is in DOM tree.
 ///
 /// [element] Can be a [Node] or a [List] of [Node].
 bool isInDOM(dynamic element) {
-  if (element == null) return false ;
+  if (element == null) return false;
 
   if (element is Node) {
     return document.body.contains(element);
-  }
-  else if (element is List) {
+  } else if (element is List) {
     for (var elem in element) {
       var inDom = isInDOM(elem);
-      if (inDom) return true ;
+      if (inDom) return true;
     }
-    return false ;
+    return false;
   }
 
-  return false ;
+  return false;
 }
 
 /// Returns [true] if [rootNode] contains [target].
-bool nodeTreeContains( Node rootNode , Node target ) {
-  return nodeTreeContainsAny( rootNode , [target] ) ;
+bool nodeTreeContains(Node rootNode, Node target) {
+  return nodeTreeContainsAny(rootNode, [target]);
 }
 
 /// Returns [true] if [rootNode] contains any [Node] in [list].
-bool nodeTreeContainsAny( Node rootNode , Iterable<Node> list ) {
-  if (list == null || list.isEmpty) return false ;
-  return list.firstWhere( (e) => e == rootNode || rootNode.contains(e) , orElse: () => null ) != null ;
+bool nodeTreeContainsAny(Node rootNode, Iterable<Node> list) {
+  if (list == null || list.isEmpty) return false;
+  return list.firstWhere((e) => e == rootNode || rootNode.contains(e),
+          orElse: () => null) !=
+      null;
 }
 
 /// Defines a new [CssStyleDeclaration] merging [currentCSS] and [appendCSS].
 ///
 /// [defaultCSS] if [currentCSS] and [appendCSS] are [null].
-CssStyleDeclaration defineCSS(CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS, [dynamic defaultCSS]) {
+CssStyleDeclaration defineCSS(
+    CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS,
+    [dynamic defaultCSS]) {
   if (currentCSS == null) {
-    return appendCSS ?? asCssStyleDeclaration(defaultCSS) ;
-  }
-  else if (appendCSS == null) {
+    return appendCSS ?? asCssStyleDeclaration(defaultCSS);
+  } else if (appendCSS == null) {
     return currentCSS ?? asCssStyleDeclaration(defaultCSS);
-  }
-  else {
+  } else {
     return CssStyleDeclaration()
       ..cssText = currentCSS.cssText + ' ; ' + appendCSS.cssText;
   }
@@ -604,106 +615,110 @@ CssStyleDeclaration asCssStyleDeclaration(dynamic css) {
   if (css == null) return CssStyleDeclaration();
   if (css is CssStyleDeclaration) return css;
   if (css is String) return CssStyleDeclaration()..cssText = css;
-  if (css is Function) return asCssStyleDeclaration( css() ) ;
+  if (css is Function) return asCssStyleDeclaration(css());
 
-  throw StateError("Can't convert to CSS: $css") ;
+  throw StateError("Can't convert to CSS: $css");
 }
 
 /// Returns [true] if [CssStyleDeclaration] is empty.
 bool isCssEmpty(CssStyleDeclaration css) {
-  if (css == null) return true ;
-  var cssText = css.cssText ;
-  return cssText == null || cssText.trim().isEmpty ;
+  if (css == null) return true;
+  var cssText = css.cssText;
+  return cssText == null || cssText.trim().isEmpty;
 }
 
 /// Returns [true] if [CssStyleDeclaration] is not empty.
 bool isCssNotEmpty(CssStyleDeclaration css) {
-  return !isCssEmpty(css) ;
+  return !isCssEmpty(css);
 }
 
 /// Applies [css] to [element] and [extraElements] list if present.
-bool applyCSS(CssStyleDeclaration css, Element element, [List<Element> extraElements]) {
-  if ( !isCssNotEmpty(css) ) return false ;
-  
-  var apply = _applyCSS(css, element) ;
+bool applyCSS(CssStyleDeclaration css, Element element,
+    [List<Element> extraElements]) {
+  if (!isCssNotEmpty(css)) return false;
+
+  var apply = _applyCSS(css, element);
 
   if (extraElements != null) {
     for (var elem in extraElements) {
-      var ok = _applyCSS(css, elem) ;
-      apply |= ok ;
+      var ok = _applyCSS(css, elem);
+      apply |= ok;
     }
   }
 
-  return apply ;
+  return apply;
 }
 
 bool _applyCSS(CssStyleDeclaration css, Element element) {
   if (element != null) {
     var newCss = element.style.cssText + ' ; ' + css.cssText;
     element.style.cssText = newCss;
-    return true ;
+    return true;
   }
-  return false ;
+  return false;
 }
 
 /// Returns [true] if [element] matches [attributes].
-bool elementMatchesAttributes(Element element, Map<String,dynamic> attributes) {
+bool elementMatchesAttributes(
+    Element element, Map<String, dynamic> attributes) {
   for (var entry in attributes.entries) {
-    if ( !elementMatchesAttribute(element, entry.key, entry.value) ) {
-      return false ;
+    if (!elementMatchesAttribute(element, entry.key, entry.value)) {
+      return false;
     }
   }
-  return true ;
+  return true;
 }
 
-typedef MatchesValue = bool Function(String value) ;
+typedef MatchesValue = bool Function(String value);
 
 /// Returns [true] if [element] matches [attributeName] and [attributeValue].
-bool elementMatchesAttribute(Element element, String attributeName, dynamic attributeValue) {
-  var value = element.getAttribute(attributeName) ;
-  if ( value == attributeValue ) return true ;
-  if (value == null || attributeValue == null ) return false ;
+bool elementMatchesAttribute(
+    Element element, String attributeName, dynamic attributeValue) {
+  var value = element.getAttribute(attributeName);
+  if (value == attributeValue) return true;
+  if (value == null || attributeValue == null) return false;
 
-  if ( attributeValue is String ) {
-    return value.trim() == attributeValue.trim() ;
-  }
-  else if ( attributeValue is RegExp ) {
-    return attributeValue.hasMatch(value) ;
-  }
-  else if ( attributeValue is MatchesValue ) {
-    return attributeValue(value) ;
+  if (attributeValue is String) {
+    return value.trim() == attributeValue.trim();
+  } else if (attributeValue is RegExp) {
+    return attributeValue.hasMatch(value);
+  } else if (attributeValue is MatchesValue) {
+    return attributeValue(value);
   }
 
-  return false ;
+  return false;
 }
 
 /// Selects elements from DOM with [tag] and matches attribute.
 ///
 /// [tag] Type of tag for selection.
 /// [matchAttributes] Attributes to match in selection.
-List<Element> getElementsWithAttributes(String tag, Map<String,dynamic> matchAttributes) {
-  var tags = (document.getElementsByTagName(tag) ?? []).whereType<Element>() ;
-  return tags.where( (e) => elementMatchesAttributes(e, matchAttributes) ).toList() ;
+List<Element> getElementsWithAttributes(
+    String tag, Map<String, dynamic> matchAttributes) {
+  var tags = (document.getElementsByTagName(tag) ?? []).whereType<Element>();
+  return tags
+      .where((e) => elementMatchesAttributes(e, matchAttributes))
+      .toList();
 }
 
 /// Returns a list of `meta` [Element] with [name].
 List<Element> getMetaTagsWithName(String name) {
-  return getElementsWithAttributes('meta', {'name': name}) ?? [] ;
+  return getElementsWithAttributes('meta', {'name': name}) ?? [];
 }
 
 /// Returns a list of `meta` contet with [name].
 List<String> getMetaTagsContentWithName(String name) {
   var tags = getMetaTagsWithName(name);
-  if (tags == null || tags.isEmpty) return [] ;
-  return tags.map( (e) => e.getAttribute('content') ).toList() ;
+  if (tags == null || tags.isEmpty) return [];
+  return tags.map((e) => e.getAttribute('content')).toList();
 }
 
 /// Returns [true] if `meta` tag of name `apple-mobile-web-app-status-bar-style`
 /// is `translucent`.
 bool isMobileAppStatusBarTranslucent() {
-  var metaTagsContents = getMetaTagsContentWithName('apple-mobile-web-app-status-bar-style') ;
-  if (metaTagsContents == null || metaTagsContents.isEmpty) return false ;
-  var metaStatusContent = metaTagsContents[0] ;
-  return metaStatusContent.contains('translucent') ;
+  var metaTagsContents =
+      getMetaTagsContentWithName('apple-mobile-web-app-status-bar-style');
+  if (metaTagsContents == null || metaTagsContents.isEmpty) return false;
+  var metaStatusContent = metaTagsContents[0];
+  return metaStatusContent.contains('translucent');
 }
-
