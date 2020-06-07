@@ -4,14 +4,17 @@ import 'dart:html';
 
 import 'package:dom_tools/dom_tools.dart';
 import 'package:enum_to_string/enum_to_string.dart';
+import 'package:swiss_knife/swiss_knife.dart';
 
-
-////////////////////////////////////////////////////////////////////////////////
 
 Map<String, Future<bool>> _addedCssSources = {} ;
 
-Future<bool> addCssSource(String cssSource) async {
-  var linkInDom = getLinkElementByHref(cssSource);
+/// Add a CSS path using a `link` element into `head` DOM node.
+///
+/// [cssSource] The path to the CSS source file.
+/// [insertIndex] optional index of insertion inside `head` node.
+Future<bool> addCssSource(String cssSource , { int insertIndex }) async {
+  var linkInDom = getLinkElementByHREF(cssSource);
 
   var prevCall = _addedCssSources[cssSource] ;
 
@@ -46,7 +49,13 @@ Future<bool> addCssSource(String cssSource) async {
     completer.complete(false) ;
   } ) ;
 
-  head.children.add(script);
+  if ( insertIndex != null ) {
+    insertIndex = Math.min( insertIndex , head.children.length ) ;
+    head.children.insert(insertIndex, script) ;
+  }
+  else {
+    head.children.add(script);
+  }
 
   var call = completer.future ;
   _addedCssSources[cssSource] = call ;
@@ -54,11 +63,14 @@ Future<bool> addCssSource(String cssSource) async {
   return call ;
 }
 
+/// Returns a [CssStyleDeclaration] from an element.
 CssStyleDeclaration getComputedStyle( { Element parent, Element element, String classes , String style , bool hidden } ) {
   parent ??= document.body ;
   hidden ??= true ;
 
   element ??= DivElement() ;
+
+  var prevHidden = element.hidden ;
 
   element.hidden = hidden ;
 
@@ -83,17 +95,19 @@ CssStyleDeclaration getComputedStyle( { Element parent, Element element, String 
 
   element.remove() ;
 
+  element.hidden = prevHidden ;
+
   return computedStyle2 ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Specifies a CSS font style.
 enum FontStyle {
   normal,
   italic,
   oblique,
 }
 
+/// Specifies a CSS font weight.
 enum FontWeight {
   normal,
   bold,
@@ -101,6 +115,7 @@ enum FontWeight {
   lighter
 }
 
+/// Specifies a CSS color.
 class StyleColor {
   final int color ;
   final String colorHex ;
@@ -125,6 +140,7 @@ class StyleColor {
   }
 }
 
+/// Specifies a CSS text style.
 class TextStyle implements CSSValue {
   final StyleColor color ;
   final StyleColor backgroundColor ;
@@ -155,6 +171,7 @@ class TextStyle implements CSSValue {
   }
 }
 
+
 abstract class CSSValue {
   String cssValue() ;
 }
@@ -162,19 +179,23 @@ abstract class CSSValue {
 
 Map<String,Map<dynamic,bool>> _loadedThemesByPrefix = {} ;
 
-void loadCSS(String cssPrefix, Map<String, CSSValue> css) {
-  cssPrefix ??= '';
+/// Loads [css] dynamically.
+///
+/// [cssClassPrefix] Prefix for each class in [css] Map.
+/// [css] Map of CSS classes.
+void loadCSS(String cssClassPrefix, Map<String, CSSValue> css) {
+  cssClassPrefix ??= '';
 
-  var _loadedThemes = _loadedThemesByPrefix[cssPrefix] ;
+  var _loadedThemes = _loadedThemesByPrefix[cssClassPrefix] ;
 
   if (_loadedThemes == null) {
-    _loadedThemesByPrefix[cssPrefix] = _loadedThemes = {} ;
+    _loadedThemesByPrefix[cssClassPrefix] = _loadedThemes = {} ;
   }
 
   if ( _loadedThemes[css] != null ) return ;
   _loadedThemes[css] = true ;
 
-  var id = '__dom_tools__dynamic_css__$cssPrefix';
+  var id = '__dom_tools__dynamic_css__$cssClassPrefix';
 
   var styleElement = StyleElement()
     ..id = id ;
@@ -191,38 +212,39 @@ void loadCSS(String cssPrefix, Map<String, CSSValue> css) {
 
   for (var key in css.keys) {
     var val = css[key] ;
-    var rule = '.$cssPrefix$key { ${ val.cssValue() } }\n' ;
+    var rule = '.$cssClassPrefix$key { ${ val.cssValue() } }\n' ;
     sheet.insertRule(rule, 0) ;
     print(rule);
   }
 
 }
 
-
+/// A Theme set, with multiples themes.
 class CSSThemeSet {
 
   final String cssPrefix ;
   final List< Map<String, CSSValue> > _themes ;
-  final int defaultThemeID ;
+  final int defaultThemeIndex ;
 
-  CSSThemeSet(this.cssPrefix, this._themes, [this.defaultThemeID = 0]) ;
+  CSSThemeSet(this.cssPrefix, this._themes, [this.defaultThemeIndex = 0]) ;
 
-  Map<String, CSSValue> getCSSTheme(int themeID) {
+  Map<String, CSSValue> getCSSTheme(int themeIndex) {
     if (_themes == null || _themes.isEmpty) return null ;
-    return themeID >= 0 && themeID < _themes.length ?  _themes[themeID] : null ;
+    return themeIndex >= 0 && themeIndex < _themes.length ?  _themes[themeIndex] : null ;
   }
 
-  int loadTheme(int themeID) {
-    var cssTheme = getCSSTheme(themeID) ;
+  /// Loads theme at [themeIndex].
+  int loadTheme(int themeIndex) {
+    var cssTheme = getCSSTheme(themeIndex) ;
 
     if (cssTheme != null) {
       loadCSSTheme(cssTheme) ;
-      return themeID ;
+      return themeIndex ;
     }
     else {
-      cssTheme = getCSSTheme(defaultThemeID) ;
+      cssTheme = getCSSTheme(defaultThemeIndex) ;
       loadCSSTheme(cssTheme) ;
-      return defaultThemeID ;
+      return defaultThemeIndex ;
     }
   }
 
@@ -230,14 +252,16 @@ class CSSThemeSet {
 
   bool get loadedTheme => _loadedTheme;
 
+  /// Loads [css] into DOM.
   void loadCSSTheme(Map<String, CSSValue> css) {
     loadCSS(cssPrefix, css);
     _loadedTheme = true ;
   }
 
+  /// Ensures that the [defaultThemeIndex] is loaded into DOM.
   void ensureThemeLoaded() {
     if (!_loadedTheme) {
-      loadTheme( defaultThemeID );
+      loadTheme( defaultThemeIndex );
     }
   }
 

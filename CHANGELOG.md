@@ -1,3 +1,8 @@
+## 1.3.0
+
+- addCssSource( insertIndex ): a new parameter for index insertion.
+- Added API Documentation.
+
 ## 1.2.9
 
 - getElementHref(), getElementSrc().

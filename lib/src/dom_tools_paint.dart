@@ -9,10 +9,10 @@ import 'package:intl/intl.dart';
 
 import 'perspective_filter.dart';
 
-////////////////////////////////////////////////////////////////////////////////
-// Class Color from  'dart:ui' (Flutter):
-////////////////////////////////////////////////////////////////////////////////
 
+/// Represents a color.
+///
+/// This class is based into `dart:ui` (Flutter) implementation.
 class Color {
 
   static final Color BLACK = Color.fromRGBO(0, 0, 0);
@@ -263,8 +263,7 @@ class Color {
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Gets the width and height from [image] ([CanvasImageSource]).
 Rectangle<int> getImageDimension(CanvasImageSource image) {
   if ( image is ImageElement ) {
     return Rectangle(0,0, image.naturalWidth , image.naturalHeight ) ;
@@ -278,11 +277,15 @@ Rectangle<int> getImageDimension(CanvasImageSource image) {
   return null ;
 }
 
+/// Crops an image using a [Rectangle] ([crop]),
+/// delegating to method [cropImage],
 CanvasElement cropImageByRectangle(CanvasImageSource image, Rectangle crop) {
   if (crop == null) return null ;
   return cropImage(image, crop.left, crop.top, crop.width, crop.height) ;
 }
 
+/// Crops the [image] using coordinates [x], [y], [width] and [height],
+/// returning new image ([CanvasElement]).
 CanvasElement cropImage(CanvasImageSource image, int x, int y, int width, int height) {
   if ( !(image is CanvasElement) ) {
     var imgDim = getImageDimension(image);
@@ -309,19 +312,22 @@ CanvasElement cropImage(CanvasImageSource image, int x, int y, int width, int he
   return canvasCrop ;
 }
 
-CanvasImageSource createScaledImage(CanvasImageSource image, int w, int h, double scale) {
-  var w2 = (w * scale).toInt();
-  var h2 = (h * scale).toInt();
+/// Creates a new image from [image], of [width] and [height],
+/// to a [scale].
+CanvasImageSource createScaledImage(CanvasImageSource image, int width, int height, double scale) {
+  var w2 = (width * scale).toInt();
+  var h2 = (height * scale).toInt();
 
   var canvas = CanvasElement(width: w2, height: h2);
 
   CanvasRenderingContext2D context = canvas.getContext('2d');
 
-  context.drawImageScaledFromSource(image, 0, 0, w, h, 0, 0, w2, h2);
+  context.drawImageScaledFromSource(image, 0, 0, width, height, 0, 0, w2, h2);
 
   return canvas;
 }
 
+/// Creates an image from a [file].
 Future<ImageElement> createImageElementFromFile(File file) {
   var reader = FileReader();
 
@@ -336,6 +342,7 @@ Future<ImageElement> createImageElementFromFile(File file) {
   return completer.future;
 }
 
+/// Creates an image from a Base-64 with [mimeType].
 ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
   if (base64 == null || base64.isEmpty) return null ;
   if (!base64.startsWith('data:')) {
@@ -349,10 +356,8 @@ ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
   return imgElement;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-
-List<Point<num>> numsToPoints(List<num> perspective, [Color color]) {
+/// Converts a [List<num>], as pairs, to a [List<Point>].
+List<Point<num>> numsToPoints(List<num> perspective) {
   // ignore: omit_local_variable_types
   List< Point<num> > points = [] ;
 
@@ -365,24 +370,27 @@ List<Point<num>> numsToPoints(List<num> perspective, [Color color]) {
   return points ;
 }
 
+/// Makes a copy of [points].
 List< Point<num> > copyPoints( List< Point<num> > points ) {
   return points.map( (p) => Point( p.x , p.y )  ).toList() ;
 }
 
+/// Scales [points] to [scale].
 List< Point<num> > scalePoints( List< Point<num> > points , double scale ) {
   return points.map( (p) => Point( p.x*scale , p.y*scale )  ).toList() ;
 }
 
+/// Scales [points] to [scaleX] and [scaleY].
 List< Point<num> > scalePointsXY( List< Point<num> > points , double scaleX, double scaleY ) {
   return points.map( (p) => Point( p.x*scaleX , p.y*scaleY )  ).toList() ;
 }
 
+/// Translate [pints] in [x] and [y].
 List< Point<num> > translatePoints( List< Point<num> > points , num x, num y ) {
   return points.map( (p) => Point( p.x+x , p.y+y )  ).toList() ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// A cache for scaled images.
 class ImageScaledCache {
 
   final CanvasImageSource _image ;
@@ -405,20 +413,24 @@ class ImageScaledCache {
 
   }
 
+  /// Main image for scale.
   CanvasImageSource get image => _image;
+  /// Width of the main [image].
   int get width => _width;
+  /// Height of the main [image].
   int get height => _height;
 
+  /// Maximoum number of entries in the cache.
   int get maxScaleCacheEntries => _maxScaleCacheEntries ;
-
-  /////
 
   final Map<double, CanvasImageSource> _scaleCache = {} ;
 
+  /// Clears the cache.
   void clearScaleCache() {
     _scaleCache.clear() ;
   }
 
+  /// Returns [true] if a [scale] is in cache.
   bool isImageScaledInCache(double scale) {
     if (scale <= 0) return false ;
     if (scale == 1.0) return true ;
@@ -427,6 +439,7 @@ class ImageScaledCache {
     return scaledImage != null ;
   }
 
+  /// Returns a cached image in [scale].
   CanvasImageSource getImageScaled(double scale) {
     if (scale <= 0) return null ;
     if (scale == 1.0) return _image ;
@@ -460,18 +473,18 @@ class ImageScaledCache {
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Image Viewer using Canvas and highlight elements (Clip and Rectangles)
-////////////////////////////////////////////////////////////////////////////////
-
+/// Applies a filter to [image], of [width] and [height].
 typedef ImageFilter = CanvasImageSource Function(CanvasImageSource image, int width, int height) ;
 
+/// Quality of an image.
 enum Quality {
   HIGH,
   MEDIUM,
   LOW
 }
 
+
+/// The type of edition for [CanvasImageViewer].
 enum EditionType {
   CLIP,
   POINTS,
@@ -480,31 +493,30 @@ enum EditionType {
 
 typedef ValueCopier<T> = T Function(T value) ;
 
-class ViewerValue<T> {
+/// Represents an element in the [CanvasImageViewer].
+class ViewerElement<T> {
 
-  static T copyValue<T>(ViewerValue<T> viewerValue) {
-    return viewerValue != null ? viewerValue.valueCopy : null ;
+  static T copyValue<T>(ViewerElement<T> viewerElement) {
+    return viewerElement != null ? viewerElement.valueCopy : null ;
   }
 
-  static T getValue<T>(ViewerValue<T> viewerValue) {
-    return viewerValue != null ? viewerValue.value : null ;
+  static T getValue<T>(ViewerElement<T> viewerElement) {
+    return viewerElement != null ? viewerElement.value : null ;
   }
 
-  static Color getColor(ViewerValue viewerValue, [Color defaultColor]) {
-    return viewerValue != null ? viewerValue.color ?? defaultColor : defaultColor ;
+  static Color getColor(ViewerElement viewerElement, [Color defaultColor]) {
+    return viewerElement != null ? viewerElement.color ?? defaultColor : defaultColor ;
   }
 
-  static String getKey(ViewerValue viewerValue, [String defaultKey]) {
-    return viewerValue != null ? viewerValue.key ?? defaultKey : defaultKey ;
+  static String getKey(ViewerElement viewerElement, [String defaultKey]) {
+    return viewerElement != null ? viewerElement.key ?? defaultKey : defaultKey ;
   }
-
-  //////////////////////////////////
 
   T _value ;
   final Color color ;
   final ValueCopier<T> _copier ;
 
-  ViewerValue(this._value, this.color, [this._copier]);
+  ViewerElement(this._value, this.color, [this._copier]);
 
   bool get isNull => _value == null ;
 
@@ -531,6 +543,7 @@ class _RenderImageResult {
   _RenderImageResult(this.quality, this.translate) ;
 }
 
+/// An image viewer that can render points, rectangles, clip and grid over.
 class CanvasImageViewer {
 
   static final DATE_FORMAT_YYYY_MM_DD_HH_MM_SS = DateFormat('yyyy/MM/dd HH:mm:ss', Intl.getCurrentLocale()) ;
@@ -542,14 +555,15 @@ class CanvasImageViewer {
   CanvasImageSource _image ;
   ImageFilter _imageFilter ;
 
-  ViewerValue<Rectangle<num>> _clip ;
-  final ViewerValue<List<Rectangle<num>>> _rectangles ;
-  final ViewerValue<List<Point<num>>> _points ;
-  final ViewerValue<List<Point<num>>> _perspective ;
-  final ViewerValue<num> _gridSize ;
+  ViewerElement<Rectangle<num>> _clip ;
+  final ViewerElement<List<Rectangle<num>>> _rectangles ;
+  final ViewerElement<List<Point<num>>> _points ;
+  final ViewerElement<List<Point<num>>> _perspective ;
+  final ViewerElement<num> _gridSize ;
 
   bool _cropPerspective ;
 
+  /// Time of the image.
   final DateTime time ;
 
   final EditionType _editionType ;
@@ -557,11 +571,11 @@ class CanvasImageViewer {
   ImagePerspectiveFilterCache _imagePerspectiveFilterCache ;
 
   CanvasImageViewer(this._canvas, { int width, int height, bool canvasSizeToImageSize = true , CanvasImageSource image, ImageFilter imageFilter,
-    ViewerValue< Rectangle<num> > clip ,
-    ViewerValue< List<Rectangle<num>> > rectangles ,
-    ViewerValue< List<Point<num>> > points ,
-    ViewerValue<List<Point<num>>> perspective ,
-    ViewerValue<num> gridSize,
+    ViewerElement< Rectangle<num> > clip ,
+    ViewerElement< List<Rectangle<num>> > rectangles ,
+    ViewerElement< List<Point<num>> > points ,
+    ViewerElement<List<Point<num>>> perspective ,
+    ViewerElement<num> gridSize,
     bool cropPerspective,
     this.time , EditionType editable
   } ) :
@@ -648,53 +662,60 @@ class CanvasImageViewer {
 
   bool get cropPerspective => _cropPerspective;
 
+  /// Type of edition (EditionType). If null edition is not enabled.
   EditionType get editionType => _editionType;
+
+  /// Returns [true] if edition is enable. See [editionType].
   bool get isEditable => _editionType != null ;
 
+  /// Width of the image.
   int get width => _width;
+  /// Height of the image.
   int get height => _height;
 
-  //////
-
-  static ViewerValue<Rectangle<num>> clipViewerValue(Rectangle<num> clip, [Color color]) {
-    return ViewerValue<Rectangle<num>>(clip, color, (v) => Rectangle<num>( v.left , v.top , v.width , v.height ) ) ;
+  /// Converts [Rectangle<num>] to [ViewerElement<Rectangle<num>>].
+  static ViewerElement<Rectangle<num>> clipViewerElement(Rectangle<num> clip, [Color color]) {
+    return ViewerElement<Rectangle<num>>(clip, color, (v) => Rectangle<num>( v.left , v.top , v.width , v.height ) ) ;
   }
 
-  Rectangle<num> get clip => ViewerValue.copyValue(_clip) ;
-  String get clipKey => ViewerValue.getKey(_clip, 'clip') ;
+  /// Clip area element rendered in the image.
+  Rectangle<num> get clip => ViewerElement.copyValue(_clip) ;
+  String get clipKey => ViewerElement.getKey(_clip, 'clip') ;
 
-  //////
-
-  static ViewerValue< List<Rectangle<num>> > rectanglesViewerValue(List<Rectangle<num>> rectangles, [Color color]) {
-    return ViewerValue< List<Rectangle<num>> >(rectangles, color, (value) => value.map( (r) => Rectangle<num>( r.left , r.top , r.width , r.height ) ).toList() ) ;
+  /// Converts a [List<Rectangle<num>>] to [ViewerElement< List<Rectangle<num>> >].
+  ///
+  /// [color] Optional color to render the element.
+  static ViewerElement< List<Rectangle<num>> > rectanglesViewerElement(List<Rectangle<num>> rectangles, [Color color]) {
+    return ViewerElement< List<Rectangle<num>> >(rectangles, color, (value) => value.map( (r) => Rectangle<num>( r.left , r.top , r.width , r.height ) ).toList() ) ;
   }
 
-  List<Rectangle<num>> get rectangles => ViewerValue.copyValue(_rectangles) ;
-  String get rectanglesKey => ViewerValue.getKey(_rectangles, 'rectangles') ;
+  /// Rectangle elements rendered in the image.
+  List<Rectangle<num>> get rectangles => ViewerElement.copyValue(_rectangles) ;
+  String get rectanglesKey => ViewerElement.getKey(_rectangles, 'rectangles') ;
 
-  //////
-
-  static ViewerValue< List<Point<num>> > pointsViewerValue(List<Point<num>> points, [Color color]) {
-    return ViewerValue< List<Point<num>> >(points, color, (value) => value.map( (p) => Point<num>( p.x , p.y ) ).toList() ) ;
+  /// Converts a [List<Point<num>> ] to [ViewerElement< List<Point<num>> >].
+  ///
+  /// [color] Optional color to render the element.
+  static ViewerElement< List<Point<num>> > pointsViewerElement(List<Point<num>> points, [Color color]) {
+    return ViewerElement< List<Point<num>> >(points, color, (value) => value.map( (p) => Point<num>( p.x , p.y ) ).toList() ) ;
   }
 
-  List<Point<num>> get points => ViewerValue.copyValue(_points) ;
-  String get pointsKey => ViewerValue.getKey(_points, 'points') ;
+  /// Point elements rendered in the image.
+  List<Point<num>> get points => ViewerElement.copyValue(_points) ;
+  String get pointsKey => ViewerElement.getKey(_points, 'points') ;
 
-  //////
-
-  static ViewerValue<num> gridSizeViewerValue(num gridSize, [Color color]) {
-    return ViewerValue<num>(gridSize, color, (value) => value) ;
+  static ViewerElement<num> gridSizeViewerElement(num gridSize, [Color color]) {
+    return ViewerElement<num>(gridSize, color, (value) => value) ;
   }
 
-  num get gridSize => ViewerValue.copyValue(_gridSize) ;
-  String get gridSizeKey => ViewerValue.getKey(_gridSize, 'gridSize') ;
+  /// The size of grid boxes when rendering the grid.
+  num get gridSize => ViewerElement.copyValue(_gridSize) ;
+  String get gridSizeKey => ViewerElement.getKey(_gridSize, 'gridSize') ;
 
-  //////
-
-  static ViewerValue< List<Point<num>> > perspectiveViewerValueFromNums(List<num> perspective, [Color color]) {
+  /// Converts a [List<num>] (pairs of perspective points) to [ViewerElement< List<Point<num>> >].
+  static ViewerElement< List<Point<num>> > perspectiveViewerElementFromNums(List<num> perspective, [Color color]) {
     if (perspective == null) {
-      return perspectiveViewerValue(null, color) ;
+      return perspectiveViewerElement(null, color) ;
     }
 
     // ignore: omit_local_variable_types
@@ -706,17 +727,17 @@ class CanvasImageViewer {
       points.add( Point(x,y) ) ;
     }
 
-    return perspectiveViewerValue(points, color) ;
+    return perspectiveViewerElement(points, color) ;
   }
 
-  static ViewerValue< List<Point<num>> > perspectiveViewerValue(List< Point<num> > perspective, [Color color]) {
-    return ViewerValue< List<Point<num>> >(perspective, color, (value) => value.map( (p) => Point<num>( p.x , p.y ) ).toList() ) ;
+  /// Converts [List< Point<num> >] (perspective points) to [ViewerElement< List<Point<num>> >].
+  static ViewerElement< List<Point<num>> > perspectiveViewerElement(List< Point<num> > perspective, [Color color]) {
+    return ViewerElement< List<Point<num>> >(perspective, color, (value) => value.map( (p) => Point<num>( p.x , p.y ) ).toList() ) ;
   }
 
-  List<Point<num>> get perspective => ViewerValue.copyValue(_perspective) ;
-  String get perspectiveKey => ViewerValue.getKey(_perspective, 'perspective') ;
-
-  //////
+  /// The perspective points to use in the Perspective filter of the image.
+  List<Point<num>> get perspective => ViewerElement.copyValue(_perspective) ;
+  String get perspectiveKey => ViewerElement.getKey(_perspective, 'perspective') ;
 
   void _deselectDOM() {
     var selection = window.getSelection() ;
@@ -766,8 +787,6 @@ class CanvasImageViewer {
       _renderImpl( edited , false ) ;
     }
   }
-
-  ///////////////////////////////////
 
   double get offsetWidthRatio {
     var offsetW = _canvas.offset.width;
@@ -846,7 +865,7 @@ class CanvasImageViewer {
     if (clip2 != null) {
       var clipArea = clip2.width * clip2.height ;
       if (clipArea > 1) {
-        _clip = clipViewerValue(clip2 , ViewerValue.getColor(_clip) ) ;
+        _clip = clipViewerElement(clip2 , ViewerElement.getColor(_clip) ) ;
         return Quality.HIGH ;
       }
     }
@@ -919,8 +938,6 @@ class CanvasImageViewer {
     return nearest ;
   }
 
-  /////
-
   Quality adjustPoints( Point mouse , bool click ) {
     if (!click) return null ;
 
@@ -951,8 +968,6 @@ class CanvasImageViewer {
 
     return Quality.HIGH ;
   }
-
-  /////
 
   Quality adjustPerspective(Point<num> mouse, bool click) {
     //if (click) return null ;
@@ -1061,8 +1076,7 @@ class CanvasImageViewer {
     return Rectangle( minX , minY , maxX-minX , maxY-minY ) ;
   }
 
-  /////////////////////////////////////////////////
-
+  /// Renders this component asynchronously.
   void renderAsync( Duration delay ) {
     _renderAsyncImpl( delay , Quality.HIGH , false ) ;
   }
@@ -1076,10 +1090,12 @@ class CanvasImageViewer {
     }
   }
 
+  /// Returns [true] if this component is in DOM.
   bool get inDOM {
     return isInDOM(_canvas) ;
   }
 
+  /// Renders this component.
   void render() {
     if ( !inDOM ) {
       Future.delayed( Duration(seconds: 1) , () => render()) ;
@@ -1104,18 +1120,16 @@ class CanvasImageViewer {
 
     var translate = renderImageResult.translate ;
 
-    _renderGrid(context, translate, ViewerValue.getValue(_gridSize) , ViewerValue.getColor(_gridSize, Color.CYAN.withOpacity(0.70) ) , 2) ;
+    _renderGrid(context, translate, ViewerElement.getValue(_gridSize) , ViewerElement.getColor(_gridSize, Color.CYAN.withOpacity(0.70) ) , 2) ;
 
-    _renderRectangles(context, translate, ViewerValue.getValue(_rectangles) , ViewerValue.getColor(_rectangles, Color.GREEN ) );
-    _renderPoints(context, translate, ViewerValue.getValue(_points) , ViewerValue.getColor(_points, Color.RED ) );
-    _renderClip(context, translate, ViewerValue.getValue(_clip) , ViewerValue.getColor(_clip, Color.BLUE ) );
+    _renderRectangles(context, translate, ViewerElement.getValue(_rectangles) , ViewerElement.getColor(_rectangles, Color.GREEN ) );
+    _renderPoints(context, translate, ViewerElement.getValue(_points) , ViewerElement.getColor(_points, Color.RED ) );
+    _renderClip(context, translate, ViewerElement.getValue(_clip) , ViewerElement.getColor(_clip, Color.BLUE ) );
 
     _renderTime(context, translate, time);
 
     _renderedTranslation = translate ;
   }
-
-  //////////////////////////////////////////
 
   _RenderImageResult _renderImage(CanvasRenderingContext2D context, Quality quality , bool forceQuality) {
     if ( _perspective != null && !_perspective.isNull ) {
@@ -1423,8 +1437,6 @@ class CanvasImageViewer {
     context.fillText(timeStr, margin+shadow, height-(margin+shadow)) ;
   }
 
-  /////////////////////////////////////////////////////
-
   void _translate(CanvasRenderingContext2D context, Point<num> translate) {
     context.resetTransform() ;
     if (translate != null) {
@@ -1474,7 +1486,10 @@ class CanvasImageViewer {
 
 }
 
-
+/// Converts [imageSource] to [CanvasElement].
+///
+/// [width] Width of the image.
+/// [height] Height of the image.
 CanvasElement toCanvasElement( CanvasImageSource imageSource , int width, int height ) {
   var canvas = CanvasElement( width: width , height: height ) ;
   CanvasRenderingContext2D context = canvas.getContext('2d');
@@ -1484,6 +1499,10 @@ CanvasElement toCanvasElement( CanvasImageSource imageSource , int width, int he
   return canvas ;
 }
 
+/// Converts [canvas] to [ImageElement]
+///
+/// [mimeType] MIME-Type of the image.
+/// [quality] Quality of the image.
 ImageElement canvasToImageElement( CanvasElement canvas , [String mimeType, num quality] ) {
   mimeType ??= 'image/png' ;
   quality ??= 0.99 ;
@@ -1495,12 +1514,17 @@ ImageElement canvasToImageElement( CanvasElement canvas , [String mimeType, num 
   return img ;
 }
 
+/// Rotates [image] with [angleDegree].
 CanvasElement rotateImageElement( ImageElement image, [ angleDegree = 90 ] ) {
   var w = image.width ;
   var h = image.height ;
   return rotateCanvasImageSource( image , w, h, angleDegree) ;
 }
 
+/// Rotates [image] (a [CanvasImageSource]) with [angleDegree].
+///
+/// [width] Width of the image.
+/// [height] Height of the image.
 CanvasElement rotateCanvasImageSource( CanvasImageSource image , int width, int height, [ angleDegree = 90 ]) {
   angleDegree ??= 90 ;
 

@@ -6,17 +6,26 @@ import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
 
+/// Shows a text dialog.
+///
+/// [text] The text to show.
+/// [transparency] The transparency of the dialog as double.
+/// [padding] The padding of the dialog.
 DivElement showDialogText( String text , { double transparency , String padding } ) {
   if ( text == null || text.isEmpty ) return null ;
 
   var element = SpanElement() ;
-
 
   element.text = text ;
 
   return showDialogElement( element , transparency: transparency, padding: padding ) ;
 }
 
+/// Shows a [html] dialog.
+///
+/// [html] The HTML to show.
+/// [transparency] The transparency of the dialog as double.
+/// [padding] The padding of the dialog.
 DivElement showDialogHTML( String html , { double transparency , String padding } ) {
   if ( html == null || html.isEmpty ) return null ;
 
@@ -27,6 +36,9 @@ DivElement showDialogHTML( String html , { double transparency , String padding 
   return showDialogElement( element , transparency: transparency, padding: padding ) ;
 }
 
+/// Shows an image ([src]) dialog.
+///
+/// [src] The image source.
 void showDialogImage( String src ) {
 
   var img = ImageElement()
@@ -40,6 +52,11 @@ void showDialogImage( String src ) {
 
 }
 
+/// Shows an [Element] dialog.
+///
+/// [content] The element to show.
+/// [transparency] The transparency of the dialog as double.
+/// [padding] The padding of the dialog.
 DivElement showDialogElement( Element content , { double transparency , String padding } ) {
   if ( transparency == null || transparency <= 0 ) transparency = 0.90 ;
 
@@ -59,8 +76,6 @@ DivElement showDialogElement( Element content , { double transparency , String p
     ..style.setProperty('backdrop-filter', 'blur(6px)')
   ;
 
-  ///////////////////////////////////
-
   var close = SpanElement()
     ..innerHtml = '&times;'
     ..style.float = 'right'
@@ -77,8 +92,6 @@ DivElement showDialogElement( Element content , { double transparency , String p
   } );
 
   dialog.children.add( close ) ;
-
-  //////////////////////////////////
 
   String src ;
   String title ;
@@ -128,8 +141,6 @@ DivElement showDialogElement( Element content , { double transparency , String p
     dialog.children.add(download);
   }
 
-  //////////////////////////////
-
   if ( isImage ) {
     var rotate = SpanElement()
       ..innerHtml = '&#10549;'
@@ -170,8 +181,6 @@ DivElement showDialogElement( Element content , { double transparency , String p
 
     dialog.children.add( rotate ) ;
   }
-
-  //////////////////////////////
 
   content
     ..style.maxWidth = '98vw'

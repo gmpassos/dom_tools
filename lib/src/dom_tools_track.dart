@@ -7,8 +7,6 @@ import 'package:swiss_knife/swiss_knife.dart';
 import 'dom_tools_base.dart';
 
 
-////////////////////////////////////////////////////////////////////////////////
-
 class _ElementTrack<T> {
 
   final TrackElementValue _trackElementValue ;
@@ -69,6 +67,7 @@ class _ElementTrack<T> {
 
 typedef OnElementTrackValueEvent<T> = bool Function(Element element, T value) ;
 
+/// Tracks a DOM [Element] to identify when a value changes.
 class TrackElementValue {
 
   Duration _checkInterval ;
@@ -79,6 +78,12 @@ class TrackElementValue {
 
   final Map<Element,_ElementTrack> _elements = {} ;
 
+  /// Tracks [element] using [elementValueGetter] to catch the value.
+  ///
+  /// [element] The element to track.
+  /// [elementValueGetter] The value getter.
+  /// [onTrackValueEvent] Callback to call when value changes.
+  /// [periodicTracking] If [true] this tracking will continue after first event.
   T track<T>( Element element , ElementValueGetter<T> elementValueGetter , OnElementTrackValueEvent<T> onTrackValueEvent , [ bool periodicTracking ] ) {
     if (element == null || elementValueGetter == null || onTrackValueEvent == null) return null ;
 
@@ -96,10 +101,11 @@ class TrackElementValue {
     return initialValue ;
   }
 
-  T untrack<T>( Element elem ) {
-    var removed = _elements.remove(elem) ;
+  /// Untracks [element].
+  T untrack<T>( Element element ) {
+    var removed = _elements.remove(element) ;
 
-    _elementsProperties.remove(elem) ;
+    _elementsProperties.remove(element) ;
 
     if (_elements.isEmpty) {
       _cancelTimer();
@@ -108,6 +114,7 @@ class TrackElementValue {
     return removed != null ? removed._lastCheck_value : null ;
   }
 
+  /// Checks tracked elements for values changes.
   void checkElements() {
     if ( _elements.isEmpty ) return ;
 
@@ -162,6 +169,7 @@ class TrackElementValue {
 
 typedef OnElementEvent = void Function(Element element) ;
 
+/// Tracks a DOM [Element] to identify when its visible in viewport.
 class TrackElementInViewport {
 
   TrackElementValue _trackElementValue ;
@@ -170,6 +178,15 @@ class TrackElementInViewport {
     _trackElementValue = TrackElementValue( checkInterval ) ;
   }
 
+  /// Tracks [element] if it's visible in viewport.
+  ///
+  /// Useful to track when an element is visible for the 1st time,
+  /// usually due scrolling.
+  ///
+  /// [element] The element to track
+  /// [onEnterViewport] Callback to call when element shows up in viewport.
+  /// [onLeaveViewport] Callback to call when element leaves viewport.
+  /// [periodicTracking] If [true] this tracking will continue after first event.
   bool track( Element element , { OnElementEvent onEnterViewport, OnElementEvent onLeaveViewport , bool periodicTracking } ) {
     if (element == null || (onEnterViewport == null && onLeaveViewport == null)) return null ;
 
@@ -193,12 +210,14 @@ class TrackElementInViewport {
     return initValue == true ;
   }
 
+  /// Untracks [element].
   void untrack( Element element ) {
     _trackElementValue.untrack(element) ;
   }
 
 }
 
+/// Tracks a DOM [Element] to identify when its size changes.
 class TrackElementResize {
 
   TrackElementValue _trackElementValueInstance ;
@@ -234,6 +253,10 @@ class TrackElementResize {
     return _resizeObserverInstance ;
   }
 
+  /// Tracks [element] resize events.
+  ///
+  /// [element] Element to track.
+  /// [onResize] Callback to call when size changes.
   void track( Element element , OnElementEvent onResize ) {
     var resizeObserver = _resizeObserver ;
 
@@ -252,6 +275,7 @@ class TrackElementResize {
     throw UnsupportedError("Can't track element resize") ;
   }
 
+  /// Untracks [element].
   void untrack( Element element ) {
 
     var resizeObserver = _resizeObserver ;

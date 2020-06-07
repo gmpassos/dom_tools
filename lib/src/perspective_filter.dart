@@ -40,10 +40,14 @@ class FilterResult {
 
 }
 
+/// A filter that applies a perspective to an image.
 class ImagePerspectiveFilter {
 
+  /// The image to filter.
   final CanvasImageSource image;
+  /// Image width.
   final int width;
+  /// Image height.
   final int height;
 
   double _x0;
@@ -214,6 +218,7 @@ class ImagePerspectiveFilter {
     return imageData.data;
   }
 
+  /// Filters the image into [resultCanvas].
   FilterResult filter( [ CanvasElement resultCanvas ] ) {
     // ignore: omit_local_variable_types
     Uint8ClampedList inPixels = _getImagePixels();
@@ -303,6 +308,7 @@ class ImagePerspectiveFilter {
 
 }
 
+/// Apply [perspective] filter to [image].
 FilterResult applyPerspective(CanvasImageSource image, List<Point<num>> perspective) {
   var wh = getImageDimension(image) ;
 
@@ -315,8 +321,9 @@ FilterResult applyPerspective(CanvasImageSource image, List<Point<num>> perspect
   return filter.filter();
 }
 
-////////////////////////////////////////////
-
+/// A cache for perspective filers.
+///
+/// Useful for consecutive calls to perspective on the same image.
 class ImagePerspectiveFilterCache extends ImageScaledCache {
 
   int _maxPerspectiveCacheEntries ;

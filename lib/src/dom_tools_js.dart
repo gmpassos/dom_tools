@@ -7,10 +7,9 @@ import 'dart:js_util';
 
 import 'dom_tools_base.dart';
 
-////////////////////////////////////////////////////////////////////////////////
-
 Map<String, Future<bool> > _addedJavaScriptCodes = {} ;
 
+/// Adds a JavaScript code ([scriptCode]) into DOM.
 Future<bool> addJavaScriptCode(String scriptCode) async {
   var prevCall = _addedJavaScriptCodes[scriptCode] ;
   if ( prevCall != null ) return prevCall ;
@@ -40,13 +39,14 @@ Future<bool> addJavaScriptCode(String scriptCode) async {
   return future ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
 
 Map<String, Future<bool> > _addedJavaScriptsSources = {} ;
 
+/// Adds a JavaScript path ([scriptSource]] into DOM.
+///
+/// [addToBody] If [true] adds into `body` node instead of `head` node.
 Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
-  var scriptInDom = getScriptElementBySrc(scriptSource);
+  var scriptInDom = getScriptElementBySRC(scriptSource);
 
   var prevCall = _addedJavaScriptsSources[scriptSource] ;
 
@@ -97,9 +97,11 @@ Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
   return call ;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-
+/// Adds a JavaScript function into DOM.
+///
+/// [name] Name of the function.
+/// [parameters] Parameters names of the function.
+/// [body] Content of the function.
 Future<bool> addJSFunction(String name, List<String> parameters, String body) {
   if (name == null || name.isEmpty) throw ArgumentError('Empty name') ;
   parameters ??= [] ;
@@ -111,53 +113,39 @@ Future<bool> addJSFunction(String name, List<String> parameters, String body) {
   return addJavaScriptCode(code) ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-
+/// Call `eval()` with the content of [scriptCode] and returns the result.
 dynamic evalJS(String scriptCode) {
   context.callMethod('eval', [scriptCode]);
 }
 
 typedef MappedFunction = void Function(dynamic o) ;
 
+/// Maps a JavaScript function to a Dart function.
+///
+/// [jsFunctionName] Name of the functin.
+/// [f] Dart function to map.
 void mapJSFunction(String jsFunctionName, MappedFunction f) {
-
-  var setterName = '__mapJSFunction__set_$jsFunctionName' ;
-
-  var scriptCode = '''
-  
-    $jsFunctionName = function(o) {};
-  
-    function $setterName(f) {
-      console.log('mapJSFunction: $jsFunctionName(o)');
-      $jsFunctionName = f ;
-    }
-    
-  ''';
-
-  addJavaScriptCode(scriptCode) ;
-
-  var setter = context[setterName] as JsFunction ;
-
-  setter.apply([ (dynamic o) => f(o) ]) ;
-
+  context[jsFunctionName] = f ;
 }
 
+/// Calls JavaScript a [method] in object [o] with [args].
 dynamic callObjectMethod(dynamic o, String method, [List args]) {
   return callMethod(o, method, args);
 }
 
+/// Calls JavaScript a function [method] with [args].
 dynamic callFunction(String method, [List args]) {
   return context.callMethod(method, args);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+String _JS_FUNCTION_BLOCK_SCROLLING = 'UI__BlockScroll__' ;
 
+/// Disables scrolling in browser.
 void disableScrolling() {
   var scriptCode = '''
   
-  if ( window.UI__BlcokScroll__ == null ) {
-    UI__BlcokScroll__ = function(event) {
+  if ( window.$_JS_FUNCTION_BLOCK_SCROLLING == null ) {
+    $_JS_FUNCTION_BLOCK_SCROLLING = function(event) {
       window.scrollTo( 0, 0 );
       event.preventDefault();
     }  
@@ -168,20 +156,23 @@ void disableScrolling() {
   addJavaScriptCode(scriptCode) ;
 
   evalJS('''
-    window.addEventListener('scroll', UI__BlcokScroll__, { passive: false });
+    window.addEventListener('scroll', $_JS_FUNCTION_BLOCK_SCROLLING, { passive: false });
   ''') ;
-
 
 }
 
+
+
+/// Enables scrolling in browser.
 void enableScrolling() {
   evalJS('''
-    if ( window.UI__BlcokScroll__ != null ) {
-      window.removeEventListener('scroll', UI__BlcokScroll__);  
+    if ( window.$_JS_FUNCTION_BLOCK_SCROLLING != null ) {
+      window.removeEventListener('scroll', $_JS_FUNCTION_BLOCK_SCROLLING);  
     }
   ''') ;
 }
 
+/// Disables zooming in browser.
 void disableZooming() {
 
   var scriptCode = '''

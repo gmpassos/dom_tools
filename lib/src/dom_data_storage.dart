@@ -6,7 +6,6 @@ import 'dart:indexed_db';
 import 'package:swiss_knife/swiss_knife.dart';
 import 'package:json_object_mapper/json_object_mapper.dart';
 
-////////////////////////////////////
 
 abstract class _SimpleStorage {
 
@@ -335,13 +334,18 @@ class _DBSimpleStorage extends _SimpleStorage {
 
 }
 
-////////////////////////////////////
 
+/// Type of [DataStorage].
 enum DataStorageType {
+  /// Data is persistent between sessions.
   PERSISTENT,
+  /// Data is available ony in the current browser session.
   SESSION
 }
 
+/// Represents a persistent storage in the browser.
+///
+/// It uses the available storage for implementation.
 class DataStorage {
 
   static final _SimpleStorage _sessionStorage = _SessionSimpleStorage() ;
@@ -353,7 +357,9 @@ class DataStorage {
     return true ;
   }
 
+  /// ID of this storage.
   final String id ;
+  /// Type of this storage.
   final DataStorageType storageType ;
 
   _SimpleStorage _simpleStorage ;
@@ -368,35 +374,42 @@ class DataStorage {
 
   final Map<String, State> _states = {} ;
 
+  /// Returns a [List<State>] stored in this storage.
   List<State> getStates() {
     return List.from(_states.values) ;
   }
 
-  List<State> getStatesNames() {
+  /// Returns a [List<String>] of stored [State] names.
+  List<String> getStatesNames() {
     return List.from(_states.keys) ;
   }
 
+  /// Registers a [state].
   bool registerState(State state) {
     if ( _states.containsKey(state.name) ) return false ;
     _states[ state.name ] = state ;
     return true ;
   }
 
+  /// Unregister a [State] by [name].
   State unregisterState(String name) {
     var prev = _states.remove(name);
     return prev ;
   }
 
+  /// Creates a [State] with [stateName].
   State createState(String stateName) {
     var state = getState(stateName);
     state ??= State(this, stateName);
     return state ;
   }
 
+  /// Gets a stored [State] with [name].
   State getState(String name) {
     return _states[name];
   }
 
+  /// Returns [true] if this storage contains a [State] with [name].
   bool containsState(String name) {
     return _states[name] != null ;
   }
@@ -443,9 +456,13 @@ class DataStorage {
 
 }
 
+/// Represents a value stored in [State].
 class StorageValue extends JSONObject {
 
-  int storeTime ;
+  /// Time of storage.
+  final int storeTime ;
+
+  /// The stored value.
   String value ;
 
   @override
@@ -453,9 +470,9 @@ class StorageValue extends JSONObject {
     return ['storeTime', 'value'] ;
   }
 
-  StorageValue(this.value) {
-    storeTime = DateTime.now().millisecondsSinceEpoch ;
-  }
+  StorageValue(this.value) :
+    storeTime = DateTime.now().millisecondsSinceEpoch
+  ;
 
   StorageValue.stored(this.storeTime, this.value) ;
 
@@ -466,6 +483,7 @@ class StorageValue extends JSONObject {
 
 }
 
+/// State operation.
 enum StateOperation {
   LOAD,
   SET,
@@ -475,9 +493,13 @@ enum StateOperation {
 typedef StateEventListener = void Function(StateOperation op, State state, String key, dynamic value);
 typedef StateKeyListener = void Function(dynamic value);
 
+
+/// A state stored in [DataStorage].
 class State {
 
+  /// The storage of this state.
   final DataStorage storage;
+  /// Name of this state.
   final String name ;
 
   State(this.storage, this.name) {
@@ -494,6 +516,7 @@ class State {
 
   bool _loaded = false ;
 
+  /// Returns [true] if this state is already loaded.
   bool get isLoaded => _loaded ;
 
   final EventStream<bool> onLoad = EventStream() ;
@@ -520,14 +543,17 @@ class State {
 
   String get storageRootKey => storage.id +'/'+ name +'/' ;
 
+  /// Returns the internal storage key for [key].
   String getStorageKey(String key) {
     return storageRootKey + key ;
   }
 
   final Map<String,dynamic> _properties = {} ;
 
+  /// Returns the storage keys in this state.
   List<String> get keys => List.from(_properties.keys) ;
 
+  /// Same as [keys], but async.
   Future<List<String>> getKeysAsync() async {
     if (isLoaded) return keys ;
 
@@ -541,10 +567,12 @@ class State {
     _properties[key] = storageValue.value ;
   }
 
+  /// Remove [key].
   dynamic remove(String key) {
     return set(key, null);
   }
 
+  /// Sets [key] to [value].
   dynamic set(String key, dynamic value) {
     var prev = _properties[key] ;
     _properties[key] = value ;
@@ -554,6 +582,7 @@ class State {
     return prev ;
   }
 
+  /// Sets [key] to [value] if not stored yet.
   bool setIfAbsent(String key, dynamic value) {
     if ( !_properties.containsKey(key) ) {
       _properties[key] = value ;
@@ -565,6 +594,7 @@ class State {
     }
   }
 
+  /// Gets the value of [key] in async mode.
   Future getAsync(String key) async {
     if (isLoaded) return get(key) ;
     return onLoad.listen((_){
@@ -572,6 +602,7 @@ class State {
     });
   }
 
+  /// Gets [key] value. If absent returns [defaultValue].
   Future getOrDefaultAsync(String key, dynamic defaultValue) async {
     if (isLoaded) return getOrDefault(key, defaultValue) ;
     return onLoad.listen((_){
@@ -579,6 +610,7 @@ class State {
     });
   }
 
+  /// Gets [key] value. If absent sets the key to [defaultValue] and returns it.
   Future getOrSetDefaultAsync(String key, dynamic defaultValue) async {
     if (isLoaded) return getOrSetDefault(key, defaultValue) ;
     return onLoad.listen((_){
@@ -586,10 +618,16 @@ class State {
     });
   }
 
+  /// Gets [key] value.
+  ///
+  /// Note, this [State] should be already loaded [isLoaded].
   dynamic get(String key) {
     return _properties[key] ;
   }
 
+  /// Gets [key] value or returns [defaultValue].
+  ///
+  /// Note, this [State] should be already loaded [isLoaded].
   dynamic getOrDefault(String key, dynamic defaultValue) {
     if ( !_properties.containsKey(key) ) {
       return defaultValue ;
@@ -599,6 +637,9 @@ class State {
     }
   }
 
+  /// Gets [key] value. If absent sets the key value to [defaultValue] and returns it.
+  ///
+  /// Note, this [State] should be already loaded [isLoaded].
   dynamic getOrSetDefault(String key, dynamic defaultValue) {
     if ( !_properties.containsKey(key) ) {
       _properties[key] = defaultValue ;
@@ -630,24 +671,30 @@ class State {
     }
   }
 
-  ///////////////////////////////////////////////////
-
+  /// Listen for [op] events.
+  ///
+  /// [op] The [StateOperation] to listen.
+  /// [listener] The listener callback.
   State listen(StateOperation op, StateEventListener listener) {
     _registerEventListener(op, listener);
     return this ;
   }
 
+  /// Listen all events.
+  ///
+  /// [listener] The listener callback.
   State listenAll(StateEventListener listener) {
     _registerEventListener(StateOperation.ALL, listener);
     return this ;
   }
 
+  /// Listen for a specific [key] events.
+  ///
+  /// [listener] The listener callback.
   State listenKey(String key, StateKeyListener listener) {
     _registerKeyListener(key, listener);
     return this ;
   }
-
-  ///////////////////////////////////////////////////
 
   final Map<String, List<StateKeyListener>> _keyListeners = {} ;
 

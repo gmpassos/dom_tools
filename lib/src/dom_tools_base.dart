@@ -6,10 +6,10 @@ import 'dart:math';
 
 import 'package:swiss_knife/swiss_knife.dart';
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Returns a value from an [Element].
 typedef ElementValueGetter<T> = T Function(Element element) ;
 
+/// selects in DOM an [Element] with [tag] and one of [values] provided by [getter].
 Element getElementByValues<V>(String tag, ElementValueGetter getter, List<V> values ) {
   if (tag == null || tag.isEmpty) return null ;
   if ( values == null || values.isEmpty ) return null ;
@@ -30,7 +30,8 @@ Element getElementByValues<V>(String tag, ElementValueGetter getter, List<V> val
   return fond ;
 }
 
-String getElementHref(Element element) {
+/// Returns `href` value for different [Element] types.
+String getElementHREF(Element element) {
   if ( element is LinkElement ) return element.href ;
   if ( element is AnchorElement ) return element.href ;
   if ( element is BaseElement ) return element.href ;
@@ -39,7 +40,8 @@ String getElementHref(Element element) {
   return null ;
 }
 
-String getElementSrc(Element element) {
+/// Returns `src` value for different [Element] types.
+String getElementSRC(Element element) {
   if ( element is ImageElement ) return element.src ;
   if ( element is ScriptElement ) return element.src ;
   if ( element is InputElement ) return element.src ;
@@ -56,13 +58,15 @@ String getElementSrc(Element element) {
   return null ;
 }
 
-Element getElementByHref(String tag, String href) {
+/// Selects an [Element] in DOM with [tag] and [href].
+Element getElementByHREF(String tag, String href) {
   if ( href == null || href.isEmpty ) return null ;
   var resolvedURL = resolveUri(href).toString() ;
-  return getElementByValues(tag, getElementHref, [href, resolvedURL]) ;
+  return getElementByValues(tag, getElementHREF, [href, resolvedURL]) ;
 }
 
-Element getElementBySrc(String tag, String src) {
+/// Selects an [Element] in DOM with [tag] and [src].
+Element getElementBySRC(String tag, String src) {
   if ( src == null || src.isEmpty ) return null ;
 
   var values = [src];
@@ -72,31 +76,37 @@ Element getElementBySrc(String tag, String src) {
     values.add(resolvedURL);
   }
 
-  return getElementByValues(tag, getElementSrc, values) ;
+  return getElementByValues(tag, getElementSRC, values) ;
 }
 
-AnchorElement getAnchorElementByHref(String href) {
-  return getElementByHref('a', href) ;
+/// Selects an [AnchorElement] in DOM with [href].
+AnchorElement getAnchorElementByHREF(String href) {
+  return getElementByHREF('a', href) ;
 }
 
-LinkElement getLinkElementByHref(String href) {
-  return getElementByHref('link', href) ;
+/// Selects an [LinkElement] in DOM with [href].
+LinkElement getLinkElementByHREF(String href) {
+  return getElementByHREF('link', href) ;
 }
 
-ScriptElement getScriptElementBySrc(String src) {
-  return getElementBySrc('script', src) ;
+/// Selects an [ScriptElement] in DOM with [src].
+ScriptElement getScriptElementBySRC(String src) {
+  return getElementBySRC('script', src) ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Returns a [Future<bool>] for when [img] loads.
 Future<bool> elementOnLoad(ImageElement img) {
   var completer = Completer<bool>() ;
   img.onLoad.listen( (e) => completer.complete(true) , onError: (e) => completer.complete(false) ) ;
   return completer.future ;
 }
 
+/// Creates a `div` with `display: inline-block`.
 DivElement createDivInlineBlock() => DivElement()..style.display = 'inline-block';
 
+/// Creates a `div`.
+/// [inline] If [true] sets `display: inline-block`.
+/// [html] The HTML to parse as content.
 DivElement createDiv([bool inline = false, String html]) {
   var div = DivElement() ;
 
@@ -109,10 +119,16 @@ DivElement createDiv([bool inline = false, String html]) {
   return div ;
 }
 
+/// Creates a `div` with `display: inline-block`.
+///
+/// [html] The HTML to parse as content.
 DivElement createDivInline([String html]) {
   return createDiv(true, html);
 }
 
+/// Creates a `span` element.
+///
+/// [html] The HTML to parse as content.
 SpanElement createSpan([String html]) {
   var span = SpanElement() ;
 
@@ -123,6 +139,10 @@ SpanElement createSpan([String html]) {
   return span ;
 }
 
+
+/// Creates a `label` element.
+///
+/// [html] The HTML to parse as content.
 LabelElement createLabel([String html]) {
   var label = LabelElement() ;
 
@@ -133,6 +153,7 @@ LabelElement createLabel([String html]) {
   return label ;
 }
 
+/// Creates a HTML [Element]. Returns 1st node form parsed HTML.
 Element createHTML([String html]) {
   var div = createDiv(true, html);
   if ( div.childNodes.isEmpty ) return div ;
@@ -151,7 +172,7 @@ const _HTML_ELEMENTS_ALLOWED_ATTRS = [ ..._HTML_BASIC_ATTRS , ..._HTML_CONTROL_A
 
 AnyUriPolicy _anyUriPolicy = AnyUriPolicy() ;
 
-
+/// Allows anu [Uri] policy.
 class AnyUriPolicy implements UriPolicy {
   @override
   bool allowsUri(String uri) {
@@ -182,35 +203,49 @@ NodeValidatorBuilder _nodeValidatorBuilder = NodeValidatorBuilder()
   ..allowInlineStyles()
 ;
 
-void setElementInnerHTML(Element e, String html) {
-  e.setInnerHtml(html, validator: _nodeValidatorBuilder) ;
+/// Sets the inner HTML of [element] with parsed result of [html].
+void setElementInnerHTML(Element element, String html) {
+  element.setInnerHtml(html, validator: _nodeValidatorBuilder) ;
 }
 
-void appendElementInnerHTML(Element e, String html) {
-  e.appendHtml(html, validator: _nodeValidatorBuilder) ;
+/// Appends to the inner HTML of [element] with parsed result of [html].
+void appendElementInnerHTML(Element element, String html) {
+  element.appendHtml(html, validator: _nodeValidatorBuilder) ;
 }
 
-void scrollToTopAsync(int delayMs) {
-  if (delayMs < 1) delayMs = 1 ;
-  Future.delayed( Duration(milliseconds: delayMs), scrollToTop) ;
+/// Scrolls viewport to the top with a delay.
+///
+/// [delayMs] Delay in milliseconds.
+void scrollToTopDelayed(int delayMs) {
+  if (delayMs < 1) {
+    scrollToTop() ;
+  }
+  else {
+    Future.delayed(Duration(milliseconds: delayMs), scrollToTop);
+  }
 }
 
+/// Scrolls viewport to the top.
 void scrollToTop() {
   window.scrollTo(window.scrollX,0, {'behavior': 'smooth'});
 }
 
+/// Scrolls viewport to the bottom.
 void scrollToBottom() {
   window.scrollTo(window.scrollX, document.body.scrollHeight, {'behavior': 'smooth'});
 }
 
+/// Scrolls viewport to the left border.
 void scrollToLeft() {
   window.scrollTo(0, window.scrollY, {'behavior': 'smooth'});
 }
 
+/// Scrolls viewport to the right border.
 void scrollToRight() {
   window.scrollTo(document.body.scrollWidth, window.scrollY, {'behavior': 'smooth'});
 }
 
+/// Resets viewport zoom.
 void resetZoom() {
   _resetZoomImpl(0) ;
 }
@@ -257,10 +292,12 @@ void _resetZoomImpl(int retry) {
   }
 }
 
+/// Sets the viewport [zoom].
 void setZoom(String zoom) {
   document.body.style.zoom = zoom ;
 }
 
+/// Sets the `meta` viewport with [minimumScale] and [maximumScale].
 bool setMetaViewportScale( { String minimumScale, String maximumScale } ) {
   if (minimumScale == null && maximumScale == null) return false ;
 
@@ -305,6 +342,7 @@ bool setMetaViewportScale( { String minimumScale, String maximumScale } ) {
   return false ;
 }
 
+/// Parses a `meta` content to [Map<String,String>].
 Map<String,String> parseMetaContent(String content) {
   var parts = content.split(RegExp(r'\s*,\s*')) ;
 
@@ -327,6 +365,7 @@ Map<String,String> parseMetaContent(String content) {
   return map ;
 }
 
+/// Builds a `meta` content from [map].
 String buildMetaContent(Map<String,String> map) {
   var content = '' ;
 
@@ -350,8 +389,9 @@ String buildMetaContent(Map<String,String> map) {
   return content ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Returns [element] attribute with [key].
+///
+/// [key] Can be a [RegExp] or a [String].
 String getElementAttribute(Element element, dynamic key) {
   if (element == null || key == null) return null ;
 
@@ -363,6 +403,7 @@ String getElementAttribute(Element element, dynamic key) {
   }
 }
 
+/// Returns [element] attribute with [RegExp] [key].
 String getElementAttributeRegExp(Element element, RegExp key) {
   if (element == null || key == null) return null ;
 
@@ -377,6 +418,7 @@ String getElementAttributeRegExp(Element element, RegExp key) {
   return null ;
 }
 
+/// Returns [element] attribute with [String] [key].
 String getElementAttributeStr(Element element, String key) {
   if (element == null || key == null) return null ;
 
@@ -398,7 +440,7 @@ String getElementAttributeStr(Element element, String key) {
 }
 
 
-
+/// Clears selected text in vieport.
 void clearSelections() {
   var selection = window.getSelection() ;
 
@@ -407,8 +449,9 @@ void clearSelections() {
   }
 }
 
-String toHTML(Element e) {
-  return _toHTML_any(e) ;
+/// Converts [element] to HTML.
+String toHTML(Element element) {
+  return _toHTML_any(element) ;
 }
 
 String _toHTML_any(Element e) {
@@ -461,13 +504,11 @@ String _toHTML_innerHtml_Select(SelectElement e) {
 }
 
 
-
-////////////////////////////////////////////////////////////////////////////////
-
 typedef FunctionTest = bool Function() ;
 
-bool isInViewport(Element elem) {
-  var rect = elem.getBoundingClientRect();
+/// Returns [true] if [element] is visible in viewport.
+bool isInViewport(Element element) {
+  var rect = element.getBoundingClientRect();
 
   var windowWidth = min( window.innerWidth, document.documentElement.clientWidth ) ;
   var windowHeight = min( window.innerHeight, document.documentElement.clientHeight ) ;
@@ -475,10 +516,12 @@ bool isInViewport(Element elem) {
   return rect.bottom > 0 && rect.right > 0 && rect.left < windowWidth && rect.top < windowHeight ;
 }
 
+/// Returns [true] if device orientation is in Portrait mode.
 bool isOrientationInPortraitMode() {
   return !isOrientationInLandscapeMode() ;
 }
 
+/// Returns [true] if device orientation is in Landscape mode.
 bool isOrientationInLandscapeMode() {
   var orientation = window.orientation;
   if (orientation == null) return false ;
@@ -491,6 +534,7 @@ bool isOrientationInLandscapeMode() {
   }
 }
 
+/// Attaches [listener] to `orientationchange` event.
 bool onOrientationchange( EventListener listener ) {
   try {
     window.addEventListener('orientationchange', listener ) ;
@@ -503,10 +547,14 @@ bool onOrientationchange( EventListener listener ) {
   }
 }
 
+/// Returns [true] if [node] is in DOM tree.
 bool isNodeInDOM(Node node) {
   return document.body.contains(node) ;
 }
 
+/// Returns [true] if [element] is in DOM tree.
+///
+/// [element] Can be a [Node] or a [List] of [Node].
 bool isInDOM(dynamic element) {
   if (element == null) return false ;
 
@@ -524,18 +572,20 @@ bool isInDOM(dynamic element) {
   return false ;
 }
 
-
-bool nodeTreeContains( Node node , Node target ) {
-  return nodeTreeContainsAny( node , [target] ) ;
+/// Returns [true] if [rootNode] contains [target].
+bool nodeTreeContains( Node rootNode , Node target ) {
+  return nodeTreeContainsAny( rootNode , [target] ) ;
 }
 
-bool nodeTreeContainsAny( Node node , Iterable<Node> list ) {
+/// Returns [true] if [rootNode] contains any [Node] in [list].
+bool nodeTreeContainsAny( Node rootNode , Iterable<Node> list ) {
   if (list == null || list.isEmpty) return false ;
-  return list.firstWhere( (e) => e == node || node.contains(e) , orElse: () => null ) != null ;
+  return list.firstWhere( (e) => e == rootNode || rootNode.contains(e) , orElse: () => null ) != null ;
 }
 
-///////////////////////////
-
+/// Defines a new [CssStyleDeclaration] merging [currentCSS] and [appendCSS].
+///
+/// [defaultCSS] if [currentCSS] and [appendCSS] are [null].
 CssStyleDeclaration defineCSS(CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS, [dynamic defaultCSS]) {
   if (currentCSS == null) {
     return appendCSS ?? asCssStyleDeclaration(defaultCSS) ;
@@ -549,6 +599,7 @@ CssStyleDeclaration defineCSS(CssStyleDeclaration currentCSS, CssStyleDeclaratio
   }
 }
 
+/// Parses dynamic [css] as [CssStyleDeclaration].
 CssStyleDeclaration asCssStyleDeclaration(dynamic css) {
   if (css == null) return CssStyleDeclaration();
   if (css is CssStyleDeclaration) return css;
@@ -558,15 +609,21 @@ CssStyleDeclaration asCssStyleDeclaration(dynamic css) {
   throw StateError("Can't convert to CSS: $css") ;
 }
 
-bool hasCSS(CssStyleDeclaration css) {
-  if (css == null) return false ;
+/// Returns [true] if [CssStyleDeclaration] is empty.
+bool isCssEmpty(CssStyleDeclaration css) {
+  if (css == null) return true ;
   var cssText = css.cssText ;
-  if (cssText == null || cssText.trim().isEmpty) return false ;
-  return true ;
+  return cssText == null || cssText.trim().isEmpty ;
 }
 
+/// Returns [true] if [CssStyleDeclaration] is not empty.
+bool isCssNotEmpty(CssStyleDeclaration css) {
+  return !isCssEmpty(css) ;
+}
+
+/// Applies [css] to [element] and [extraElements] list if present.
 bool applyCSS(CssStyleDeclaration css, Element element, [List<Element> extraElements]) {
-  if ( !hasCSS(css) ) return false ;
+  if ( !isCssNotEmpty(css) ) return false ;
   
   var apply = _applyCSS(css, element) ;
 
@@ -589,8 +646,7 @@ bool _applyCSS(CssStyleDeclaration css, Element element) {
   return false ;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Returns [true] if [element] matches [attributes].
 bool elementMatchesAttributes(Element element, Map<String,dynamic> attributes) {
   for (var entry in attributes.entries) {
     if ( !elementMatchesAttribute(element, entry.key, entry.value) ) {
@@ -602,6 +658,7 @@ bool elementMatchesAttributes(Element element, Map<String,dynamic> attributes) {
 
 typedef MatchesValue = bool Function(String value) ;
 
+/// Returns [true] if [element] matches [attributeName] and [attributeValue].
 bool elementMatchesAttribute(Element element, String attributeName, dynamic attributeValue) {
   var value = element.getAttribute(attributeName) ;
   if ( value == attributeValue ) return true ;
@@ -620,21 +677,29 @@ bool elementMatchesAttribute(Element element, String attributeName, dynamic attr
   return false ;
 }
 
+/// Selects elements from DOM with [tag] and matches attribute.
+///
+/// [tag] Type of tag for selection.
+/// [matchAttributes] Attributes to match in selection.
 List<Element> getElementsWithAttributes(String tag, Map<String,dynamic> matchAttributes) {
   var tags = (document.getElementsByTagName(tag) ?? []).whereType<Element>() ;
   return tags.where( (e) => elementMatchesAttributes(e, matchAttributes) ).toList() ;
 }
 
+/// Returns a list of `meta` [Element] with [name].
 List<Element> getMetaTagsWithName(String name) {
   return getElementsWithAttributes('meta', {'name': name}) ?? [] ;
 }
 
+/// Returns a list of `meta` contet with [name].
 List<String> getMetaTagsContentWithName(String name) {
   var tags = getMetaTagsWithName(name);
   if (tags == null || tags.isEmpty) return [] ;
   return tags.map( (e) => e.getAttribute('content') ).toList() ;
 }
 
+/// Returns [true] if `meta` tag of name `apple-mobile-web-app-status-bar-style`
+/// is `translucent`.
 bool isMobileAppStatusBarTranslucent() {
   var metaTagsContents = getMetaTagsContentWithName('apple-mobile-web-app-status-bar-style') ;
   if (metaTagsContents == null || metaTagsContents.isEmpty) return false ;

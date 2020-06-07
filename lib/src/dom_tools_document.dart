@@ -8,7 +8,6 @@ import 'package:swiss_knife/swiss_knife.dart';
 import 'dom_tools_base.dart';
 import 'dom_tools_css.dart';
 
-////////////////////////////////////////////////////////////////////////////////
 
 const CODE_THEME_0 = {
   'comment': TextStyle(color: StyleColor(0xffd4d0ab)),
@@ -128,8 +127,11 @@ const CODE_THEME_2 = {
 
 final CSSThemeSet CODE_THEME = CSSThemeSet('hljs-', [CODE_THEME_0, CODE_THEME_1, CODE_THEME_2], 2) ;
 
-////////////////////////////////////////////////////////////////////////////////
-
+/// Converts [code] to a highlighted HTML version.
+///
+/// [code] The code to parse and highlight.
+/// [language] The language of the code. If null will try to detect automatically.
+/// [normalize] If [true] normalizes ident, skipping common/global ident from code.
 String codeToHighlightHtml( String code, { String language, bool normalize = true } ) {
   if ( normalize != null && normalize ) code = normalizeIdent(code) ;
 
@@ -146,7 +148,10 @@ String codeToHighlightHtml( String code, { String language, bool normalize = tru
   return result != null ? result.toHtml() : null ;
 }
 
-
+/// Normalizes a ident, removing the common/global ident of the code.
+///
+/// Useful to remove ident caused due declaration inside a multiline String
+/// with it's own indentation.
 String normalizeIdent(String text) {
   if (text == null || text.isEmpty) return text ;
 
@@ -184,12 +189,20 @@ String normalizeIdent(String text) {
   return textNorm ;
 }
 
+/// Converts a [markdown] document into a HTML in a div node.
+///
+/// [markdown] The markdown document.
+/// [normalize] If [true] normalizes ident.
 DivElement markdownToDiv( String markdown, { bool normalize = true , Iterable<mk.BlockSyntax> blockSyntaxes, Iterable<mk.InlineSyntax> inlineSyntaxes, mk.ExtensionSet extensionSet, mk.Resolver linkResolver, mk.Resolver imageLinkResolver, bool inlineOnly = false } ) {
   if ( markdown == null || markdown.isEmpty ) return createDivInline() ;
   var html = markdownToHtml(markdown, blockSyntaxes: blockSyntaxes, inlineSyntaxes: inlineSyntaxes, extensionSet: extensionSet, linkResolver: linkResolver, imageLinkResolver: imageLinkResolver, inlineOnly: inlineOnly);
   return createDivInline(html) ;
 }
 
+/// Converts a [markdown] document into a HTML.
+///
+/// [markdown] The markdown document.
+/// [normalize] If [true] normalizes ident.
 String markdownToHtml( String markdown, { bool normalize = true , Iterable<mk.BlockSyntax> blockSyntaxes, Iterable<mk.InlineSyntax> inlineSyntaxes, mk.ExtensionSet extensionSet, mk.Resolver linkResolver, mk.Resolver imageLinkResolver, bool inlineOnly = false } ) {
   if ( markdown == null || markdown.isEmpty ) return '';
   if ( normalize != null && normalize ) markdown = normalizeIdent(markdown) ;
