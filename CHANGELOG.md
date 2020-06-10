@@ -1,3 +1,8 @@
+## 1.3.2
+
+- Removed dependency `highlight`: reduce generated code, files and Browser time to load code.
+- Removed codeToHighlightHtml()
+
 ## 1.3.1
 
 - Added example.

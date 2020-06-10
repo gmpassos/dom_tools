@@ -1,6 +1,5 @@
 import 'dart:html';
 
-import 'package:highlight/highlight.dart';
 import 'package:markdown/markdown.dart' as mk;
 import 'package:swiss_knife/swiss_knife.dart';
 
@@ -136,27 +135,6 @@ const CODE_THEME_2 = {
 
 final CSSThemeSet CODE_THEME =
     CSSThemeSet('hljs-', [CODE_THEME_0, CODE_THEME_1, CODE_THEME_2], 2);
-
-/// Converts [code] to a highlighted HTML version.
-///
-/// [code] The code to parse and highlight.
-/// [language] The language of the code. If null will try to detect automatically.
-/// [normalize] If [true] normalizes ident, skipping common/global ident from code.
-String codeToHighlightHtml(String code,
-    {String language, bool normalize = true}) {
-  if (normalize != null && normalize) code = normalizeIdent(code);
-
-  var result;
-  if (language == null || language.isEmpty) {
-    result = highlight.parse(code, autoDetection: true);
-  } else {
-    result = highlight.parse(code, language: language);
-  }
-
-  CODE_THEME.ensureThemeLoaded();
-
-  return result != null ? result.toHtml() : null;
-}
 
 /// Normalizes a ident, removing the common/global ident of the code.
 ///
