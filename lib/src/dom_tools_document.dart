@@ -202,6 +202,12 @@ String normalizeIdent(String text) {
 
 /// Converts a [markdown] document into a HTML in a div node.
 ///
+/// Links are extended to accept attributes:
+///
+/// ```markdown
+///   [Go to Google](https://www.google.com/){:target="_blank"}
+/// ```
+///
 /// [markdown] The markdown document.
 /// [normalize] If [true] normalizes ident.
 DivElement markdownToDiv(String markdown,
@@ -223,7 +229,7 @@ DivElement markdownToDiv(String markdown,
   return createDivInline(html);
 }
 
-/// Converts a [markdown] document into a HTML.
+/// Converts a [markdown] document into a HTML string.
 ///
 /// [markdown] The markdown document.
 /// [normalize] If [true] normalizes ident.
