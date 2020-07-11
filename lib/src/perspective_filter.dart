@@ -391,6 +391,13 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
 
     if (imageWithPerspective == null) {
       var imageScaled = getImageScaled(scale);
+      var imageScaledDim = getImageDimension(imageScaled);
+      if (imageScaledDim == null ||
+          imageScaledDim.width == 0 ||
+          imageScaledDim.height == 0) {
+        getImageScaled(scale);
+      }
+
       var perspective = scalePoints(points, scale);
 
       imageWithPerspective = applyPerspective(imageScaled, perspective);

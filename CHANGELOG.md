@@ -1,3 +1,18 @@
+## 1.3.3
+
+- Added: `getElementTagName, detectTouchDevice, addCSSCode`
+- Added `contenteditable` to allowed `_HTML_BASIC_ATTRS`.
+- Added Color: `GREY, GREY_LIGHT, GREY_LIGHTER, GREY_DARK, GREY_DARKER`.
+- Added Color: `alphaRatio, hasAlpha, withAlphaRatio`.
+- CanvasImageViewer with labels and hints. 
+- CanvasImageViewer: added `EditionType`: `RECTANGLES, LABELS`.
+- Fix `createHTML` for table tags. 
+- Fix `addJavaScriptCode` cache.
+- Fix `getImageWithPerspective` when image dimension can't be defined.
+- dartfmt.
+- swiss_knife: ^2.5.4
+- markdown: ^2.1.3
+
 ## 1.3.2
 
 - Removed dependency `highlight`: reduce generated code, files and Browser time to load code.

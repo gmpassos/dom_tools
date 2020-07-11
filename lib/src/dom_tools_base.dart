@@ -150,25 +150,64 @@ LabelElement createLabel([String html]) {
   return label;
 }
 
+/// Returns the [node] tag name.
+/// Returns null if [node] is not an [Element].
+String getElementTagName(Node node) =>
+    node != null && node is Element ? node.tagName.toLowerCase() : null;
+
+final RegExp _REGEXP_DEPENDENT_TAG =
+    RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
+
 /// Creates a HTML [Element]. Returns 1st node form parsed HTML.
 Element createHTML([String html]) {
-  var div = createDiv(true, html);
-  if (div.childNodes.isEmpty) return div;
+  var dependentTagMatch = _REGEXP_DEPENDENT_TAG.firstMatch(html);
 
-  var childNode =
-      div.childNodes.firstWhere((e) => e is Element, orElse: () => null);
+  if (dependentTagMatch != null) {
+    var dependentTagName = dependentTagMatch.group(1).toLowerCase();
 
-  return childNode;
+    DivElement div;
+    if (dependentTagName == 'td' || dependentTagName == 'th') {
+      div = createDiv(true, '<table><tbody><tr>\n$html\n</tr></tbody></table>');
+    } else if (dependentTagName == 'tr') {
+      div = createDiv(true, '<table><tbody>\n$html\n</tbody></table>');
+    } else if (dependentTagName == 'tbody' ||
+        dependentTagName == 'thead' ||
+        dependentTagName == 'tfoot') {
+      div = createDiv(true, '<table>\n$html\n</table>');
+    } else {
+      throw StateError("Can't handle dependent tag: $dependentTagName");
+    }
+
+    var childNode = div.querySelector(dependentTagName);
+    return childNode;
+  } else {
+    var div = createDiv(true, html);
+    if (div.childNodes.isEmpty) return div;
+
+    var childNode =
+        div.childNodes.firstWhere((e) => e is Element, orElse: () => null);
+
+    return childNode;
+  }
 }
 
-const _HTML_BASIC_ATTRS = ['style', 'capture', 'type', 'src', 'href', 'target'];
+const _HTML_BASIC_ATTRS = [
+  'style',
+  'capture',
+  'type',
+  'src',
+  'href',
+  'target',
+  'contenteditable'
+];
 
 const _HTML_CONTROL_ATTRS = [
   'data-toggle',
   'data-target',
   'aria-controls',
   'aria-expanded',
-  'aria-label'
+  'aria-label',
+  'aria-current'
 ];
 
 const _HTML_EXTENDED_ATTRS = [
@@ -721,4 +760,54 @@ bool isMobileAppStatusBarTranslucent() {
   if (metaTagsContents == null || metaTagsContents.isEmpty) return false;
   var metaStatusContent = metaTagsContents[0];
   return metaStatusContent.contains('translucent');
+}
+
+enum TouchDeviceDetection {
+  UNKNOWN,
+  NONE,
+  MAYBE,
+  DETECTED,
+}
+
+TouchDeviceDetection _detectTouchDevice;
+
+List<StreamSubscription<TouchEvent>> _detectTouchDeviceListen = [];
+
+final EventStream<TouchDeviceDetection> onDetectTouchDevice = EventStream();
+
+TouchDeviceDetection detectTouchDevice() {
+  if (_detectTouchDevice == null) {
+    _detectTouchDevice = TouchDeviceDetection.UNKNOWN;
+
+    try {
+      _detectTouchDeviceListen
+          .add(document.body.onTouchStart.listen(_onTouchEvent));
+      _detectTouchDeviceListen
+          .add(document.body.onTouchEnd.listen(_onTouchEvent));
+      _detectTouchDeviceListen
+          .add(document.body.onTouchMove.listen(_onTouchEvent));
+
+      _detectTouchDevice = TouchDeviceDetection.MAYBE;
+    } catch (e) {
+      _detectTouchDevice = TouchDeviceDetection.NONE;
+      onDetectTouchDevice.add(TouchDeviceDetection.NONE);
+    }
+  }
+
+  return _detectTouchDevice;
+}
+
+void _onTouchEvent(event) {
+  for (var listen in _detectTouchDeviceListen) {
+    try {
+      listen.cancel();
+    // ignore: empty_catches
+    } catch (e) {}
+  }
+  _detectTouchDeviceListen = [];
+
+  _detectTouchDeviceListen = null;
+  _detectTouchDevice = TouchDeviceDetection.DETECTED;
+
+  onDetectTouchDevice.add(TouchDeviceDetection.DETECTED);
 }

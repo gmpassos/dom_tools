@@ -5,6 +5,35 @@ import 'package:dom_tools/dom_tools.dart';
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
+Map<String, Future<bool>> _addedCSSCodes = {};
+
+/// Adds a CSS code ([cssCode]) into DOM.
+Future<bool> addCSSCode(String cssCode) async {
+  var prevCall = _addedCSSCodes[cssCode];
+  if (prevCall != null) return prevCall;
+
+  Future<bool> future;
+
+  try {
+    HeadElement head = querySelector('head');
+
+    var styleElement = StyleElement();
+    styleElement.innerHtml = cssCode;
+
+    head.append(styleElement);
+
+    future = Future.value(true);
+  } catch (e, s) {
+    print(e);
+    print(s);
+    future = Future.value(false);
+  }
+
+  _addedCSSCodes[cssCode] = future;
+
+  return future;
+}
+
 Map<String, Future<bool>> _addedCssSources = {};
 
 /// Add a CSS path using a `link` element into `head` DOM node.

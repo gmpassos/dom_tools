@@ -30,7 +30,7 @@ Future<bool> addJavaScriptCode(String scriptCode) async {
     future = Future.value(false);
   }
 
-  _addedJavaScriptsSources[scriptCode] = future;
+  _addedJavaScriptCodes[scriptCode] = future;
 
   return future;
 }
@@ -107,7 +107,8 @@ Future<bool> addJSFunction(String name, List<String> parameters, String body) {
 
 /// Call `eval()` with the content of [scriptCode] and returns the result.
 dynamic evalJS(String scriptCode) {
-  context.callMethod('eval', [scriptCode]);
+  var res = context.callMethod('eval', [scriptCode]);
+  return res;
 }
 
 typedef MappedFunction = void Function(dynamic o);
