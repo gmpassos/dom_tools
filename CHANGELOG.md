@@ -1,3 +1,10 @@
+## 1.3.4
+
+- Added `setElementValue`, `getElementValue`.
+- Added `isElementWithSRC`, `setElementSRC`, `isElementWithHREF`, `setElementHREF`.
+- Added `downloadContent`.
+- swiss_knife: ^2.5.5
+
 ## 1.3.3
 
 - Added: `getElementTagName, detectTouchDevice, addCSSCode`

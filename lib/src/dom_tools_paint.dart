@@ -557,7 +557,7 @@ class ViewerElement<T> {
 
   String key;
 
-  bool get isEmpty => isEmptyValue(_value);
+  bool get isEmpty => isEmptyObject(_value);
 
   bool get isNotEmpty => !isEmpty;
 
