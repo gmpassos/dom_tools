@@ -242,19 +242,19 @@ String markdownToHtml(String markdown,
 
 /// Downloads [content] of type [mimeType], saving a file with [fileName].
 void downloadContent(List<String> content, MimeType mimeType, String fileName) {
-  var blob = Blob(content, mimeType.toString()) ;
+  var blob = Blob(content, mimeType.toString());
 
-  var fileLink = AnchorElement() ;
-  fileLink.style.display = 'none' ;
+  var fileLink = AnchorElement();
+  fileLink.style.display = 'none';
 
-  if ( isNotEmptyObject(fileName) ) fileLink.download = fileName ;
-  fileLink.href = Url.createObjectUrlFromBlob(blob) ;
+  if (isNotEmptyObject(fileName)) fileLink.download = fileName;
+  fileLink.href = Url.createObjectUrlFromBlob(blob);
 
   fileLink.onClick.listen((event) {
     fileLink.remove();
   });
 
-  document.body.append( fileLink ) ;
+  document.body.append(fileLink);
 
-  fileLink.click() ;
+  fileLink.click();
 }

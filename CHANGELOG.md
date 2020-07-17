@@ -1,3 +1,8 @@
+## 1.3.5
+
+- dartfmt.
+- swiss_knife: ^2.5.6
+
 ## 1.3.4
 
 - Added `setElementValue`, `getElementValue`.

@@ -9,65 +9,52 @@ import 'package:swiss_knife/swiss_knife.dart';
 /// If the resolved value is null or empty, and def is not null,
 /// it will return [def].
 String getElementValue(Element element, [String def]) {
-  if (element == null) return def ;
+  if (element == null) return def;
 
-  String value ;
+  String value;
 
   if (element is InputElement) {
-    value = element.value ;
-  }
-  else if (element is CanvasImageSource) {
-    value = getElementSRC(element) ;
-  }
-  else if (element is CheckboxInputElement) {
-    value = element.checked ? 'true' : 'false' ;
-  }
-  else if (element is TextAreaElement) {
-    value = element.value ;
-  }
-  else if ( isElementWithSRC(element) ) {
-    value = getElementSRC(element) ;
-  }
-  else if ( isElementWithHREF(element) ) {
-    value = getElementHREF(element) ;
-  }
-  else {
-    value = element.text ;
+    value = element.value;
+  } else if (element is CanvasImageSource) {
+    value = getElementSRC(element);
+  } else if (element is CheckboxInputElement) {
+    value = element.checked ? 'true' : 'false';
+  } else if (element is TextAreaElement) {
+    value = element.value;
+  } else if (isElementWithSRC(element)) {
+    value = getElementSRC(element);
+  } else if (isElementWithHREF(element)) {
+    value = getElementHREF(element);
+  } else {
+    value = element.text;
   }
 
-  return def != null && isEmptyObject(value) ? def : value ;
+  return def != null && isEmptyObject(value) ? def : value;
 }
 
 /// Sets the [element] [value] depending of the identified type.
 bool setElementValue(Element element, String value) {
-  if (element == null) return false ;
+  if (element == null) return false;
 
   if (element is InputElement) {
-    element.value = value ;
-    return true ;
+    element.value = value;
+    return true;
+  } else if (element is CanvasImageSource) {
+    return setElementSRC(element, value);
+  } else if (element is CheckboxInputElement) {
+    element.checked = parseBool(value);
+    return true;
+  } else if (element is TextAreaElement) {
+    element.value = value;
+    return true;
+  } else if (isElementWithSRC(element)) {
+    return setElementSRC(element, value);
+  } else if (isElementWithHREF(element)) {
+    return setElementHREF(element, value);
+  } else {
+    element.text = value;
+    return true;
   }
-  else if (element is CanvasImageSource) {
-    return setElementSRC(element, value) ;
-  }
-  else if (element is CheckboxInputElement) {
-    element.checked = parseBool(value) ;
-    return true ;
-  }
-  else if (element is TextAreaElement) {
-    element.value = value ;
-    return true ;
-  }
-  else if ( isElementWithSRC(element) ) {
-    return setElementSRC(element, value) ;
-  }
-  else if ( isElementWithHREF(element) ) {
-    return setElementHREF(element, value) ;
-  }
-  else {
-    element.text = value ;
-    return true ;
-  }
-
 }
 
 /// Returns a value from an [Element].
@@ -105,20 +92,17 @@ String getElementHREF(Element element) {
 /// Sets [element] [href] depending of the identified type.
 bool setElementHREF(Element element, String href) {
   if (element is LinkElement) {
-    element.href = href ;
-    return true ;
-  }
-  else if (element is AnchorElement) {
-    element.href = href ;
-    return true ;
-  }
-  else if (element is BaseElement) {
-    element.href = href ;
-    return true ;
-  }
-  else if (element is AreaElement) {
-    element.href = href ;
-    return true ;
+    element.href = href;
+    return true;
+  } else if (element is AnchorElement) {
+    element.href = href;
+    return true;
+  } else if (element is BaseElement) {
+    element.href = href;
+    return true;
+  } else if (element is AreaElement) {
+    element.href = href;
+    return true;
   }
 
   return false;
@@ -152,66 +136,56 @@ String getElementSRC(Element element) {
   return null;
 }
 
-
 /// Sets the [element] [src] depending of the identified type.
 bool setElementSRC(Element element, String src) {
-  if (element == null) return false ;
+  if (element == null) return false;
 
   if (element is ImageElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is ScriptElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is InputElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is MediaElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is EmbedElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is IFrameElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is SourceElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is TrackElement) {
-    element.src = src ;
-    return true ;
-  }
-  else if (element is ImageButtonInputElement) {
-    element.src = src ;
-    return true ;
-  }
-  else {
-    return false ;
+    element.src = src;
+    return true;
+  } else if (element is ScriptElement) {
+    element.src = src;
+    return true;
+  } else if (element is InputElement) {
+    element.src = src;
+    return true;
+  } else if (element is MediaElement) {
+    element.src = src;
+    return true;
+  } else if (element is EmbedElement) {
+    element.src = src;
+    return true;
+  } else if (element is IFrameElement) {
+    element.src = src;
+    return true;
+  } else if (element is SourceElement) {
+    element.src = src;
+    return true;
+  } else if (element is TrackElement) {
+    element.src = src;
+    return true;
+  } else if (element is ImageButtonInputElement) {
+    element.src = src;
+    return true;
+  } else {
+    return false;
   }
 }
 
 /// Returns [true] if [element] type can have `src` attribute.
 bool isElementWithSRC(Element element) {
-  if (element is ImageElement) return true ;
-  if (element is ScriptElement) return true ;
-  if (element is InputElement) return true ;
+  if (element is ImageElement) return true;
+  if (element is ScriptElement) return true;
+  if (element is InputElement) return true;
 
-  if (element is MediaElement) return true ;
-  if (element is EmbedElement) return true ;
+  if (element is MediaElement) return true;
+  if (element is EmbedElement) return true;
 
-  if (element is IFrameElement) return true ;
-  if (element is SourceElement) return true ;
-  if (element is TrackElement) return true ;
+  if (element is IFrameElement) return true;
+  if (element is SourceElement) return true;
+  if (element is TrackElement) return true;
 
-  if (element is ImageButtonInputElement) return true ;
+  if (element is ImageButtonInputElement) return true;
 
   return false;
 }
@@ -963,7 +937,7 @@ void _onTouchEvent(event) {
   for (var listen in _detectTouchDeviceListen) {
     try {
       listen.cancel();
-    // ignore: empty_catches
+      // ignore: empty_catches
     } catch (e) {}
   }
   _detectTouchDeviceListen = [];
