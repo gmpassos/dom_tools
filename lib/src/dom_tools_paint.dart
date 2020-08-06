@@ -326,17 +326,17 @@ class HSVColor {
   /// This constructor does not necessarily round-trip with [toColor] because
   /// of floating point imprecision.
   factory HSVColor.fromColor(Color color) {
-    final double red = color.red / 0xFF;
-    final double green = color.green / 0xFF;
-    final double blue = color.blue / 0xFF;
+    var red = color.red / 0xFF;
+    var green = color.green / 0xFF;
+    var blue = color.blue / 0xFF;
 
-    final double max = math.max(red, math.max(green, blue));
-    final double min = math.min(red, math.min(green, blue));
-    final double delta = max - min;
+    var max = math.max(red, math.max(green, blue));
+    var min = math.min(red, math.min(green, blue));
+    var delta = max - min;
 
-    final double alpha = color.alpha / 0xFF;
-    final double hue = _getHue(red, green, blue, max, delta);
-    final double saturation = max == 0.0 ? 0.0 : delta / max;
+    var alpha = color.alpha / 0xFF;
+    var hue = _getHue(red, green, blue, max, delta);
+    var saturation = max == 0.0 ? 0.0 : delta / max;
 
     return HSVColor.fromAHSV(alpha, hue, saturation, max);
   }
@@ -389,10 +389,9 @@ class HSVColor {
 
   /// Returns this color in RGB.
   Color toColor() {
-    final double chroma = saturation * value;
-    final double secondary =
-        chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
-    final double match = value - chroma;
+    var chroma = saturation * value;
+    var secondary = chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
+    var match = value - chroma;
 
     return _colorFromHue(alpha, hue, chroma, secondary, match);
   }
@@ -495,19 +494,19 @@ class HSLColor {
   /// This constructor does not necessarily round-trip with [toColor] because
   /// of floating point imprecision.
   factory HSLColor.fromColor(Color color) {
-    final double red = color.red / 0xFF;
-    final double green = color.green / 0xFF;
-    final double blue = color.blue / 0xFF;
+    var red = color.red / 0xFF;
+    var green = color.green / 0xFF;
+    var blue = color.blue / 0xFF;
 
-    final double max = math.max(red, math.max(green, blue));
-    final double min = math.min(red, math.min(green, blue));
-    final double delta = max - min;
+    var max = math.max(red, math.max(green, blue));
+    var min = math.min(red, math.min(green, blue));
+    var delta = max - min;
 
-    final double alpha = color.alpha / 0xFF;
-    final double hue = _getHue(red, green, blue, max, delta);
-    final double lightness = (max + min) / 2.0;
+    var alpha = color.alpha / 0xFF;
+    var hue = _getHue(red, green, blue, max, delta);
+    var lightness = (max + min) / 2.0;
     // Saturation can exceed 1.0 with rounding errors, so clamp it.
-    final double saturation = lightness == 1.0
+    var saturation = lightness == 1.0
         ? 0.0
         : ((delta / (1.0 - (2.0 * lightness - 1.0).abs())).clamp(0.0, 1.0)
             as double);
@@ -564,10 +563,9 @@ class HSLColor {
 
   /// Returns this HSL color in RGB.
   Color toColor() {
-    final double chroma = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
-    final double secondary =
-        chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
-    final double match = lightness - chroma / 2.0;
+    var chroma = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
+    var secondary = chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
+    var match = lightness - chroma / 2.0;
 
     return _colorFromHue(alpha, hue, chroma, secondary, match);
   }
