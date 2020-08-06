@@ -1,3 +1,13 @@
+## 1.3.6
+
+- Added `HSLColor` and `HSVColor` class.
+- Added `animateCSS`: for animation/transition of CSS properties.
+- Touch helpers: `detectTouchDevice`, `touchEventToMouseEvent`, `redirect_onTouchStart_to_MouseEvent`, `redirect_onTouchMove_to_MouseEvent`, `redirect_onTouchEnd_to_MouseEvent`.
+- Renamed abstract class `CSSValue` to `CSSValueBase`.
+- Fix `Color.parse` for `r,g,b` parameters.
+- Fix `getImageDimension`, to avoid `NaN` for `0` width or height. 
+- swiss_knife: ^2.5.8 
+
 ## 1.3.5
 
 - dartfmt.

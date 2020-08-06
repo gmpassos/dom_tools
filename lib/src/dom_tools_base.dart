@@ -340,14 +340,20 @@ const _HTML_BASIC_ATTRS = [
 const _HTML_CONTROL_ATTRS = [
   'data-toggle',
   'data-target',
+  'data-dismiss',
   'aria-controls',
   'aria-expanded',
   'aria-label',
-  'aria-current'
+  'aria-current',
+  'aria-hidden',
+  'role',
+
 ];
 
 const _HTML_EXTENDED_ATTRS = [
   'field',
+  'field_value',
+  'element_value',
   'navigate',
   'action',
   'uilayout',
@@ -896,54 +902,4 @@ bool isMobileAppStatusBarTranslucent() {
   if (metaTagsContents == null || metaTagsContents.isEmpty) return false;
   var metaStatusContent = metaTagsContents[0];
   return metaStatusContent.contains('translucent');
-}
-
-enum TouchDeviceDetection {
-  UNKNOWN,
-  NONE,
-  MAYBE,
-  DETECTED,
-}
-
-TouchDeviceDetection _detectTouchDevice;
-
-List<StreamSubscription<TouchEvent>> _detectTouchDeviceListen = [];
-
-final EventStream<TouchDeviceDetection> onDetectTouchDevice = EventStream();
-
-TouchDeviceDetection detectTouchDevice() {
-  if (_detectTouchDevice == null) {
-    _detectTouchDevice = TouchDeviceDetection.UNKNOWN;
-
-    try {
-      _detectTouchDeviceListen
-          .add(document.body.onTouchStart.listen(_onTouchEvent));
-      _detectTouchDeviceListen
-          .add(document.body.onTouchEnd.listen(_onTouchEvent));
-      _detectTouchDeviceListen
-          .add(document.body.onTouchMove.listen(_onTouchEvent));
-
-      _detectTouchDevice = TouchDeviceDetection.MAYBE;
-    } catch (e) {
-      _detectTouchDevice = TouchDeviceDetection.NONE;
-      onDetectTouchDevice.add(TouchDeviceDetection.NONE);
-    }
-  }
-
-  return _detectTouchDevice;
-}
-
-void _onTouchEvent(event) {
-  for (var listen in _detectTouchDeviceListen) {
-    try {
-      listen.cancel();
-      // ignore: empty_catches
-    } catch (e) {}
-  }
-  _detectTouchDeviceListen = [];
-
-  _detectTouchDeviceListen = null;
-  _detectTouchDevice = TouchDeviceDetection.DETECTED;
-
-  onDetectTouchDevice.add(TouchDeviceDetection.DETECTED);
 }

@@ -173,7 +173,7 @@ class StyleColor {
 }
 
 /// Specifies a CSS text style.
-class TextStyle implements CSSValue {
+class TextStyle implements CSSValueBase {
   final StyleColor color;
 
   final StyleColor backgroundColor;
@@ -220,7 +220,7 @@ class TextStyle implements CSSValue {
   }
 }
 
-abstract class CSSValue {
+abstract class CSSValueBase {
   String cssValue();
 }
 
@@ -230,7 +230,7 @@ Map<String, Map<dynamic, bool>> _loadedThemesByPrefix = {};
 ///
 /// [cssClassPrefix] Prefix for each class in [css] Map.
 /// [css] Map of CSS classes.
-void loadCSS(String cssClassPrefix, Map<String, CSSValue> css) {
+void loadCSS(String cssClassPrefix, Map<String, CSSValueBase> css) {
   cssClassPrefix ??= '';
 
   var _loadedThemes = _loadedThemesByPrefix[cssClassPrefix];
@@ -268,13 +268,13 @@ void loadCSS(String cssClassPrefix, Map<String, CSSValue> css) {
 class CSSThemeSet {
   final String cssPrefix;
 
-  final List<Map<String, CSSValue>> _themes;
+  final List<Map<String, CSSValueBase>> _themes;
 
   final int defaultThemeIndex;
 
   CSSThemeSet(this.cssPrefix, this._themes, [this.defaultThemeIndex = 0]);
 
-  Map<String, CSSValue> getCSSTheme(int themeIndex) {
+  Map<String, CSSValueBase> getCSSTheme(int themeIndex) {
     if (_themes == null || _themes.isEmpty) return null;
     return themeIndex >= 0 && themeIndex < _themes.length
         ? _themes[themeIndex]
@@ -300,7 +300,7 @@ class CSSThemeSet {
   bool get loadedTheme => _loadedTheme;
 
   /// Loads [css] into DOM.
-  void loadCSSTheme(Map<String, CSSValue> css) {
+  void loadCSSTheme(Map<String, CSSValueBase> css) {
     loadCSS(cssPrefix, css);
     _loadedTheme = true;
   }
@@ -311,4 +311,96 @@ class CSSThemeSet {
       loadTheme(defaultThemeIndex);
     }
   }
+}
+
+typedef AnimationCallback = void Function();
+
+/// Changes CSS properties ([cssProperties]) of [elements] using
+/// animation (CSS transition).
+///
+/// [duration] Time duration of the animation/transition. Default: 1s.
+/// [timingFunction] Type of speed curve function (linear, ease, ease-in, ease-out, ease-in-out, step-start, step-end). Default: `ease`.
+/// [finalizeInterval] Time after CSS transition to set [finalProperties]. Default: 100ms
+/// [rollbackProperties] Properties to rollback, to values before start of transition.
+/// [finalProperties] The final properties to set after transition.
+/// [callback] Callback to be called after transition and set of [finalProperties].
+void animateCSS(Iterable<Element> elements, Map<String, String> cssProperties,
+    Duration duration,
+    {String timingFunction,
+    Duration finalizeInterval,
+    Set<String> rollbackProperties,
+    Map<String, String> finalProperties,
+    AnimationCallback callback}) {
+  if (elements == null || cssProperties == null) return;
+
+  elements = List.from(elements.where((e) => e != null));
+
+  if (elements.isEmpty || cssProperties.isEmpty) return;
+
+  duration ??= Duration(seconds: 1);
+  timingFunction ??= 'ease';
+  rollbackProperties ??= {};
+  finalProperties ??= {};
+
+  rollbackProperties.removeWhere((p) => !cssProperties.containsKey(p));
+
+  var durationMs = duration.inMilliseconds;
+
+  var prevTransitions =
+      Map.fromEntries(elements.map((e) => MapEntry(e, e.style.transition)));
+
+  elements.forEach(
+      (e) => e.style.transition = 'all ${durationMs}ms $timingFunction');
+
+  var prevValues = <Element, Map<String, String>>{};
+  var setValues = <Element, Map<String, String>>{};
+
+  for (var entry in cssProperties.entries) {
+    var key = entry.key;
+
+    for (var element in elements) {
+      var prevVal = element.style.getPropertyValue(key);
+      element.style.setProperty(key, entry.value);
+
+      if (rollbackProperties.contains(key)) {
+        prevValues[element] ??= {};
+        prevValues[element][key] = prevVal;
+
+        setValues[element] ??= {};
+        setValues[element][key] = element.style.getPropertyValue(key);
+      }
+    }
+  }
+
+  var interval =
+      finalizeInterval != null ? finalizeInterval.inMilliseconds : 100;
+
+  Future.delayed(Duration(milliseconds: durationMs + interval), () {
+    for (var key in rollbackProperties) {
+      for (var element in elements) {
+        var setVal = element.style.getPropertyValue(key);
+        if (setVal == setValues[element][key]) {
+          var prevValue = prevValues[element][key];
+          element.style.setProperty(key, prevValue);
+        }
+      }
+    }
+
+    for (var element in elements) {
+      for (var entry in finalProperties.entries) {
+        element.style.setProperty(entry.key, entry.value);
+      }
+      var prevTransition = prevTransitions[element];
+      element.style.transition = prevTransition;
+
+      print(element.outerHtml);
+    }
+
+    try {
+      callback();
+    } catch (e, s) {
+      print(e);
+      print(s);
+    }
+  });
 }
