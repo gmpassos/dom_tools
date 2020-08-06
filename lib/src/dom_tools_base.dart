@@ -347,7 +347,6 @@ const _HTML_CONTROL_ATTRS = [
   'aria-current',
   'aria-hidden',
   'role',
-
 ];
 
 const _HTML_EXTENDED_ATTRS = [

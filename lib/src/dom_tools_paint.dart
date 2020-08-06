@@ -279,7 +279,6 @@ class Color {
   String toHex() => '#${value.toRadixString(16).padLeft(8, '0')}';
 }
 
-
 /// A color represented using [alpha], [hue], [saturation], and [value].
 ///
 /// An [HSVColor] is represented in a parameter space that's based on human
@@ -391,7 +390,8 @@ class HSVColor {
   /// Returns this color in RGB.
   Color toColor() {
     final double chroma = saturation * value;
-    final double secondary = chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
+    final double secondary =
+        chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
     final double match = value - chroma;
 
     return _colorFromHue(alpha, hue, chroma, secondary, match);
@@ -419,12 +419,9 @@ class HSVColor {
   /// Values outside of the valid range for each channel will be clamped.
   static HSVColor lerp(HSVColor a, HSVColor b, double t) {
     assert(t != null);
-    if (a == null && b == null)
-      return null;
-    if (a == null)
-      return b._scaleAlpha(t);
-    if (b == null)
-      return a._scaleAlpha(1.0 - t);
+    if (a == null && b == null) return null;
+    if (a == null) return b._scaleAlpha(t);
+    if (b == null) return a._scaleAlpha(1.0 - t);
     return HSVColor.fromAHSV(
       lerpDouble(a.alpha, b.alpha, t).clamp(0.0, 1.0) as double,
       lerpDouble(a.hue, b.hue, t) % 360.0,
@@ -435,20 +432,20 @@ class HSVColor {
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other))
-      return true;
-    return other is HSVColor
-        && other.alpha == alpha
-        && other.hue == hue
-        && other.saturation == saturation
-        && other.value == value;
+    if (identical(this, other)) return true;
+    return other is HSVColor &&
+        other.alpha == alpha &&
+        other.hue == hue &&
+        other.saturation == saturation &&
+        other.value == value;
   }
 
   @override
   int get hashCode => deepHashCodeList([alpha, hue, saturation, value]);
 
   @override
-  String toString() => 'HSVColor($hue, ${ saturation * 100 }, ${ value * 100 }, $alpha)';
+  String toString() =>
+      'HSVColor($hue, ${saturation * 100}, ${value * 100}, $alpha)';
 }
 
 /// A color represented using [alpha], [hue], [saturation], and [lightness].
@@ -512,7 +509,8 @@ class HSLColor {
     // Saturation can exceed 1.0 with rounding errors, so clamp it.
     final double saturation = lightness == 1.0
         ? 0.0
-        : ((delta / (1.0 - (2.0 * lightness - 1.0).abs())).clamp(0.0, 1.0) as double);
+        : ((delta / (1.0 - (2.0 * lightness - 1.0).abs())).clamp(0.0, 1.0)
+            as double);
     return HSLColor.fromAHSL(alpha, hue, saturation, lightness);
   }
 
@@ -567,7 +565,8 @@ class HSLColor {
   /// Returns this HSL color in RGB.
   Color toColor() {
     final double chroma = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
-    final double secondary = chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
+    final double secondary =
+        chroma * (1.0 - (((hue / 60.0) % 2.0) - 1.0).abs());
     final double match = lightness - chroma / 2.0;
 
     return _colorFromHue(alpha, hue, chroma, secondary, match);
@@ -605,12 +604,9 @@ class HSLColor {
   /// an [AnimationController].
   static HSLColor lerp(HSLColor a, HSLColor b, double t) {
     assert(t != null);
-    if (a == null && b == null)
-      return null;
-    if (a == null)
-      return b._scaleAlpha(t);
-    if (b == null)
-      return a._scaleAlpha(1.0 - t);
+    if (a == null && b == null) return null;
+    if (a == null) return b._scaleAlpha(t);
+    if (b == null) return a._scaleAlpha(1.0 - t);
     return HSLColor.fromAHSL(
       lerpDouble(a.alpha, b.alpha, t).clamp(0.0, 1.0) as double,
       lerpDouble(a.hue, b.hue, t) % 360.0,
@@ -621,24 +617,24 @@ class HSLColor {
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other))
-      return true;
-    return other is HSLColor
-        && other.alpha == alpha
-        && other.hue == hue
-        && other.saturation == saturation
-        && other.lightness == lightness;
+    if (identical(this, other)) return true;
+    return other is HSLColor &&
+        other.alpha == alpha &&
+        other.hue == hue &&
+        other.saturation == saturation &&
+        other.lightness == lightness;
   }
 
   @override
-  int get hashCode => deepHashCodeList( [alpha, hue, saturation, lightness] ) ;
+  int get hashCode => deepHashCodeList([alpha, hue, saturation, lightness]);
 
   @override
-  String toString() => 'hsl($hue, ${ Math.round(saturation * 100) }, ${ Math.round(lightness * 100) }, $alpha)';
-
+  String toString() =>
+      'hsl($hue, ${Math.round(saturation * 100)}, ${Math.round(lightness * 100)}, $alpha)';
 }
 
-double _getHue(double red, double green, double blue, double max, double delta) {
+double _getHue(
+    double red, double green, double blue, double max, double delta) {
   double hue;
   if (max == 0.0) {
     hue = 0.0;
@@ -656,20 +652,19 @@ double _getHue(double red, double green, double blue, double max, double delta) 
 }
 
 double lerpDouble(num a, num b, double t) {
-  if (a == null && b == null)
-    return null;
+  if (a == null && b == null) return null;
   a ??= 0.0;
   b ??= 0.0;
   return a + (b - a) * t as double;
 }
 
 Color _colorFromHue(
-    double alpha,
-    double hue,
-    double chroma,
-    double secondary,
-    double match,
-    ) {
+  double alpha,
+  double hue,
+  double chroma,
+  double secondary,
+  double match,
+) {
   double red;
   double green;
   double blue;
@@ -698,7 +693,8 @@ Color _colorFromHue(
     green = 0.0;
     blue = secondary;
   }
-  return Color.fromARGB((alpha * 0xFF).round(), ((red + match) * 0xFF).round(), ((green + match) * 0xFF).round(), ((blue + match) * 0xFF).round());
+  return Color.fromARGB((alpha * 0xFF).round(), ((red + match) * 0xFF).round(),
+      ((green + match) * 0xFF).round(), ((blue + match) * 0xFF).round());
 }
 
 /// Gets the width and height from [image] ([CanvasImageSource]).
@@ -1476,13 +1472,13 @@ class CanvasImageViewer {
 
   double get offsetWidthRatio {
     var offsetW = _canvas.offset.width;
-    if (offsetW == 0) return 0 ;
+    if (offsetW == 0) return 0;
     return _renderedImageWidth / offsetW;
   }
 
   double get offsetHeightRatio {
     var offsetH = _canvas.offset.height;
-    if (offsetH == 0) return 0 ;
+    if (offsetH == 0) return 0;
     return _renderedImageHeight / offsetH;
   }
 

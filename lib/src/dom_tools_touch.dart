@@ -62,7 +62,7 @@ void _onTouchEvent(event) {
 /// simplifying UI support for touch events and mouse events.
 MouseEvent touchEventToMouseEvent(TouchEvent event) {
   var touches = event.changedTouches;
-  if (touches == null || touches.isEmpty) return null ;
+  if (touches == null || touches.isEmpty) return null;
 
   var first = touches[0];
   var type = '';
@@ -78,10 +78,10 @@ MouseEvent touchEventToMouseEvent(TouchEvent event) {
       type = 'mouseup';
       break;
     default:
-      return null ;
+      return null;
   }
 
-  var target = event.target ;
+  var target = event.target;
 
   var simulatedEvent = MouseEvent(type,
       canBubble: true,
@@ -99,7 +99,7 @@ MouseEvent touchEventToMouseEvent(TouchEvent event) {
       button: 0,
       relatedTarget: target);
 
-  return simulatedEvent ;
+  return simulatedEvent;
 }
 
 /// Redirects [element.onTouchStart] to [element.onMouseDown] as [MouseEvent].

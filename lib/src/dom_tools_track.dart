@@ -341,5 +341,3 @@ class TrackElementResize {
     _trackElementValueInstance.checkElements();
   }
 }
-
-
