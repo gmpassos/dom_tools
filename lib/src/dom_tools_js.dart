@@ -40,7 +40,10 @@ Map<String, Future<bool>> _addedJavaScriptsSources = {};
 /// Adds a JavaScript path ([scriptSource]] into DOM.
 ///
 /// [addToBody] If [true] adds into `body` node instead of `head` node.
-Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
+/// [async] If true, the script will be executed asynchronously as soon as it is available,
+/// and not when the page has finished parsing.
+Future<bool> addJavaScriptSource(String scriptSource,
+    {bool addToBody, bool async}) async {
   var scriptInDom = getScriptElementBySRC(scriptSource);
 
   var prevCall = _addedJavaScriptsSources[scriptSource];
@@ -59,6 +62,7 @@ Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
   }
 
   addToBody ??= false;
+  async ??= false;
 
   print('ADDING <SCRIPT>: $scriptSource > into body: $addToBody');
 
@@ -72,6 +76,10 @@ Future<bool> addJavaScriptSource(String scriptSource, [bool addToBody]) async {
   var script = ScriptElement()
     ..type = 'text/javascript'
     ..src = scriptSource;
+
+  if (async) {
+    script.async = true;
+  }
 
   var completer = Completer<bool>();
 

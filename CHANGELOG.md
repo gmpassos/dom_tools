@@ -1,3 +1,9 @@
+## 1.3.7
+
+- Fix `animateCSS`: NPE when `callback` parameter is null.
+- Fix `touchEventToMouseEvent`.
+- `addJavaScriptSource`: added `async` parameter.
+
 ## 1.3.6
 
 - Added `HSLColor` and `HSVColor` class.

@@ -396,11 +396,13 @@ void animateCSS(Iterable<Element> elements, Map<String, String> cssProperties,
       print(element.outerHtml);
     }
 
-    try {
-      callback();
-    } catch (e, s) {
-      print(e);
-      print(s);
+    if (callback != null) {
+      try {
+        callback();
+      } catch (e, s) {
+        print(e);
+        print(s);
+      }
     }
   });
 }

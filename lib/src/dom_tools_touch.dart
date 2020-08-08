@@ -61,7 +61,7 @@ void _onTouchEvent(event) {
 /// This helps to use [TouchEvent] as normal [MouseEvent],
 /// simplifying UI support for touch events and mouse events.
 MouseEvent touchEventToMouseEvent(TouchEvent event) {
-  var touches = event.changedTouches;
+  var touches = event.touches;
   if (touches == null || touches.isEmpty) return null;
 
   var first = touches[0];
@@ -81,21 +81,28 @@ MouseEvent touchEventToMouseEvent(TouchEvent event) {
       return null;
   }
 
-  var target = event.target;
+  EventTarget target;
+
+  // If `event.target` is null, not dispatched, it will throw an exception.
+  try {
+    target = event.target;
+  }
+  // ignore: empty_catches
+  catch (ignore) {}
 
   var simulatedEvent = MouseEvent(type,
-      canBubble: true,
-      cancelable: true,
+      canBubble: event.bubbles,
+      cancelable: event.cancelable,
       view: window,
       detail: 1,
       screenX: first.screen.x,
       screenY: first.screen.y,
       clientX: first.client.x,
       clientY: first.client.y,
-      ctrlKey: false,
-      altKey: false,
-      shiftKey: false,
-      metaKey: false,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      shiftKey: event.shiftKey,
+      metaKey: event.metaKey,
       button: 0,
       relatedTarget: target);
 
