@@ -16,25 +16,24 @@ void main() {
     test('touchEventToMouseEvent', () {
       var div = DivElement();
 
-      Touch touch ;
+      Touch touch;
 
       try {
         touch = Touch({
-        'identifier': 123,
-        'target': div,
-        'screenX': 200,
-        'screenY': 100,
-        'clientX': 100,
-        'clientY': 50,
+          'identifier': 123,
+          'target': div,
+          'screenX': 200,
+          'screenY': 100,
+          'clientX': 100,
+          'clientY': 50,
         });
-      }
-      catch(e) {
+      } catch (e) {
         print(e);
       }
 
       if (touch == null) {
         print('** Touch creation not supported. Aborting test!');
-        return ;
+        return;
       }
 
       var touchEvent = TouchEvent('touchstart', {
