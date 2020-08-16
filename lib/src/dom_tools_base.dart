@@ -341,6 +341,7 @@ const _HTML_CONTROL_ATTRS = [
   'data-toggle',
   'data-target',
   'data-dismiss',
+  'data-source',
   'aria-controls',
   'aria-expanded',
   'aria-label',
@@ -406,6 +407,12 @@ void setElementInnerHTML(Element element, String html) {
 /// Appends to the inner HTML of [element] with parsed result of [html].
 void appendElementInnerHTML(Element element, String html) {
   element.appendHtml(html, validator: _nodeValidatorBuilder);
+}
+
+/// Transform [html] to plain text.
+String htmlToText(String html) {
+  var elem = createHTML('<div>$html</div>');
+  return elem.text;
 }
 
 /// Scrolls viewport to the top with a delay.

@@ -136,11 +136,11 @@ const CODE_THEME_2 = {
 final CSSThemeSet CODE_THEME =
     CSSThemeSet('hljs-', [CODE_THEME_0, CODE_THEME_1, CODE_THEME_2], 2);
 
-/// Normalizes a ident, removing the common/global ident of the code.
+/// Normalizes a indent, removing the common/global indent of the code.
 ///
-/// Useful to remove ident caused due declaration inside a multiline String
+/// Useful to remove indent caused due declaration inside a multiline String
 /// with it's own indentation.
-String normalizeIdent(String text) {
+String normalizeIndent(String text) {
   if (text == null || text.isEmpty) return text;
 
   var lines = text.split(RegExp(r'[\r\n]'));
@@ -148,18 +148,18 @@ String normalizeIdent(String text) {
   if (lines.length <= 2) return text;
 
   // ignore: omit_local_variable_types
-  Map<String, int> identCount = {};
+  Map<String, int> indentCount = {};
 
   for (var line in lines) {
-    var ident = line.split(RegExp(r'\S'))[0];
-    var count = identCount[ident] ?? 0;
-    identCount[ident] = count + 1;
+    var indent = line.split(RegExp(r'\S'))[0];
+    var count = indentCount[indent] ?? 0;
+    indentCount[indent] = count + 1;
   }
 
-  if (identCount.isEmpty) return text;
+  if (indentCount.isEmpty) return text;
 
-  var identList = List.from(identCount.keys)
-    ..sort((a, b) => identCount[b].compareTo(identCount[a]));
+  var identList = List.from(indentCount.keys)
+    ..sort((a, b) => indentCount[b].compareTo(indentCount[a]));
 
   String mainIdent = identList[0];
 
@@ -187,7 +187,7 @@ String normalizeIdent(String text) {
 /// ```
 ///
 /// [markdown] The markdown document.
-/// [normalize] If [true] normalizes ident.
+/// [normalize] If [true] normalizes indent.
 DivElement markdownToDiv(String markdown,
     {bool normalize = true,
     Iterable<mk.BlockSyntax> blockSyntaxes,
@@ -210,7 +210,7 @@ DivElement markdownToDiv(String markdown,
 /// Converts a [markdown] document into a HTML string.
 ///
 /// [markdown] The markdown document.
-/// [normalize] If [true] normalizes ident.
+/// [normalize] If [true] normalizes indent.
 String markdownToHtml(String markdown,
     {bool normalize = true,
     Iterable<mk.BlockSyntax> blockSyntaxes,
@@ -220,7 +220,7 @@ String markdownToHtml(String markdown,
     mk.Resolver imageLinkResolver,
     bool inlineOnly = false}) {
   if (markdown == null || markdown.isEmpty) return '';
-  if (normalize != null && normalize) markdown = normalizeIdent(markdown);
+  if (normalize != null && normalize) markdown = normalizeIndent(markdown);
   var markdownHtml = mk.markdownToHtml(markdown,
       blockSyntaxes: blockSyntaxes,
       inlineSyntaxes: inlineSyntaxes,

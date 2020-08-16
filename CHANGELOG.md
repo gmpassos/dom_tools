@@ -1,3 +1,11 @@
+## 1.3.8
+
+- Added: `htmlToText`.
+- export 'package:json_object_mapper/json_object_mapper.dart';
+- Fix typo.
+- json_object_mapper: ^1.1.2
+- swiss_knife: ^2.5.10
+
 ## 1.3.7
 
 - Fix `animateCSS`: NPE when `callback` parameter is null.
