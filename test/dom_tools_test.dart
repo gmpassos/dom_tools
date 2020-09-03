@@ -1,7 +1,7 @@
+@TestOn('browser')
 import 'dart:html';
 
 import 'package:dom_tools/dom_tools.dart';
-@TestOn('browser')
 import 'package:test/test.dart';
 
 void main() {

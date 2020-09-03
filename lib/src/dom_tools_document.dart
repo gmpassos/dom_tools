@@ -243,7 +243,17 @@ String markdownToHtml(String markdown,
 /// Downloads [content] of type [mimeType], saving a file with [fileName].
 void downloadContent(List<String> content, MimeType mimeType, String fileName) {
   var blob = Blob(content, mimeType.toString());
+  downloadBlob(blob, mimeType, fileName);
+}
 
+/// Downloads [bytes] of type [mimeType], saving a file with [fileName].
+void downloadBytes(List<int> bytes, MimeType mimeType, String fileName) {
+  var blob = Blob([bytes], mimeType.toString());
+  downloadBlob(blob, mimeType, fileName);
+}
+
+/// Downloads [blob] of type [mimeType], saving a file with [fileName].
+void downloadBlob(Blob blob, MimeType mimeType, String fileName) {
   var fileLink = AnchorElement();
   fileLink.style.display = 'none';
 

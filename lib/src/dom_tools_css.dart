@@ -406,3 +406,239 @@ void animateCSS(Iterable<Element> elements, Map<String, String> cssProperties,
     }
   });
 }
+
+/// Sets [element] scroll colors, using standard CSS property `scrollbar-color`
+/// and webkit pseudo element `::-webkit-scrollbar-thumb` and `::-webkit-scrollbar-track`
+String setElementScrollColors(
+    Element element, int scrollWidth, String scrollButtonColor,
+    [String scrollBgColor]) {
+  if (element == null) return null;
+
+  scrollWidth ??= 6;
+  scrollButtonColor ??= '';
+  scrollBgColor ??= '';
+
+  scrollButtonColor = scrollButtonColor.trim();
+  scrollBgColor = scrollBgColor.trim();
+
+  if (scrollButtonColor.isEmpty && scrollBgColor.isEmpty) return null;
+
+  if (scrollWidth < 0) scrollWidth = 0;
+
+  removeElementScrollColors(element);
+
+  element.style.setProperty('scrollbar-width', '${scrollWidth}px');
+  element.style.setProperty(
+      'scrollbar-color', '$scrollButtonColor $scrollBgColor'.trim());
+
+  var regExpNonWord = RegExp(r'\W+');
+
+  var buttonColorID = scrollButtonColor.replaceAll(regExpNonWord, '_');
+  var bgColorID = scrollButtonColor.replaceAll(regExpNonWord, '_');
+
+  var scrollColorClassID =
+      '__scroll_color__${scrollWidth}__${buttonColorID}__${bgColorID}';
+
+  var webkitScrollColorsCSS =
+      '.$scrollColorClassID::-webkit-scrollbar { width: ${scrollWidth}px;}\n';
+
+  if (scrollButtonColor.isNotEmpty) {
+    var radius = scrollWidth * 2;
+    var border = scrollWidth > 1 ? Math.max(1, scrollWidth ~/ 4) : 0;
+
+    webkitScrollColorsCSS +=
+        '.$scrollColorClassID::-webkit-scrollbar-thumb { background-color: $scrollButtonColor ; border-radius: ${radius}px; border: ${border}px solid $scrollBgColor;}\n';
+  }
+
+  if (scrollBgColor.isNotEmpty) {
+    webkitScrollColorsCSS +=
+        '.$scrollColorClassID::-webkit-scrollbar-track { background: $scrollBgColor ;}\n';
+    webkitScrollColorsCSS +=
+        '.$scrollColorClassID::-webkit-scrollbar-track-piece { background: $scrollBgColor ;}\n';
+  }
+
+  addCSSCode(webkitScrollColorsCSS);
+
+  if (!element.classes.contains(scrollColorClassID)) {
+    element.classes.add(scrollColorClassID);
+  }
+
+  return scrollColorClassID;
+}
+
+/// Removes [element] scroll colors CSS properties set by [setElementScrollColors].
+List<String> removeElementScrollColors(Element element) {
+  if (element == null) return null;
+
+  element.style.removeProperty('scrollbar-width');
+  element.style.removeProperty('scrollbar-color');
+
+  var scrollClassIDs =
+      element.classes.where((c) => c.startsWith('__scroll_color__'));
+
+  if (isNotEmptyObject(scrollClassIDs)) {
+    element.classes.removeAll(scrollClassIDs);
+    return scrollClassIDs;
+  } else {
+    return null;
+  }
+}
+
+/// Sets [element] background as a blur effect of size [blurSize].
+/// Uses CSS property `backdrop-filter`.
+void setElementBackgroundBlur(Element element, [int blurSize]) {
+  if (element == null) return;
+
+  blurSize ??= 3;
+  var filter = blurSize > 0 ? 'blur(${blurSize}px)' : 'none';
+  element.style.setProperty('backdrop-filter', filter);
+}
+
+/// Removes [element] background blur effect, set by [setElementBackgroundBlur].
+void removeElementBackgroundBlur(Element element, [int blurSize]) {
+  if (element == null) return;
+
+  var val = element.style.getPropertyValue('backdrop-filter');
+  if (val != null && val.contains('blur')) {
+    element.style.removeProperty('backdrop-filter');
+  }
+}
+
+const int CSS_MAX_Z_INDEX = 2147483647;
+
+/// Returns the [element] `z-index` or [element.parent] `z-index` recursively.
+String getElementZIndex(Element element, [String def]) {
+  while (element != null) {
+    var zIndex = element.style.zIndex;
+    if (isNotEmptyObject(zIndex) && isInt(zIndex)) {
+      return zIndex;
+    }
+    element = element.parent;
+  }
+  return def;
+}
+
+/// Returns a [CssStyleDeclaration] of the pre-computed CSS properties of [element].
+CssStyleDeclaration getElementPreComputedStyle(Element element) {
+  var list = getElementAllCssProperties(element);
+  var allCss = list.join('; ');
+  return CssStyleDeclaration.css(allCss);
+}
+
+/// Returns a list of CSS properties associated with [element]
+List<String> getElementAllCssProperties(Element element) {
+  var rules = getElementAllCssRule(element);
+
+  var cssTexts =
+      rules.map((r) => r.cssText).map(parseCssRuleTextProperties).toList();
+  cssTexts.removeWhere((e) => e.isEmpty);
+
+  cssTexts.add(element.style.cssText);
+
+  return cssTexts;
+}
+
+/// Returns a list of [CssRule] associated with [element].
+List<CssRule> getElementAllCssRule(Element element) {
+  var tag = element.tagName.toLowerCase();
+
+  var patterns = [tag, ...element.classes.map((c) => r'\.' + c)];
+
+  var regExp = RegExp(r'^(?:' + patterns.join('|') + r')$',
+      multiLine: false, caseSensitive: false);
+
+  var rules = selectCssRuleWithSelector(regExp);
+
+  return rules;
+}
+
+/// Returns a list of [CssRule] with [targetSelector] patterns.
+List<CssRule> selectCssRuleWithSelector(Pattern targetSelector) {
+  var styles = querySelectorAll('style').cast<StyleElement>();
+  var links = querySelectorAll('link').cast<LinkElement>();
+
+  var sheets = [
+    ...styles.map((s) => s.sheet as CssStyleSheet),
+    ...links.map((s) => s.sheet as CssStyleSheet),
+  ];
+
+  var rules = sheets
+      .map((s) => getAllCssRuleBySelector(targetSelector, s))
+      .expand((e) => e)
+      .toList();
+
+  return rules;
+}
+
+List<CssRule> getAllCssRuleBySelector(
+    Pattern targetSelector, CssStyleSheet sheet) {
+  if (sheet == null || targetSelector == null) return [];
+
+  if (targetSelector is String) {
+    var s = targetSelector.trim().toLowerCase();
+    if (s.isEmpty) return [];
+    return _getAllCssRuleBySelector_String(s, sheet);
+  } else if (targetSelector is RegExp) {
+    return _getAllCssRuleBySelector_RegExp(targetSelector, sheet);
+  } else {
+    throw StateError('Invalid targetSelector: $targetSelector');
+  }
+}
+
+List<CssRule> _getAllCssRuleBySelector_String(
+    String targetSelector, CssStyleSheet sheet) {
+  var rules = <CssRule>[];
+
+  for (var rule in sheet.rules) {
+    var cssRuleText = rule.cssText;
+    var selectors =
+        parseCssRuleTextSelectors(cssRuleText).map((s) => s.toLowerCase());
+
+    var firstMatch =
+        selectors.firstWhere((s) => s == targetSelector, orElse: () => null);
+
+    if (firstMatch != null) {
+      rules.add(rule);
+    }
+  }
+
+  return rules;
+}
+
+List<CssRule> _getAllCssRuleBySelector_RegExp(
+    RegExp targetSelector, CssStyleSheet sheet) {
+  var rules = <CssRule>[];
+
+  for (var rule in sheet.rules) {
+    var cssRuleText = rule.cssText;
+    var selectors =
+        parseCssRuleTextSelectors(cssRuleText).map((s) => s.toLowerCase());
+
+    var firstMatch = selectors.firstWhere((s) => targetSelector.hasMatch(s),
+        orElse: () => null);
+
+    if (firstMatch != null) {
+      rules.add(rule);
+    }
+  }
+
+  return rules;
+}
+
+/// Returns a list of selectors of the [CssRule] text.
+List<String> parseCssRuleTextSelectors(String cssRuleText) {
+  var idx = cssRuleText.indexOf('{');
+  if (idx < 0) return [];
+  var query = cssRuleText.substring(0, idx).trim();
+  var list = parseStringFromInlineList(query, RegExp(r'\s*,\s*'));
+  return list;
+}
+
+/// Returns a list of properties of the [CssRule] text.
+String parseCssRuleTextProperties(String cssRuleText) {
+  var idx1 = cssRuleText.indexOf('{');
+  if (idx1 < 0) return '';
+  var idx2 = cssRuleText.lastIndexOf('}');
+  var properties = cssRuleText.substring(idx1 + 1, idx2).trim();
+  return properties;
+}

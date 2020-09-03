@@ -318,12 +318,18 @@ Element createHTML([String html]) {
     return childNode;
   } else {
     var div = createDiv(true, html);
-    if (div.childNodes.isEmpty) return div;
+    if (div.nodes.isEmpty) return div;
 
     var childNode =
-        div.childNodes.firstWhere((e) => e is Element, orElse: () => null);
+        div.nodes.firstWhere((e) => e is Element, orElse: () => null);
 
-    return childNode;
+    if (childNode != null) {
+      return childNode;
+    }
+
+    var span = SpanElement();
+    span.nodes.addAll(div.nodes);
+    return span;
   }
 }
 

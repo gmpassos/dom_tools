@@ -1,3 +1,15 @@
+## 1.3.9
+
+- `CanvasImageViewer`: Better hint box. Added support for `maxWidth` and `maxHeight`. 
+- Added: `setElementScrollColors`, `removeElementScrollColors`, `setElementBackgroundBlur`, `removeElementBackgroundBlur`.
+- Added: `getElementZIndex`, `getElementPreComputedStyle`, `getElementAllCssProperties`, `getElementAllCssRule`, `selectCssRuleWithSelector`, `getAllCssRuleBySelector`.
+- Added: `downloadBytes` and `downloadBlob`.
+- `createHTML` now uses `Element.nodes` instead of `Element.childNodes` while generating root element.
+- Fix `TrackElementResize` issue with `ResizeObserverEntry`.
+- swiss_knife: ^2.5.12
+- markdown: ^2.1.8
+- enum_to_string: ^1.0.9
+
 ## 1.3.8
 
 - Added: `htmlToText`.

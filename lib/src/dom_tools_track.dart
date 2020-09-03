@@ -313,9 +313,8 @@ class TrackElementResize {
     _resizeObserverListeners.remove(element);
   }
 
-  void _onResizeObserver(
-      List<ResizeObserverEntry> entries, ResizeObserver observer) {
-    for (var entry in entries) {
+  void _onResizeObserver(List entries, ResizeObserver observer) {
+    for (var entry in entries.whereType<ResizeObserverEntry>()) {
       var elem = entry.target;
       var listener = _resizeObserverListeners[elem];
       if (listener != null) {
