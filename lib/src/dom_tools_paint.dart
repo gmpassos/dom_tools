@@ -2412,7 +2412,7 @@ class CanvasImageViewer {
 
   void _renderLabels(CanvasRenderingContext2D context, Point<num> translate,
       List<Label<num>> rectangles, Color color, int strokeSize) {
-    print('_renderLabels> ${rectangles.length}');
+    if (isEmptyObject(rectangles)) return;
 
     _translate(context, translate);
     _strokeLabels(
@@ -2421,9 +2421,7 @@ class CanvasImageViewer {
 
   void _renderRectangles(CanvasRenderingContext2D context, Point<num> translate,
       List<Rectangle<num>> rectangles, Color color, int strokeSize) {
-    if (rectangles == null || rectangles.isEmpty) return;
-
-    print('_renderRectangles> ${rectangles.length}');
+    if (isEmptyObject(rectangles)) return;
 
     _translate(context, translate);
     _strokeRects(context, rectangles, color, strokeSize);
@@ -2431,9 +2429,7 @@ class CanvasImageViewer {
 
   void _renderPoints(CanvasRenderingContext2D context, Point<num> translate,
       List<Point<num>> points, Color color, int strokeSize) {
-    if (points == null || points.isEmpty) return;
-
-    print('_renderPoints> ${points.length}');
+    if (isEmptyObject(points)) return;
 
     _translate(context, translate);
 
@@ -2510,6 +2506,8 @@ class CanvasImageViewer {
       Color color, int lineWidth, Label sel, int selLineWidth) {
     var hasSel = sel != null;
     var selHasColor = sel != null && sel.color != null;
+
+    print('>> ${labels.runtimeType} > $labels ');
 
     // Render non selected labels first:
     for (var label in labels) {
@@ -2615,7 +2613,7 @@ class CanvasImageViewer {
 
   /// Shows a hint with [label] at [point] in canvas.
   void showHint(String label, Point<num> point) {
-    print('showHint> $label ; $point');
+    //print('showHint> $label ; $point');
 
     hideHint();
 

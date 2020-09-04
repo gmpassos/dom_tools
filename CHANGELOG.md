@@ -1,3 +1,10 @@
+## 1.3.10
+
+- `CanvasImageViewer`: Fix NPE for `_renderLabels`.
+- intl: ^0.16.1
+- pedantic: ^1.9.2
+- test: ^1.15.3
+
 ## 1.3.9
 
 - `CanvasImageViewer`: Better hint box. Added support for `maxWidth` and `maxHeight`. 
