@@ -205,10 +205,10 @@ class TextStyle implements CSSValueBase {
     if (backgroundColor != null) str += 'background-color: $backgroundColor ;';
 
     if (fontStyle != null) {
-      str += 'font-style: ${EnumToString.parse(fontStyle)} ;';
+      str += 'font-style: ${EnumToString.convertToString(fontStyle)} ;';
     }
     if (fontWeight != null) {
-      str += 'font-weight: ${EnumToString.parse(fontWeight)} ;';
+      str += 'font-weight: ${EnumToString.convertToString(fontWeight)} ;';
     }
 
     if (borderColor != null) str += 'border-color: $borderColor ;';

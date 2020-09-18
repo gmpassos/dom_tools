@@ -6,6 +6,7 @@
 - CSS helpers: `getAllViewportMediaCssRuleAsClassRule`, `getAllOutOfViewportMediaCssRuleAsClassRule`, `getAllOutOfViewportMediaCssRule`, `getAllViewportMediaCssRule`, `getAllMediaCssRule`, `getAllCssStyleSheet`, `parseCssRuleSelectors`.
 - json_object_mapper: ^1.1.3
 - swiss_knife: ^2.5.14
+- enum_to_string: ^1.0.11
 
 ## 1.3.10
 
