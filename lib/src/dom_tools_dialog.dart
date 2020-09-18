@@ -26,12 +26,14 @@ DivElement showDialogText(String text, {double transparency, String padding}) {
 /// [html] The HTML to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogHTML(String html, {double transparency, String padding}) {
+/// [validator] The [NodeValidator] for HTML generation.
+DivElement showDialogHTML(String html,
+    {double transparency, String padding, NodeValidator validator}) {
   if (html == null || html.isEmpty) return null;
 
   var element = SpanElement();
 
-  setElementInnerHTML(element, html);
+  setElementInnerHTML(element, html, validator: validator);
 
   return showDialogElement(element,
       transparency: transparency, padding: padding);

@@ -2013,7 +2013,7 @@ class CanvasImageViewer {
       [bool scheduledRender = false]) {
     quality ??= Quality.HIGH;
 
-    CanvasRenderingContext2D context = _canvas.getContext('2d');
+    var context = _canvas.context2D;
 
     var renderImageResult =
         _renderImage(context, quality, forceQuality, scheduledRender);

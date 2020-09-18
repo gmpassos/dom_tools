@@ -1,3 +1,12 @@
+## 1.3.11
+
+- Added: `htmlToText`, `createStandardNodeValidator`, `downloadDataURL`.
+- `DataAssets`: New class to handle assets object URL.
+- Added a parameter for [NodeValidator] when creating HTML.
+- CSS helpers: `getAllViewportMediaCssRuleAsClassRule`, `getAllOutOfViewportMediaCssRuleAsClassRule`, `getAllOutOfViewportMediaCssRule`, `getAllViewportMediaCssRule`, `getAllMediaCssRule`, `getAllCssStyleSheet`, `parseCssRuleSelectors`.
+- json_object_mapper: ^1.1.3
+- swiss_knife: ^2.5.14
+
 ## 1.3.10
 
 - `CanvasImageViewer`: Fix NPE for `_renderLabels`.

@@ -552,15 +552,188 @@ List<CssRule> getElementAllCssRule(Element element) {
   return rules;
 }
 
+/// Transforms all [CssMediaRule] to [targetClass] rule applied for [viewportWidth] and [viewportHeight].
+List<String> getAllViewportMediaCssRuleAsClassRule(
+    int viewportWidth, viewportHeight, String targetClass) {
+  var rules = getAllViewportMediaCssRule(viewportWidth, viewportHeight);
+
+  var rulesFixed = <String, List<String>>{};
+
+  for (var mediaRule in rules) {
+    for (var rule in mediaRule.cssRules.whereType<CssStyleRule>()) {
+      var selectors = parseCssRuleSelectors(rule);
+      var selectorsFixed = selectors.map((s) => '.$targetClass $s');
+      var block = rule.style.cssText;
+
+      var selectors2 = selectorsFixed.join(' , ');
+      var blocks = rulesFixed.putIfAbsent(selectors2, () => <String>[]);
+      blocks.add(block);
+    }
+  }
+
+  var rules2 = rulesFixed
+      .map((key, value) {
+        var css = value.join(' ; ');
+        if (value.length > 1) {
+          css = CssStyleDeclaration.css(css).cssText;
+        }
+        return MapEntry(key, '$key { $css }');
+      })
+      .values
+      .toList();
+
+  return rules2;
+}
+
+/// Transforms all [CssMediaRule] to [targetClass] rule not applied for [viewportWidth] and [viewportHeight].
+List<String> getAllOutOfViewportMediaCssRuleAsClassRule(
+    int viewportWidth, viewportHeight, String targetClass) {
+  var rules = getAllOutOfViewportMediaCssRule(viewportWidth, viewportHeight);
+
+  var rulesFixed = <String, List<String>>{};
+
+  for (var mediaRule in rules) {
+    for (var rule in mediaRule.cssRules.whereType<CssStyleRule>()) {
+      var selectors = parseCssRuleSelectors(rule);
+      var selectorsFixed = selectors.map((s) => '.$targetClass $s');
+
+      var block = rule.style.cssText;
+      var blockUnset =
+          block.replaceAll(RegExp(r':.*?;'), ': initial !important;');
+
+      var selectors2 = selectorsFixed.join(' , ');
+      var blocks = rulesFixed.putIfAbsent(selectors2, () => <String>[]);
+      blocks.add(blockUnset);
+    }
+  }
+
+  var rules2 = rulesFixed
+      .map((key, value) {
+        var css = value.join(' ; ');
+        if (value.length > 1) {
+          css = CssStyleDeclaration.css(css).cssText;
+        }
+        return MapEntry(key, '$key { $css }');
+      })
+      .values
+      .toList();
+
+  return rules2;
+}
+
+/// Returns all [CssMediaRule] not applied for [viewportWidth] and [viewportHeight].
+List<CssMediaRule> getAllOutOfViewportMediaCssRule(
+    int viewportWidth, viewportHeight) {
+  var rules = getAllMediaCssRule('(?:min|max)-(?:width|height):\s*.*?');
+
+  var viewportRules = <CssMediaRule>[];
+
+  for (var rule in rules) {
+    var conditionText =
+        rule.conditionText.trim().replaceAll(RegExp(r'(?:^\(|\)$)'), '');
+
+    var parts = split(conditionText, ':', 2);
+    if (parts.length != 2) continue;
+
+    var type = parts[0].trim().toLowerCase();
+    var value = parts[1].trim().toLowerCase();
+
+    value = value.replaceFirst(RegExp(r'px$'), '');
+
+    if (isNum(value)) {
+      var n = parseNum(value);
+
+      if (type == 'min-width') {
+        if (viewportWidth < n) {
+          viewportRules.add(rule);
+        }
+      } else if (type == 'min-height') {
+        if (viewportHeight < n) {
+          viewportRules.add(rule);
+        }
+      } else if (type == 'max-width') {
+        if (viewportWidth > n) {
+          viewportRules.add(rule);
+        }
+      } else if (type == 'max-height') {
+        if (viewportHeight > n) {
+          viewportRules.add(rule);
+        }
+      }
+    }
+  }
+
+  return viewportRules;
+}
+
+/// Returns all [CssMediaRule] applied for [viewportWidth] [viewportHeight].
+List<CssMediaRule> getAllViewportMediaCssRule(
+    int viewportWidth, viewportHeight) {
+  var rules = getAllMediaCssRule('(?:min|max)-(?:width|height):\s*.*?');
+
+  var viewportRules = <CssMediaRule>[];
+
+  for (var rule in rules) {
+    var conditionText =
+        rule.conditionText.trim().replaceAll(RegExp(r'(?:^\(|\)$)'), '');
+
+    var parts = split(conditionText, ':', 2);
+    if (parts.length != 2) continue;
+
+    var type = parts[0].trim().toLowerCase();
+    var value = parts[1].trim().toLowerCase();
+
+    value = value.replaceFirst(RegExp(r'px$'), '');
+    if (isNum(value)) {
+      var n = parseNum(value);
+
+      if (type == 'min-width') {
+        if (viewportWidth >= n) {
+          viewportRules.add(rule);
+        }
+      } else if (type == 'min-height') {
+        if (viewportHeight >= n) {
+          viewportRules.add(rule);
+        }
+      } else if (type == 'max-width') {
+        if (viewportWidth <= n) {
+          viewportRules.add(rule);
+        }
+      } else if (type == 'max-height') {
+        if (viewportHeight <= n) {
+          viewportRules.add(rule);
+        }
+      }
+    }
+  }
+
+  return viewportRules;
+}
+
+/// Returns a list of @media [CssRule] with [mediaCondition].
+List<CssMediaRule> getAllMediaCssRule(String mediaCondition) {
+  mediaCondition ??= '';
+  mediaCondition = mediaCondition.trim();
+
+  RegExp regExp;
+
+  if (mediaCondition != null && mediaCondition.isNotEmpty) {
+    regExp = RegExp(r'^@media.*?\(\s*' + mediaCondition + r'\s*\)$',
+        multiLine: false, caseSensitive: false);
+  } else {
+    regExp =
+        RegExp(r'^@media.*?\(.*?\)', multiLine: false, caseSensitive: false);
+  }
+
+  var rules =
+      selectCssRuleWithSelector(regExp).whereType<CssMediaRule>().toList();
+
+  return rules;
+}
+
 /// Returns a list of [CssRule] with [targetSelector] patterns.
 List<CssRule> selectCssRuleWithSelector(Pattern targetSelector) {
-  var styles = querySelectorAll('style').cast<StyleElement>();
-  var links = querySelectorAll('link').cast<LinkElement>();
-
-  var sheets = [
-    ...styles.map((s) => s.sheet as CssStyleSheet),
-    ...links.map((s) => s.sheet as CssStyleSheet),
-  ];
+  var sheets = getAllCssStyleSheet();
 
   var rules = sheets
       .map((s) => getAllCssRuleBySelector(targetSelector, s))
@@ -568,6 +741,18 @@ List<CssRule> selectCssRuleWithSelector(Pattern targetSelector) {
       .toList();
 
   return rules;
+}
+
+/// Returns all current [CssStyleSheet].
+List<CssStyleSheet> getAllCssStyleSheet() {
+  var styles = querySelectorAll('style').cast<StyleElement>();
+  var links = querySelectorAll('link').cast<LinkElement>();
+
+  var sheets = [
+    ...styles.map((s) => s.sheet as CssStyleSheet),
+    ...links.map((s) => s.sheet as CssStyleSheet),
+  ];
+  return sheets;
 }
 
 List<CssRule> getAllCssRuleBySelector(
@@ -590,9 +775,7 @@ List<CssRule> _getAllCssRuleBySelector_String(
   var rules = <CssRule>[];
 
   for (var rule in sheet.rules) {
-    var cssRuleText = rule.cssText;
-    var selectors =
-        parseCssRuleTextSelectors(cssRuleText).map((s) => s.toLowerCase());
+    var selectors = parseCssRuleSelectors(rule).map((s) => s.toLowerCase());
 
     var firstMatch =
         selectors.firstWhere((s) => s == targetSelector, orElse: () => null);
@@ -610,9 +793,7 @@ List<CssRule> _getAllCssRuleBySelector_RegExp(
   var rules = <CssRule>[];
 
   for (var rule in sheet.rules) {
-    var cssRuleText = rule.cssText;
-    var selectors =
-        parseCssRuleTextSelectors(cssRuleText).map((s) => s.toLowerCase());
+    var selectors = parseCssRuleSelectors(rule).map((s) => s.toLowerCase());
 
     var firstMatch = selectors.firstWhere((s) => targetSelector.hasMatch(s),
         orElse: () => null);
@@ -625,12 +806,23 @@ List<CssRule> _getAllCssRuleBySelector_RegExp(
   return rules;
 }
 
+/// Parses the selectors of [cssRule].
+List<String> parseCssRuleSelectors(CssRule cssRule) {
+  if (cssRule is CssStyleRule) {
+    var selectorText = cssRule.selectorText.trim();
+    var list = parseStringFromInlineList(selectorText, RegExp(r'\s*,\s*'));
+    return list;
+  } else {
+    return parseCssRuleTextSelectors(cssRule.cssText);
+  }
+}
+
 /// Returns a list of selectors of the [CssRule] text.
 List<String> parseCssRuleTextSelectors(String cssRuleText) {
   var idx = cssRuleText.indexOf('{');
   if (idx < 0) return [];
-  var query = cssRuleText.substring(0, idx).trim();
-  var list = parseStringFromInlineList(query, RegExp(r'\s*,\s*'));
+  var selectorText = cssRuleText.substring(0, idx).trim();
+  var list = parseStringFromInlineList(selectorText, RegExp(r'\s*,\s*'));
   return list;
 }
 

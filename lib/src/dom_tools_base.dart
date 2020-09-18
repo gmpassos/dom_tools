@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:html';
 import 'dart:math';
+import 'dart:svg' as dart_svg;
 
 import 'package:swiss_knife/swiss_knife.dart';
 
@@ -241,13 +242,14 @@ DivElement createDivInlineBlock() =>
 /// Creates a `div`.
 /// [inline] If [true] sets `display: inline-block`.
 /// [html] The HTML to parse as content.
-DivElement createDiv([bool inline = false, String html]) {
+DivElement createDiv(
+    [bool inline = false, String html, NodeValidator validator]) {
   var div = DivElement();
 
   if (inline) div.style.display = 'inline-block';
 
   if (html != null) {
-    setElementInnerHTML(div, html);
+    setElementInnerHTML(div, html, validator: validator);
   }
 
   return div;
@@ -263,11 +265,11 @@ DivElement createDivInline([String html]) {
 /// Creates a `span` element.
 ///
 /// [html] The HTML to parse as content.
-SpanElement createSpan([String html]) {
+SpanElement createSpan([String html, NodeValidator validator]) {
   var span = SpanElement();
 
   if (html != null) {
-    setElementInnerHTML(span, html);
+    setElementInnerHTML(span, html, validator: validator);
   }
 
   return span;
@@ -276,11 +278,11 @@ SpanElement createSpan([String html]) {
 /// Creates a `label` element.
 ///
 /// [html] The HTML to parse as content.
-LabelElement createLabel([String html]) {
+LabelElement createLabel([String html, NodeValidator validator]) {
   var label = LabelElement();
 
   if (html != null) {
-    setElementInnerHTML(label, html);
+    setElementInnerHTML(label, html, validator: validator);
   }
 
   return label;
@@ -295,7 +297,7 @@ final RegExp _REGEXP_DEPENDENT_TAG =
     RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
 
 /// Creates a HTML [Element]. Returns 1st node form parsed HTML.
-Element createHTML([String html]) {
+Element createHTML([String html, NodeValidator validator]) {
   var dependentTagMatch = _REGEXP_DEPENDENT_TAG.firstMatch(html);
 
   if (dependentTagMatch != null) {
@@ -317,7 +319,7 @@ Element createHTML([String html]) {
     var childNode = div.querySelector(dependentTagName);
     return childNode;
   } else {
-    var div = createDiv(true, html);
+    var div = createDiv(true, html, validator);
     if (div.nodes.isEmpty) return div;
 
     var childNode =
@@ -340,7 +342,8 @@ const _HTML_BASIC_ATTRS = [
   'src',
   'href',
   'target',
-  'contenteditable'
+  'contenteditable',
+  'xmlns'
 ];
 
 const _HTML_CONTROL_ATTRS = [
@@ -360,6 +363,8 @@ const _HTML_EXTENDED_ATTRS = [
   'field',
   'field_value',
   'element_value',
+  'src-original',
+  'href-original',
   'navigate',
   'action',
   'uilayout',
@@ -383,41 +388,80 @@ class AnyUriPolicy implements UriPolicy {
   }
 }
 
-NodeValidatorBuilder _nodeValidatorBuilder = NodeValidatorBuilder()
-  ..allowTextElements()
-  ..allowHtml5()
-  ..allowSvg()
-  ..allowElement('a', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('nav', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('div', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('li', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('ul', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('ol', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('span', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('img', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('textarea', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('input', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('label', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('button', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('iframe', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowElement('svg', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-  ..allowImages(_anyUriPolicy)
-  ..allowNavigation(_anyUriPolicy)
-  ..allowInlineStyles();
+class _FullSvgNodeValidator implements NodeValidator {
+  @override
+  bool allowsElement(Element element) {
+    if (element is dart_svg.ScriptElement) {
+      return false;
+    }
+    if (element is dart_svg.SvgElement) {
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  bool allowsAttribute(Element element, String attributeName, String value) {
+    if (attributeName == 'is' || attributeName.startsWith('on')) {
+      return false;
+    }
+    return allowsElement(element);
+  }
+}
+
+NodeValidatorBuilder createStandardNodeValidator(
+    {bool svg = true, bool allowSvgForeignObject = false}) {
+  var validator = NodeValidatorBuilder()
+    ..allowTextElements()
+    ..allowHtml5()
+    ..allowElement('a', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('nav', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('div', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('li', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('ul', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('ol', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('span', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('img', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('textarea', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('input', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('label', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('button', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('iframe', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('svg', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowImages(_anyUriPolicy)
+    ..allowNavigation(_anyUriPolicy)
+    ..allowInlineStyles();
+
+  if (svg ?? true) {
+    if (allowSvgForeignObject ?? false) {
+      validator.add(_FullSvgNodeValidator());
+    } else {
+      validator.allowSvg();
+    }
+  }
+
+  return validator;
+}
+
+NodeValidatorBuilder _defaultNodeValidator = createStandardNodeValidator();
 
 /// Sets the inner HTML of [element] with parsed result of [html].
-void setElementInnerHTML(Element element, String html) {
-  element.setInnerHtml(html, validator: _nodeValidatorBuilder);
+void setElementInnerHTML(Element element, String html,
+    {NodeValidator validator}) {
+  validator ??= _defaultNodeValidator;
+  element.setInnerHtml(html, validator: validator);
 }
 
 /// Appends to the inner HTML of [element] with parsed result of [html].
-void appendElementInnerHTML(Element element, String html) {
-  element.appendHtml(html, validator: _nodeValidatorBuilder);
+void appendElementInnerHTML(Element element, String html,
+    {NodeValidator validator}) {
+  validator ??= _defaultNodeValidator;
+  element.appendHtml(html, validator: validator);
 }
 
 /// Transform [html] to plain text.
-String htmlToText(String html) {
-  var elem = createHTML('<div>$html</div>');
+String htmlToText(String html, [NodeValidator validator]) {
+  var elem = createHTML('<div>$html</div>', validator);
   return elem.text;
 }
 

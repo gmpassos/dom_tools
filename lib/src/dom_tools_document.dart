@@ -240,6 +240,19 @@ String markdownToHtml(String markdown,
   return markdownHtml;
 }
 
+/// Converts a [dataURL] to a [Blob].
+Blob dataURLToBlob(DataURLBase64 dataURL) {
+  var mimeType = dataURL.mimeTypeAsString;
+  var buffer = dataURL.payloadArrayBuffer;
+  return Blob([buffer], mimeType);
+}
+
+/// Downloads [dataURL], saving a file with [fileName].
+void downloadDataURL(DataURLBase64 dataURL, String fileName) {
+  var blob = dataURLToBlob(dataURL);
+  downloadBlob(blob, dataURL.mimeType, fileName);
+}
+
 /// Downloads [content] of type [mimeType], saving a file with [fileName].
 void downloadContent(List<String> content, MimeType mimeType, String fileName) {
   var blob = Blob(content, mimeType.toString());
@@ -267,4 +280,77 @@ void downloadBlob(Blob blob, MimeType mimeType, String fileName) {
   document.body.append(fileLink);
 
   fileLink.click();
+}
+
+/// A collections of assets (DataURL, Blob, MediaSource) that can be accessed
+/// by an `ObjectURL`, avoiding usage and encoding to data URL (base64).
+class DataAssets {
+  final Map<String, String> _assets = {};
+
+  /// Clears all assets and revoke all ObjectURL.
+  void clear() {
+    for (var id in List.from(_assets.keys)) {
+      remove(id);
+    }
+    _assets.clear();
+  }
+
+  /// Returns the ObjectURL of [id].
+  String getURL(String id) => _assets[id];
+
+  bool contains(String id) => _assets.containsKey(id);
+
+  /// Removes asset [id] and revoke ObjectURL.
+  bool remove(String id) {
+    var prev = _assets.remove(id);
+    if (prev != null) {
+      try {
+        Url.revokeObjectUrl(prev);
+      } catch (e, s) {
+        print(e);
+        print(s);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /// Put an asset [id] of value [content] and [mimeType].
+  String putContent(String id, String content, MimeType mimeType) {
+    var blob = Blob([content], mimeType.toString());
+    return putBlob(id, blob);
+  }
+
+  /// Put an asset [id] of value [data].
+  String putData(String id, List<int> data, MimeType mimeType) {
+    var blob = Blob([data], mimeType.toString());
+    return putBlob(id, blob);
+  }
+
+  /// Put an asset [id] of value [dataURL].
+  String putDataURL(String id, DataURLBase64 dataURL) {
+    var blob = dataURLToBlob(dataURL);
+    return putBlob(id, blob);
+  }
+
+  /// Put an asset [id] of value [blob].
+  String putBlob(String id, Blob blob) {
+    var urlID = Url.createObjectUrlFromBlob(blob);
+    _assets[id] = urlID;
+    return urlID;
+  }
+
+  /// Put an asset [id] of value [source].
+  String putMediaSource(String id, MediaSource source) {
+    var urlID = Url.createObjectUrlFromSource(source);
+    _assets[id] = urlID;
+    return urlID;
+  }
+
+  /// Put an asset [id] of value [stream].
+  String putMediaStream(String id, MediaStream stream) {
+    var urlID = Url.createObjectUrlFromStream(stream);
+    _assets[id] = urlID;
+    return urlID;
+  }
 }
