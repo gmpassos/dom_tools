@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:html';
+import 'dart:typed_data';
 
 import 'package:markdown/markdown.dart' as mk;
 import 'package:swiss_knife/swiss_knife.dart';
@@ -247,6 +249,40 @@ Blob dataURLToBlob(DataURLBase64 dataURL) {
   return Blob([buffer], mimeType);
 }
 
+/// Makes a HTTP request and returns [url] content as [Uint8List].
+Future<Uint8List> getURLData(String url,
+    {String user, String password, withCredentials = true}) {
+  var httpRequest = HttpRequest();
+
+  httpRequest.withCredentials = withCredentials ?? true;
+
+  httpRequest.responseType = 'arraybuffer';
+
+  var completer = Completer<Uint8List>();
+
+  httpRequest.onLoad.listen((event) {
+    if (httpRequest.status == 200) {
+      var response = httpRequest.response;
+      var data = Uint8List.view(response);
+      completer.complete(data);
+    } else {
+      completer.completeError(null);
+    }
+  }, onError: (error) {
+    completer.completeError(error);
+  });
+
+  httpRequest.onError.listen((event) {
+    completer.completeError(event);
+  });
+
+  httpRequest.open('GET', url, async: true, user: user, password: password);
+
+  httpRequest.send();
+
+  return completer.future;
+}
+
 /// Downloads [dataURL], saving a file with [fileName].
 void downloadDataURL(DataURLBase64 dataURL, String fileName) {
   var blob = dataURLToBlob(dataURL);
@@ -282,10 +318,18 @@ void downloadBlob(Blob blob, MimeType mimeType, String fileName) {
   fileLink.click();
 }
 
+class _AssetObjectURL {
+  final String objectURL;
+
+  final MimeType mimeType;
+
+  _AssetObjectURL(this.objectURL, [this.mimeType]);
+}
+
 /// A collections of assets (DataURL, Blob, MediaSource) that can be accessed
 /// by an `ObjectURL`, avoiding usage and encoding to data URL (base64).
 class DataAssets {
-  final Map<String, String> _assets = {};
+  final Map<String, _AssetObjectURL> _assets = {};
 
   /// Clears all assets and revoke all ObjectURL.
   void clear() {
@@ -295,17 +339,132 @@ class DataAssets {
     _assets.clear();
   }
 
-  /// Returns the ObjectURL of [id].
-  String getURL(String id) => _assets[id];
+  bool get isEmpty => _assets.isEmpty;
 
+  bool get isNotEmpty => !isEmpty;
+
+  int get length => _assets.length;
+
+  /// Returns a List of all IDs.
+  List<String> get ids => List<String>.from(_assets.keys);
+
+  /// Returns a List of all URLs.
+  List<String> get urls => _assets.values.map((e) => e.objectURL).toList();
+
+  /// Returns a [Map] of ID and ObjectURL pairs.
+  Map<String, String> get entries => Map.fromEntries(
+      _assets.entries.map((e) => MapEntry(e.key, e.value.objectURL)));
+
+  /// Returns a list of IDs of [mimeType].
+  ///
+  /// [matchSubType] If [true] also matches the [mimeType.subType].
+  List<String> getIDsWhereMimeTypeOf(MimeType mimeType,
+      {bool matchSubType = true}) {
+    if (mimeType == null) return [];
+    matchSubType ??= true;
+
+    var ids = _assets.entries
+        .where((e) {
+          var entryMimeType = e.value.mimeType;
+          if (entryMimeType == null) return false;
+
+          if (entryMimeType.type == mimeType.type) {
+            if (!matchSubType) return true;
+            entryMimeType.subType == mimeType.subType;
+          }
+          return false;
+        })
+        .map((e) => e.key)
+        .toList();
+
+    return ids;
+  }
+
+  /// Returns a list of IDs of type 'image/*'.
+  List<String> getIDsWhereMimeTypeIsImage() =>
+      getIDsWhereMimeTypeOf(MimeType('image', '*'), matchSubType: false);
+
+  /// Returns a list of IDs of type 'video/*'.
+  List<String> getIDsWhereMimeTypeIsVideo() =>
+      getIDsWhereMimeTypeOf(MimeType('video', '*'), matchSubType: false);
+
+  /// Returns a list of IDs of type 'audio/*'.
+  List<String> getIDsWhereMimeTypeIsAudio() =>
+      getIDsWhereMimeTypeOf(MimeType('audio', '*'), matchSubType: false);
+
+  /// Returns a list of IDs of type 'image/*', 'video/*' or 'audio/*'.
+  List<String> getIDsWhereMimeTypeIsMedia() => <String>{
+        ...getIDsWhereMimeTypeIsImage(),
+        ...getIDsWhereMimeTypeIsVideo(),
+        ...getIDsWhereMimeTypeIsAudio(),
+      }.toList();
+
+  /// Returns a list of ObjectURL of type 'image/*'.
+  List<String> getURLsWhereMimeTypeIsImage() =>
+      getURLofIDs(getIDsWhereMimeTypeIsImage());
+
+  /// Returns a list of ObjectURL of type 'video/*'.
+  List<String> getURLsWhereMimeTypeIsVideo() =>
+      getURLofIDs(getIDsWhereMimeTypeIsVideo());
+
+  /// Returns a list of ObjectURL of type 'audio/*'.
+  List<String> getURLsWhereMimeTypeIsAudio() =>
+      getURLofIDs(getIDsWhereMimeTypeIsAudio());
+
+  /// Returns a list of ObjectURL of type 'image/*', 'video/*' or 'audio/*'.
+  List<String> getURLsWhereMimeTypeIsMedia() =>
+      getURLofIDs(getIDsWhereMimeTypeIsMedia());
+
+  /// Returns a list of ObjectURL for [ids].
+  List<String> getURLofIDs(List<String> ids) {
+    if (ids == null || ids.isEmpty) return [];
+    return ids.map((id) => getURL(id)).toList();
+  }
+
+  /// Returns the ObjectURL of [id].
+  String getURL(String id) => _assets[id]?.objectURL;
+
+  /// Returns the ID of [url].
+  String getIDofURL(String url) {
+    if (url == null) return null;
+    for (var entry in _assets.entries) {
+      if (entry.value.objectURL == url) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
+  Future<Uint8List> getData(String id) {
+    var url = getURL(id);
+    return getURLData(url);
+  }
+
+  /// Returns [true] if contains [id].
   bool contains(String id) => _assets.containsKey(id);
+
+  /// Changes [id] to [id2].
+  bool rename(String id, String id2) {
+    if (id == id2) return false;
+
+    if (isEmptyString(id) || isEmptyString(id2)) return false;
+
+    var prev = _assets.remove(id);
+    if (prev != null) {
+      _assets[id2] = prev;
+      return true;
+    }
+    return false;
+  }
 
   /// Removes asset [id] and revoke ObjectURL.
   bool remove(String id) {
+    if (isEmptyString(id)) return false;
+
     var prev = _assets.remove(id);
     if (prev != null) {
       try {
-        Url.revokeObjectUrl(prev);
+        Url.revokeObjectUrl(prev.objectURL);
       } catch (e, s) {
         print(e);
         print(s);
@@ -317,40 +476,46 @@ class DataAssets {
 
   /// Put an asset [id] of value [content] and [mimeType].
   String putContent(String id, String content, MimeType mimeType) {
+    if (isEmptyString(id) || content == null) return null;
     var blob = Blob([content], mimeType.toString());
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [data].
   String putData(String id, List<int> data, MimeType mimeType) {
+    if (isEmptyString(id) || data == null) return null;
     var blob = Blob([data], mimeType.toString());
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [dataURL].
   String putDataURL(String id, DataURLBase64 dataURL) {
+    if (isEmptyString(id) || dataURL == null) return null;
     var blob = dataURLToBlob(dataURL);
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [blob].
   String putBlob(String id, Blob blob) {
-    var urlID = Url.createObjectUrlFromBlob(blob);
-    _assets[id] = urlID;
-    return urlID;
+    if (isEmptyString(id) || blob == null) return null;
+    var objURL = Url.createObjectUrlFromBlob(blob);
+    _assets[id] = _AssetObjectURL(objURL, MimeType.parse(blob.type));
+    return objURL;
   }
 
   /// Put an asset [id] of value [source].
-  String putMediaSource(String id, MediaSource source) {
-    var urlID = Url.createObjectUrlFromSource(source);
-    _assets[id] = urlID;
-    return urlID;
+  String putMediaSource(String id, MediaSource source, [MimeType mimeType]) {
+    if (isEmptyString(id) || source == null) return null;
+    var objURL = Url.createObjectUrlFromSource(source);
+    _assets[id] = _AssetObjectURL(objURL, mimeType);
+    return objURL;
   }
 
   /// Put an asset [id] of value [stream].
-  String putMediaStream(String id, MediaStream stream) {
-    var urlID = Url.createObjectUrlFromStream(stream);
-    _assets[id] = urlID;
-    return urlID;
+  String putMediaStream(String id, MediaStream stream, [MimeType mimeType]) {
+    if (isEmptyString(id) || stream == null) return null;
+    var objURL = Url.createObjectUrlFromStream(stream);
+    _assets[id] = _AssetObjectURL(objURL, mimeType);
+    return objURL;
   }
 }

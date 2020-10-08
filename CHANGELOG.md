@@ -1,3 +1,14 @@
+## 1.3.12
+
+- Added: `getElementWidth`, `getElementHeight`, `copyElementToClipboard`.  
+- Added: `parseCSSLength`.
+- Added: `getURLData`.
+- Improve `DataAssets`.
+- Fix: `removeElementScrollColors`. 
+- swiss_knife: ^2.5.15
+- html_unescape: ^1.0.2
+- enum_to_string: ^1.0.13
+
 ## 1.3.11
 
 - Added: `htmlToText`, `createStandardNodeValidator`, `downloadDataURL`.

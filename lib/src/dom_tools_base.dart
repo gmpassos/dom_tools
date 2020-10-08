@@ -3,6 +3,7 @@ import 'dart:html';
 import 'dart:math';
 import 'dart:svg' as dart_svg;
 
+import 'package:dom_tools/src/dom_tools_css.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 /// Gets the [element] value depending of identified type.
@@ -225,6 +226,26 @@ LinkElement getLinkElementByHREF(String href) {
 /// Selects an [ScriptElement] in DOM with [src].
 ScriptElement getScriptElementBySRC(String src) {
   return getElementBySRC('script', src);
+}
+
+/// Returns [element] width. Tries to use 'offsetWidth' or 'style.width' values.
+int getElementWidth(Element element) {
+  if (element == null) return null;
+  var w = element.offsetWidth;
+  if (w == 0) {
+    return parseCSSLength(element.style.width, unit: 'px', def: 0);
+  }
+  return w;
+}
+
+/// Returns [element] height. Tries to use 'offsetHeight' or 'style.height' values.
+int getElementHeight(Element element) {
+  if (element == null) return null;
+  var h = element.offsetHeight;
+  if (h == 0) {
+    return parseCSSLength(element.style.height, unit: 'px', def: 0);
+  }
+  return h;
 }
 
 /// Returns a [Future<bool>] for when [img] loads.
@@ -958,4 +979,22 @@ bool isMobileAppStatusBarTranslucent() {
   if (metaTagsContents == null || metaTagsContents.isEmpty) return false;
   var metaStatusContent = metaTagsContents[0];
   return metaStatusContent.contains('translucent');
+}
+
+/// Copies [element] text to Clipboard.
+void copyElementToClipboard(Element element) {
+  var selection = window.getSelection();
+  var range = document.createRange();
+
+  range.selectNodeContents(element);
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  var selectedText = selection.toString();
+
+  document.execCommand('copy');
+
+  if (selectedText != null) {
+    window.getSelection().removeAllRanges();
+  }
 }

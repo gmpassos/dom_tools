@@ -5,6 +5,44 @@ import 'package:dom_tools/dom_tools.dart';
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
+final RegExp _PATTERN_CSS_LENGTH_UNIT =
+    RegExp(r'(px|%|vw|vh|vmin|vmax|em|ex|ch|rem|cm|mm|in|pc|pt)$');
+
+/// Parses a CSS length, using optional [unit].
+///
+/// [def] Default value if parse fails or [cssValue] [isEmptyString].
+/// [allowPXWithoutSuffix]
+num parseCSSLength(String cssValue,
+    {String unit, int def, bool allowPXWithoutSuffix = false}) {
+  if (isEmptyString(cssValue)) return def;
+  cssValue = cssValue.toLowerCase().trim();
+  if (isEmptyString(cssValue)) return def;
+
+  if (unit != null) {
+    unit = unit.toLowerCase().trim();
+  }
+
+  if (isNotEmptyString(unit)) {
+    if (cssValue.endsWith(unit)) {
+      var s = cssValue.substring(0, cssValue.length - unit.length).trim();
+      return parseNum(s, def);
+    } else if ((allowPXWithoutSuffix ?? false) &&
+        unit == 'px' &&
+        isNum(cssValue)) {
+      return parseNum(cssValue, def);
+    }
+  } else {
+    var match = _PATTERN_CSS_LENGTH_UNIT.firstMatch(cssValue);
+    if (match != null) {
+      var unit = match.group(1);
+      var s = cssValue.substring(0, cssValue.length - unit.length).trim();
+      return parseNum(s, def);
+    }
+  }
+
+  return def;
+}
+
 Map<String, Future<bool>> _addedCSSCodes = {};
 
 /// Adds a CSS code ([cssCode]) into DOM.
@@ -474,7 +512,7 @@ List<String> removeElementScrollColors(Element element) {
   element.style.removeProperty('scrollbar-color');
 
   var scrollClassIDs =
-      element.classes.where((c) => c.startsWith('__scroll_color__'));
+      element.classes.where((c) => c.startsWith('__scroll_color__')).toList();
 
   if (isNotEmptyObject(scrollClassIDs)) {
     element.classes.removeAll(scrollClassIDs);
