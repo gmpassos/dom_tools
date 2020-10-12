@@ -1,3 +1,8 @@
+## 1.3.13
+
+- `getElementWidth`/`getElementHeight`:
+  - Added optional `def` parameter.
+
 ## 1.3.12
 
 - Added: `getElementWidth`, `getElementHeight`, `copyElementToClipboard`.  

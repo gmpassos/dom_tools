@@ -229,23 +229,27 @@ ScriptElement getScriptElementBySRC(String src) {
 }
 
 /// Returns [element] width. Tries to use 'offsetWidth' or 'style.width' values.
-int getElementWidth(Element element) {
+///
+/// [def] default value if width is `null` or `0`.
+int getElementWidth(Element element, [int def]) {
   if (element == null) return null;
   var w = element.offsetWidth;
-  if (w == 0) {
-    return parseCSSLength(element.style.width, unit: 'px', def: 0);
+  if (w <= 0) {
+    w = parseCSSLength(element.style.width, unit: 'px', def: def ?? 0);
   }
-  return w;
+  return w <= 0 ? def : w;
 }
 
 /// Returns [element] height. Tries to use 'offsetHeight' or 'style.height' values.
-int getElementHeight(Element element) {
+///
+/// [def] default value if width is `null` or `0`.
+int getElementHeight(Element element, [int def]) {
   if (element == null) return null;
   var h = element.offsetHeight;
-  if (h == 0) {
-    return parseCSSLength(element.style.height, unit: 'px', def: 0);
+  if (h <= 0) {
+    h = parseCSSLength(element.style.height, unit: 'px', def: def ?? 0);
   }
-  return h;
+  return h <= 0 ? def : h;
 }
 
 /// Returns a [Future<bool>] for when [img] loads.

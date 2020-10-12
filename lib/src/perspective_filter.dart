@@ -14,6 +14,9 @@ class _Rect {
   _Rect(this.x, this.y, this.width, this.height);
 }
 
+/// Filter result.
+///
+/// Used by [ImagePerspectiveFilter].
 class FilterResult {
   final CanvasImageSource imageSource;
 

@@ -793,6 +793,7 @@ List<CssStyleSheet> getAllCssStyleSheet() {
   return sheets;
 }
 
+/// Returns a [List<CssRule>] for [targetSelector].
 List<CssRule> getAllCssRuleBySelector(
     Pattern targetSelector, CssStyleSheet sheet) {
   if (sheet == null || targetSelector == null) return [];
