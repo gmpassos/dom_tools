@@ -3,6 +3,8 @@
 - `callObjectMethod` renamed to `callJSObjectMethod`.
 - `callFunction` renamed to `callJSFunction`.
 - Added `jsObjectKeys`, `jsToDart`, `jsArrayToList`, `jsObjectToMap`.
+- markdown: ^3.0.0
+- swiss_knife: ^2.5.16
 
 ## 1.3.13
 

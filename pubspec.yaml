@@ -13,7 +13,7 @@ dependencies:
   swiss_knife: ^2.5.16
     #path: ../swiss_knife
   html_unescape: ^1.0.2
-  markdown: ^2.1.8
+  markdown: ^3.0.0
   enum_to_string: ^1.0.13
 
 dev_dependencies:
