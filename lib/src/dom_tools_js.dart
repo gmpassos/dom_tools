@@ -119,7 +119,7 @@ dynamic evalJS(String scriptCode) {
   return res;
 }
 
-typedef MappedFunction = void Function(dynamic o);
+typedef MappedFunction = dynamic Function(dynamic o);
 
 /// Maps a JavaScript function to a Dart function.
 ///
@@ -130,16 +130,64 @@ void mapJSFunction(String jsFunctionName, MappedFunction f) {
 }
 
 /// Calls JavaScript a [method] in object [o] with [args].
-dynamic callObjectMethod(dynamic o, String method, [List args]) {
+dynamic callJSObjectMethod(dynamic o, String method, [List args]) {
   return callMethod(o, method, args);
 }
 
 /// Calls JavaScript a function [method] with [args].
-dynamic callFunction(String method, [List args]) {
+dynamic callJSFunction(String method, [List args]) {
   return context.callMethod(method, args);
 }
 
-String _JS_FUNCTION_BLOCK_SCROLLING = 'UI__BlockScroll__';
+/// Returns the keys of [JsObject] [o].
+List<String> jsObjectKeys(JsObject o) {
+  var keys = context['Object'].callMethod('keys', [o]);
+  return jsArrayToList(keys).map((e) => '$e').toList();
+}
+
+/// Converts [o] to Dart primitives or collections.
+///
+/// [o] Can be any primitive value, a [JsArray] or a [JsObject]).
+dynamic jsToDart(dynamic o) {
+  if (o == null) return null;
+
+  if (o is String) return o;
+  if (o is num) return o;
+  if (o is bool) return o;
+
+  if (o is JsArray) return jsArrayToList(o);
+  if (o is JsObject) return jsObjectToMap(o);
+
+  if (o is List) return o.map(jsToDart).toList();
+  if (o is Map) {
+    return o.map((key, value) => MapEntry(jsToDart(key), jsToDart(value)));
+  }
+
+  return o;
+}
+
+/// Converts a [JsArray] [a] to a [List].
+/// Also converts values using [jsToDart].
+List jsArrayToList(JsArray a) {
+  if (a == null) return null;
+  return a.map(jsToDart).toList();
+}
+
+/// Converts a [JsObject] [o] to a [Map].
+/// Also converts keys and values using [jsToDart].
+Map jsObjectToMap(JsObject o) {
+  if (o == null) return null;
+
+  var keys = jsObjectKeys(o);
+  if (keys == null || keys.isEmpty) return {};
+
+  return Map.fromEntries(keys.map((k) {
+    var v = o[k];
+    return MapEntry(k, jsToDart(v));
+  }));
+}
+
+String _JS_FUNCTION_BLOCK_SCROLLING = '__JS__BlockScroll__';
 
 /// Disables scrolling in browser.
 void disableScrolling() {

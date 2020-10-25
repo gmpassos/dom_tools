@@ -1,3 +1,9 @@
+## 1.3.14
+
+- `callObjectMethod` renamed to `callJSObjectMethod`.
+- `callFunction` renamed to `callJSFunction`.
+- Added `jsObjectKeys`, `jsToDart`, `jsArrayToList`, `jsObjectToMap`.
+
 ## 1.3.13
 
 - `getElementWidth`/`getElementHeight`:
