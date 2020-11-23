@@ -1002,3 +1002,91 @@ void copyElementToClipboard(Element element) {
     window.getSelection().removeAllRanges();
   }
 }
+
+/// Set all [element] sub div with [className] to centered content.
+void setTreeElementsDivCentered(Element element, String className,
+    {bool centerVertically = true, bool centerHorizontally = true}) {
+  if (element == null || isEmptyString(className, trim: true)) return;
+
+  var elements = element.querySelectorAll('div.$className');
+
+  for (var e in elements) {
+    if (e is DivElement) {
+      setDivCentered(e,
+          centerVertically: centerVertically,
+          centerHorizontally: centerHorizontally);
+    }
+  }
+}
+
+const _DIV_CENTERED_BOOTSTRAP_CONFLICTING_CLASSES = <String>{
+  'd-none',
+  'd-inline',
+  'd-inline-block',
+  'd-block',
+  'd-table',
+  'd-table-cell',
+  'd-table-row',
+  'd-flex',
+  'd-inline-flex',
+};
+
+/// Sets [div] as centered content, using `display` property as `table` and sub
+/// div elements `display` property as `table-cell`.
+void setDivCentered(DivElement div,
+    {bool centerVertically = true,
+    bool centerHorizontally = true,
+    bool checkBootstrapClasses = true}) {
+  if (div == null) return;
+
+  centerVertically ??= true;
+  centerHorizontally ??= true;
+  checkBootstrapClasses ??= true;
+
+  div.style.display =
+      isInlineElement(div, checkBootstrapClasses: checkBootstrapClasses)
+          ? 'inline-table'
+          : 'table';
+
+  div.classes.removeAll(_DIV_CENTERED_BOOTSTRAP_CONFLICTING_CLASSES);
+
+  var subDivs = div.querySelectorAll(':scope > div');
+
+  for (var subDiv in subDivs) {
+    print(subDiv.outerHtml);
+
+    subDiv.classes.removeAll(_DIV_CENTERED_BOOTSTRAP_CONFLICTING_CLASSES);
+    subDiv.style.display = 'table-cell';
+
+    if (centerHorizontally) {
+      subDiv.style.textAlign = 'center';
+    }
+
+    if (centerVertically) {
+      subDiv.style.verticalAlign = 'middle';
+    }
+
+    var contentDivs = subDiv.querySelectorAll(':scope > div');
+
+    for (var contentDiv in contentDivs) {
+      if (!isInlineElement(contentDiv,
+          checkBootstrapClasses: checkBootstrapClasses)) {
+        contentDiv.style.display = 'inline-block';
+      }
+    }
+  }
+}
+
+/// Returns [true] if [element] `display` property is inline.
+bool isInlineElement(DivElement element, {bool checkBootstrapClasses = true}) {
+  if (element == null) return false;
+
+  if (element.style.display.toLowerCase().contains('inline')) return true;
+
+  if (checkBootstrapClasses ?? true) {
+    return element.classes.contains('d-inline') ||
+        element.classes.contains('d-inline-block') ||
+        element.classes.contains('d-inline-flex');
+  }
+  return false;
+}

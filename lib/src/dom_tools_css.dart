@@ -353,67 +353,186 @@ class CSSThemeSet {
 
 typedef AnimationCallback = void Function();
 
-/// Changes CSS properties ([cssProperties]) of [elements] using
-/// animation (CSS transition).
-///
-/// [duration] Time duration of the animation/transition. Default: 1s.
-/// [timingFunction] Type of speed curve function (linear, ease, ease-in, ease-out, ease-in-out, step-start, step-end). Default: `ease`.
-/// [finalizeInterval] Time after CSS transition to set [finalProperties]. Default: 100ms
-/// [rollbackProperties] Properties to rollback, to values before start of transition.
-/// [finalProperties] The final properties to set after transition.
-/// [callback] Callback to be called after transition and set of [finalProperties].
-void animateCSS(Iterable<Element> elements, Map<String, String> cssProperties,
-    Duration duration,
-    {String timingFunction,
-    Duration finalizeInterval,
-    Set<String> rollbackProperties,
-    Map<String, String> finalProperties,
-    AnimationCallback callback}) {
-  if (elements == null || cssProperties == null) return;
+/// CSS animation configuration.
+class CSSAnimationConfig {
+  /// Elements to animate.
+  final List<Element> elements;
 
-  elements = List.from(elements.where((e) => e != null));
+  /// CSS properties to animate.
+  final Map<String, String> transitionProperties;
 
-  if (elements.isEmpty || cssProperties.isEmpty) return;
+  /// Time duration of the animation/transition of properties. Default: 1s.
+  final Duration duration;
 
-  duration ??= Duration(seconds: 1);
-  timingFunction ??= 'ease';
-  rollbackProperties ??= {};
-  finalProperties ??= {};
+  /// Type of speed curve function (linear, ease, ease-in, ease-out, ease-in-out, step-start, step-end). Default: `ease`.
+  final String timingFunction;
 
-  rollbackProperties.removeWhere((p) => !cssProperties.containsKey(p));
+  /// The initial properties to set before transition.
+  final Map<String, String> initialProperties;
 
-  var durationMs = duration.inMilliseconds;
+  /// Classes to set before transitions. Will remove classes starting with '!'.
+  final Set<String> initialClasses;
 
-  var prevTransitions =
-      Map.fromEntries(elements.map((e) => MapEntry(e, e.style.transition)));
+  /// Properties to rollback, to values before start of transition.
+  final Set<String> rollbackProperties;
 
-  elements.forEach(
-      (e) => e.style.transition = 'all ${durationMs}ms $timingFunction');
+  /// The pre-final properties, to set before [finalizeInterval].
+  final Map<String, String> preFinalProperties;
 
-  var prevValues = <Element, Map<String, String>>{};
-  var setValues = <Element, Map<String, String>>{};
+  /// The final properties to set after transition.
+  final Map<String, String> finalProperties;
 
-  for (var entry in cssProperties.entries) {
-    var key = entry.key;
+  /// Classes to set after transitions. Will remove classes starting with '!'.
+  final Set<String> finalClasses;
 
-    for (var element in elements) {
-      var prevVal = element.style.getPropertyValue(key);
-      element.style.setProperty(key, entry.value);
+  /// Time after CSS transition to set [finalProperties]. Default: 100ms
+  final Duration finalizeInterval;
 
-      if (rollbackProperties.contains(key)) {
-        prevValues[element] ??= {};
-        prevValues[element][key] = prevVal;
+  CSSAnimationConfig(Iterable<Element> elements, this.duration,
+      {String timingFunction = 'ease',
+      Map<String, String> initialProperties,
+      Iterable<String> initialClasses,
+      Iterable<String> rollbackProperties,
+      Map<String, String> transitionProperties,
+      Map<String, String> preFinalProperties,
+      Map<String, String> finalProperties,
+      Iterable<String> finalClasses,
+      this.finalizeInterval})
+      : elements = _parseElements(elements),
+        timingFunction = _parseTimingFunction(timingFunction),
+        initialProperties = initialProperties ?? {},
+        initialClasses = _parseSet(initialClasses),
+        rollbackProperties = _parseSet(rollbackProperties),
+        transitionProperties = transitionProperties ?? {},
+        preFinalProperties = preFinalProperties ?? {},
+        finalProperties = finalProperties ?? {},
+        finalClasses = _parseSet(finalClasses);
 
-        setValues[element] ??= {};
-        setValues[element][key] = element.style.getPropertyValue(key);
-      }
+  static String _parseTimingFunction(String timingFunction) {
+    return isNotEmptyString(timingFunction, trim: true)
+        ? timingFunction.trim()
+        : 'ease';
+  }
+
+  static List<Element> _parseElements(Iterable<Element> elements) =>
+      elements != null ? elements.where((e) => e != null).toList() : [];
+
+  static Set<String> _parseSet(Iterable<String> it) => Set.from((it ?? [])
+      .where((c) => isNotEmptyString(c, trim: true))
+      .map((c) => c.trim()));
+
+  bool get isValid {
+    if (this.elements == null || this.elements.isEmpty) return false;
+
+    var elements = List.from(this.elements.where((e) => e != null));
+    if (elements.isEmpty || transitionProperties.isEmpty) return false;
+
+    return true;
+  }
+
+  bool get isNotValid => !isValid;
+
+  /// Play animation.
+  ///
+  /// [initialDelay] An initial delay, before start transitions.
+  /// [callback] Callback to be called after transition and set of [finalProperties].
+  Future<void> play({Duration initialDelay, AnimationCallback callback}) {
+    return _animateInit(initialDelay: initialDelay, callback: callback);
+  }
+
+  Future<void> _animateInit(
+      {Duration initialDelay, AnimationCallback callback}) {
+    if (isNotValid) return null;
+
+    rollbackProperties.removeWhere((p) => !transitionProperties.containsKey(p));
+
+    if (initialDelay != null && initialDelay.inMilliseconds > 0) {
+      return Future.delayed(initialDelay, () {
+        return _animate(callback);
+      });
+    } else {
+      return _animate(callback);
     }
   }
 
-  var interval =
-      finalizeInterval != null ? finalizeInterval.inMilliseconds : 100;
+  Future<void> _animate(AnimationCallback callback) {
+    var prevTransitions =
+        Map.fromEntries(elements.map((e) => MapEntry(e, e.style.transition)));
 
-  Future.delayed(Duration(milliseconds: durationMs + interval), () {
+    var prevValues = <Element, Map<String, String>>{};
+
+    for (var entry in transitionProperties.entries) {
+      var key = entry.key;
+
+      for (var element in elements) {
+        var prevVal = element.style.getPropertyValue(key);
+
+        if (rollbackProperties.contains(key)) {
+          prevValues[element] ??= {};
+          prevValues[element][key] = prevVal;
+        }
+      }
+    }
+
+    if (initialProperties.isNotEmpty || initialClasses.isNotEmpty) {
+      for (var entry in initialProperties.entries) {
+        var key = entry.key;
+
+        for (var element in elements) {
+          element.style.setProperty(key, entry.value);
+        }
+      }
+
+      addElementsClasses(elements, initialClasses);
+
+      return Future.delayed(Duration(milliseconds: 16), () {
+        return _animateTransitions(prevValues, prevTransitions, callback);
+      });
+    } else {
+      return _animateTransitions(prevValues, prevTransitions, callback);
+    }
+  }
+
+  Future<void> _animateTransitions(Map<Element, Map<String, String>> prevValues,
+      Map<Element, String> prevTransitions, AnimationCallback callback) async {
+    var durationMs = duration.inMilliseconds;
+
+    elements.forEach(
+        (e) => e.style.transition = 'all ${durationMs}ms $timingFunction');
+
+    var setValues = <Element, Map<String, String>>{};
+
+    for (var entry in transitionProperties.entries) {
+      var key = entry.key;
+
+      for (var element in elements) {
+        element.style.setProperty(key, entry.value);
+
+        if (rollbackProperties.contains(key)) {
+          setValues[element] ??= {};
+          setValues[element][key] = element.style.getPropertyValue(key);
+        }
+      }
+    }
+
+    var interval =
+        finalizeInterval != null ? finalizeInterval.inMilliseconds : 100;
+
+    if (preFinalProperties.isNotEmpty) {
+      await Future.delayed(Duration(milliseconds: durationMs));
+
+      for (var entry in preFinalProperties.entries) {
+        var key = entry.key;
+        for (var element in elements) {
+          element.style.setProperty(key, entry.value);
+        }
+      }
+
+      await Future.delayed(Duration(milliseconds: interval));
+    } else {
+      await Future.delayed(Duration(milliseconds: durationMs + interval));
+    }
+
     for (var key in rollbackProperties) {
       for (var element in elements) {
         var setVal = element.style.getPropertyValue(key);
@@ -428,10 +547,11 @@ void animateCSS(Iterable<Element> elements, Map<String, String> cssProperties,
       for (var entry in finalProperties.entries) {
         element.style.setProperty(entry.key, entry.value);
       }
+
+      addElementsClasses(elements, finalClasses);
+
       var prevTransition = prevTransitions[element];
       element.style.transition = prevTransition;
-
-      print(element.outerHtml);
     }
 
     if (callback != null) {
@@ -442,7 +562,111 @@ void animateCSS(Iterable<Element> elements, Map<String, String> cssProperties,
         print(s);
       }
     }
-  });
+  }
+
+  @override
+  String toString() {
+    return 'CSSAnimationConfig{elements: $elements, transitionProperties: $transitionProperties, duration: $duration, timingFunction: $timingFunction, initialProperties: $initialProperties, initialClasses: $initialClasses, rollbackProperties: $rollbackProperties, preFinalProperties: $preFinalProperties, finalProperties: $finalProperties, finalClasses: $finalClasses, finalizeInterval: $finalizeInterval}';
+  }
+}
+
+/// Sames [animateCSS] but runs [animationsConfig] in sequence;
+Future<void> animateCSSSequence(Iterable<CSSAnimationConfig> animationsConfig,
+    {Duration initialDelay, int repeat, bool repeatInfinity}) {
+  var animationsList =
+      animationsConfig.where((e) => e != null && e.isValid).toList();
+  if (animationsList.isEmpty) return null;
+
+  if (animationsList.length == 1) {
+    return animationsList[0].play(initialDelay: initialDelay);
+  }
+
+  repeat ??= 0;
+  repeatInfinity ??= false;
+
+  if (initialDelay != null && initialDelay.inMilliseconds > 0) {
+    return Future.delayed(initialDelay, () {
+      return _animateCSSSequence_repeat(animationsList, repeat, repeatInfinity);
+    });
+  } else {
+    return _animateCSSSequence_repeat(animationsList, repeat, repeatInfinity);
+  }
+}
+
+Future<void> _animateCSSSequence_repeat(List<CSSAnimationConfig> animationsList,
+    int repeat, bool repeatInfinity) async {
+  var future = _animateCSSSequence(animationsList);
+
+  while (repeat > 0 || repeatInfinity) {
+    await future;
+
+    if (document.visibilityState == 'hidden') {
+      print('ANIMATION_SEQUENCE: PAGE HIDDEN!');
+      ListenerWrapper(document.onVisibilityChange, (event) {
+        print(
+            'ANIMATION_SEQUENCE: PAGE SHOW! continue sequence: repeat $repeat ; repeatInfinity: $repeatInfinity');
+        _animateCSSSequence_repeat(animationsList, repeat - 1, repeatInfinity);
+      }, oneShot: true)
+          .listen();
+      break;
+    }
+
+    future = _animateCSSSequence(animationsList);
+    --repeat;
+  }
+
+  return future;
+}
+
+Future<void> _animateCSSSequence(List<CSSAnimationConfig> animationsList) {
+  var futures = <Future<void>>[];
+
+  futures.add(animationsList[0].play());
+
+  for (var i = 1; i < animationsList.length; ++i) {
+    var prevFuture = futures.last;
+    var animation = animationsList[i];
+
+    var future = prevFuture.then((_) {
+      return animation.play();
+    });
+
+    if (future != null) {
+      futures.add(future);
+    }
+  }
+
+  return futures.last;
+}
+
+/// Add to [elements] a set of [classes]. Will remove classes starting with '!'.
+bool addElementsClasses(Iterable<Element> elements, Iterable<String> classes) {
+  if (isEmptyObject(classes)) return false;
+
+  var initialClasses =
+      Set<String>.from(classes.where((c) => isNotEmptyString(c)));
+  if (initialClasses.isEmpty) return false;
+
+  var changedAny = false;
+
+  for (var className in initialClasses) {
+    className = className.trim();
+    var remove = className.startsWith('!');
+    if (remove) className = className.substring(1);
+
+    for (var element in elements) {
+      bool changed;
+      if (remove) {
+        changed = element.classes.remove(className);
+      } else {
+        changed = element.classes.add(className);
+      }
+
+      if (changed) changedAny = true;
+    }
+  }
+
+  return changedAny;
 }
 
 /// Sets [element] scroll colors, using standard CSS property `scrollbar-color`
@@ -519,6 +743,17 @@ List<String> removeElementScrollColors(Element element) {
     return scrollClassIDs;
   } else {
     return null;
+  }
+}
+
+void setTreeElementsBackgroundBlur(Element element, String className) {
+  if (element == null || isEmptyString(className, trim: true)) return;
+
+  className = className.trim();
+
+  var elements = element.querySelectorAll('.$className');
+  for (var e in elements) {
+    setElementBackgroundBlur(e);
   }
 }
 

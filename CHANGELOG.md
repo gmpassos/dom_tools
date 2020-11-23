@@ -1,3 +1,10 @@
+## 1.3.15
+
+- Added `setDivCentered` and `setTreeElementsDivCentered`.
+- Added `isInlineElement`, `addElementsClasses` and `setTreeElementsBackgroundBlur`.
+- Added `CSSAnimationConfig` and `animateCSSSequence`.
+- swiss_knife: ^2.5.18
+
 ## 1.3.14
 
 - `callObjectMethod` renamed to `callJSObjectMethod`.
