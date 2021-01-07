@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:html';
+import 'dart:js';
+import 'dart:js_util';
 
+import 'package:dom_tools/dom_tools.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
@@ -314,8 +317,9 @@ class TrackElementResize {
   }
 
   void _onResizeObserver(List entries, ResizeObserver observer) {
-    for (var entry in entries.whereType<ResizeObserverEntry>()) {
-      var elem = entry.target;
+    var targets = _getEntriesTargets(entries);
+
+    for (var elem in targets) {
       var listener = _resizeObserverListeners[elem];
       if (listener != null) {
         try {
@@ -326,6 +330,27 @@ class TrackElementResize {
         }
       }
     }
+  }
+
+  List<Element> _getEntriesTargets(List entries) {
+    var targets = <Element>[];
+
+    for (var entry in entries) {
+      if (entry is ResizeObserverEntry) {
+        var target = entry.target;
+        if (target is Element) {
+          targets.add(target);
+        }
+      } else {
+        var o = JsObject.fromBrowserObject(entry);
+        var target = getProperty(o, 'target');
+        if (target is Element) {
+          targets.add(target);
+        }
+      }
+    }
+
+    return targets;
   }
 
   void _track_elementValue(TrackElementValue trackElementValue, Element element,

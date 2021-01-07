@@ -64,21 +64,34 @@ typedef ElementValueGetter<T> = T Function(Element element);
 
 /// selects in DOM an [Element] with [tag] and one of [values] provided by [getter].
 Element getElementByValues<V>(
-    String tag, ElementValueGetter getter, List<V> values) {
+    String tag, ElementValueGetter getter, List<V> values,
+    [ElementValueGetter getter2, List<V> values2]) {
   if (tag == null || tag.isEmpty) return null;
   if (values == null || values.isEmpty) return null;
-  values.removeWhere((v) => v == null);
-  if (values.isEmpty) return null;
 
   var allLinks = document.querySelectorAll(tag);
   if (allLinks == null || allLinks.isEmpty) return null;
 
-  var fond = allLinks.firstWhere((l) {
-    var elemValue = getter(l);
-    return values.contains(elemValue);
-  }, orElse: () => null);
+  if (getter2 != null) {
+    if (values2 == null || values2.isEmpty) return null;
 
-  return fond;
+    var fond = allLinks.firstWhere((l) {
+      var elemValue = getter(l);
+      var ok = values.contains(elemValue);
+      if (!ok) return false;
+      var elemValue2 = getter2(l);
+      var ok2 = values2.contains(elemValue2);
+      return ok2;
+    }, orElse: () => null);
+    return fond;
+  } else {
+    var fond = allLinks.firstWhere((l) {
+      var elemValue = getter(l);
+      return values.contains(elemValue);
+    }, orElse: () => null);
+
+    return fond;
+  }
 }
 
 /// Returns `href` value for different [Element] types.
@@ -219,8 +232,16 @@ AnchorElement getAnchorElementByHREF(String href) {
 }
 
 /// Selects an [LinkElement] in DOM with [href].
-LinkElement getLinkElementByHREF(String href) {
-  return getElementByHREF('link', href);
+LinkElement getLinkElementByHREF(String href, [String rel]) {
+  if (href == null || href.isEmpty) return null;
+
+  if (isNotEmptyString(rel)) {
+    var resolvedURL = resolveUri(href).toString();
+    return getElementByValues('link', getElementHREF, [href, resolvedURL],
+        (e) => e.getAttribute('rel'), [rel]);
+  } else {
+    return getElementByHREF('link', href);
+  }
 }
 
 /// Selects an [ScriptElement] in DOM with [src].
@@ -1089,4 +1110,61 @@ bool isInlineElement(DivElement element, {bool checkBootstrapClasses = true}) {
         element.classes.contains('d-inline-flex');
   }
   return false;
+}
+
+Map<String, Future<bool>> _prefetchedHref = {};
+
+/// Prefetch a HREF using a `link` element into `head` DOM node.
+///
+/// [href] The path to the CSS source file.
+/// [insertIndex] optional index of insertion inside `head` node.
+Future<bool> prefetchHref(String href, {int insertIndex, bool preLoad}) async {
+  var rel = 'prefetch';
+
+  if (preLoad ?? false) {
+    rel = 'preload';
+  }
+
+  var linkInDom = getLinkElementByHREF(href, rel);
+
+  var prevCall = _prefetchedHref[href];
+
+  if (prevCall != null) {
+    if (linkInDom != null) {
+      return prevCall;
+    } else {
+      var removed = _prefetchedHref.remove(href);
+      assert(removed != null);
+    }
+  }
+
+  if (linkInDom != null) {
+    return true;
+  }
+
+  HeadElement head = querySelector('head');
+
+  var script = LinkElement()
+    ..rel = rel
+    ..href = href;
+
+  var completer = Completer<bool>();
+
+  script.onLoad.listen((e) {
+    completer.complete(true);
+  }, onError: (e) {
+    completer.complete(false);
+  });
+
+  if (insertIndex != null) {
+    insertIndex = Math.min(insertIndex, head.children.length);
+    head.children.insert(insertIndex, script);
+  } else {
+    head.children.add(script);
+  }
+
+  var call = completer.future;
+  _prefetchedHref[href] = call;
+
+  return call;
 }

@@ -1,3 +1,8 @@
+## 1.3.16
+
+- Added `prefetchHref`.
+- Fix `TrackElementResize` behavior due issue with `dart:html` `ResizeObserver`.
+
 ## 1.3.15
 
 - Added `setDivCentered` and `setTreeElementsDivCentered`.

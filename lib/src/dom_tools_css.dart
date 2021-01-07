@@ -79,7 +79,7 @@ Map<String, Future<bool>> _addedCssSources = {};
 /// [cssSource] The path to the CSS source file.
 /// [insertIndex] optional index of insertion inside `head` node.
 Future<bool> addCssSource(String cssSource, {int insertIndex}) async {
-  var linkInDom = getLinkElementByHREF(cssSource);
+  var linkInDom = getLinkElementByHREF(cssSource, 'stylesheet');
 
   var prevCall = _addedCssSources[cssSource];
 
@@ -750,6 +750,10 @@ void setTreeElementsBackgroundBlur(Element element, String className) {
   if (element == null || isEmptyString(className, trim: true)) return;
 
   className = className.trim();
+
+  if (element.classes.contains(className)) {
+    setElementBackgroundBlur(element);
+  }
 
   var elements = element.querySelectorAll('.$className');
   for (var e in elements) {
