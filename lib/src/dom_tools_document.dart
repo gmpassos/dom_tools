@@ -526,6 +526,8 @@ class DataAssets {
 /// [assetsURLAndTag] A [Map] of URL as key and tag as value. Accepts '?' as tag (will be defined by URL extension).
 Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
     {Duration timeout}) async {
+  if (assetsURLAndTag == null || assetsURLAndTag.isEmpty) return false;
+
   var doc = '<html><body>';
 
   var docAssetsCount = 0;
@@ -548,7 +550,12 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
 
   if (docAssetsCount == 0) return false;
 
-  var iFrame = IFrameElement()..style.display = 'none';
+  var iFrame = IFrameElement()
+    ..width = '10'
+    ..height = '10'
+    ..style.display = 'none';
+
+  iFrame.setAttribute('loading', 'eager');
 
   var completer = Completer<bool>();
   StreamSubscription<Event> listen;
@@ -558,22 +565,24 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
   listen = iFrame.onLoad.listen((event) {
     if (reloadCounter == 0) {
       reloadCounter++;
-      reloadIframe(iFrame, true);
+      Future.microtask(() => iFrame.remove());
     } else if (reloadCounter == 1) {
       listen?.cancel();
-      iFrame.remove();
       completer.complete(true);
+      Future.microtask(() => iFrame.remove());
     }
   });
 
-  document.body.append(iFrame);
   iFrame.srcdoc = doc;
+  document.body.append(iFrame);
 
   if (timeout != null) {
     Future.delayed(timeout, () {
-      listen?.cancel();
-      iFrame.remove();
-      completer.complete(false);
+      if (!completer.isCompleted) {
+        listen?.cancel();
+        completer.complete(false);
+        Future.microtask(() => iFrame.remove());
+      }
     });
   }
 
@@ -583,12 +592,11 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
 /// Reloads an IFrame document.
 Future<bool> reloadIframe(IFrameElement iFrame, [bool forceGet]) async {
   var loaded = await addJavaScriptCode('''
- 
-  window.__dom_tools_reloadIFrame = function(iframe,forceGet) {
-    iframe.contentWindow.location.reload(forceGet);
-  }
-  
+    window.__dom_tools_reloadIFrame = function(iframe,forceGet) {
+      iframe.contentWindow.location.reload(forceGet);
+    }
   ''');
+
   if (!loaded) return false;
 
   forceGet ??= false;

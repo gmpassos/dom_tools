@@ -1,3 +1,10 @@
+## 1.3.18
+
+- Fix `reloadAssets`:
+  - Fix timeout issue.
+  - Improve reload behavior.
+- Added `File` operations.
+
 ## 1.3.17
 
 - Added `replaceElement`, `reloadIframe` and `reloadAssets`.
