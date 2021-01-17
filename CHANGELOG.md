@@ -4,6 +4,7 @@
   - Fix timeout issue.
   - Improve reload behavior.
 - Added `File` operations.
+- swiss_knife: ^2.5.22
 
 ## 1.3.17
 
