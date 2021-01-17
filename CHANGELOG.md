@@ -1,6 +1,7 @@
 ## 1.3.17
 
 - Added `replaceElement`, `reloadIframe` and `reloadAssets`.
+- swiss_knife: ^2.5.21 
 
 ## 1.3.16
 
