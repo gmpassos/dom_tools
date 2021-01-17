@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:typed_data';
 
+import 'package:dom_tools/dom_tools.dart';
 import 'package:markdown/markdown.dart' as mk;
 import 'package:swiss_knife/swiss_knife.dart';
 
@@ -518,4 +519,79 @@ class DataAssets {
     _assets[id] = _AssetObjectURL(objURL, mimeType);
     return objURL;
   }
+}
+
+/// Reloads an asset (img, audi or video), forcing reload of asset URL.
+///
+/// [assetsURLAndTag] A [Map] of URL as key and tag as value. Accepts '?' as tag (will be defined by URL extension).
+Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
+    {Duration timeout}) async {
+  var doc = '<html><body>';
+
+  var docAssetsCount = 0;
+  for (var e in assetsURLAndTag.entries) {
+    var url = e.key;
+    if (isEmptyString(url, trim: true)) continue;
+
+    var tag = e.value;
+
+    if (isEmptyString(tag, trim: true) || tag == '?') {
+      var mimeType = MimeType.byExtension(url);
+      tag = mimeType?.htmlTag ?? 'img';
+    }
+
+    doc += '<$tag src="$url">';
+    docAssetsCount++;
+  }
+
+  doc += '</body></html>';
+
+  if (docAssetsCount == 0) return false;
+
+  var iFrame = IFrameElement()..style.display = 'none';
+
+  var completer = Completer<bool>();
+  StreamSubscription<Event> listen;
+
+  var reloadCounter = 0;
+
+  listen = iFrame.onLoad.listen((event) {
+    if (reloadCounter == 0) {
+      reloadCounter++;
+      reloadIframe(iFrame, true);
+    } else if (reloadCounter == 1) {
+      listen?.cancel();
+      iFrame.remove();
+      completer.complete(true);
+    }
+  });
+
+  document.body.append(iFrame);
+  iFrame.srcdoc = doc;
+
+  if (timeout != null) {
+    Future.delayed(timeout, () {
+      listen?.cancel();
+      iFrame.remove();
+      completer.complete(false);
+    });
+  }
+
+  return completer.future;
+}
+
+/// Reloads an IFrame document.
+Future<bool> reloadIframe(IFrameElement iFrame, [bool forceGet]) async {
+  var loaded = await addJavaScriptCode('''
+ 
+  window.__dom_tools_reloadIFrame = function(iframe,forceGet) {
+    iframe.contentWindow.location.reload(forceGet);
+  }
+  
+  ''');
+  if (!loaded) return false;
+
+  forceGet ??= false;
+  callJSFunction('__dom_tools_reloadIFrame', [iFrame, forceGet]);
+  return true;
 }

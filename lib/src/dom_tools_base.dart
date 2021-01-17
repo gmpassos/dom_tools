@@ -1168,3 +1168,20 @@ Future<bool> prefetchHref(String href, {int insertIndex, bool preLoad}) async {
 
   return call;
 }
+
+/// Replaces [n1] with [n2] in [n1] parent.
+///
+/// Returns [true] if replace was performed.
+bool replaceElement(Node n1, Node n2) {
+  var parent = n1?.parent;
+
+  if (parent != null) {
+    var idx = parent.nodes.indexOf(n1);
+    if (idx >= 0) {
+      parent.nodes.removeAt(idx);
+      parent.nodes.insert(idx, n2);
+      return true;
+    }
+  }
+  return false;
+}

@@ -1,3 +1,7 @@
+## 1.3.17
+
+- Added `replaceElement`, `reloadIframe` and `reloadAssets`.
+
 ## 1.3.16
 
 - Added `prefetchHref`.
