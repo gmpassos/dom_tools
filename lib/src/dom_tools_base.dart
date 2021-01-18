@@ -1185,3 +1185,36 @@ bool replaceElement(Node n1, Node n2) {
   }
   return false;
 }
+
+/// A [TreeReferenceMap] for DOM Nodes.
+class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
+  DOMTreeReferenceMap(Node root,
+      {bool autoPurge = false,
+      bool keepPurgedKeys = false,
+      Duration purgedEntriesTimeout,
+      int maxPurgedEntries})
+      : super(root,
+            autoPurge: autoPurge,
+            keepPurgedKeys: keepPurgedKeys,
+            purgedEntriesTimeout: purgedEntriesTimeout,
+            maxPurgedEntries: maxPurgedEntries);
+
+  @override
+  bool isInTree(Node node) => root.contains(node);
+
+  @override
+  Node getParentOf(Node key) => key?.parent;
+
+  @override
+  Iterable<Node> getChildrenOf(Node key) => key?.nodes;
+
+  @override
+  bool isChildOf(Node parent, Node child, bool deep) {
+    if (parent == null || child == null) return false;
+    if (deep ?? false) {
+      return !identical(parent, child) && parent.contains(child);
+    } else {
+      return parent.nodes.contains(child);
+    }
+  }
+}

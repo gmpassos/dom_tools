@@ -1,3 +1,8 @@
+## 1.3.19
+
+- Added `DOMTreeReferenceMap`.
+- swiss_knife: ^2.5.23
+
 ## 1.3.18
 
 - Fix `reloadAssets`:
