@@ -1,3 +1,8 @@
+## 1.3.20
+
+- swiss_knife: ^2.5.24
+ - Fixed `TreeReferenceMap` (`DOMTreeReferenceMap`).
+
 ## 1.3.19
 
 - Added `DOMTreeReferenceMap`.
