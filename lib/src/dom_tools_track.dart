@@ -9,13 +9,13 @@ import 'package:swiss_knife/swiss_knife.dart';
 import 'dom_tools_base.dart';
 
 class _ElementTrack<T> {
-  final TrackElementValue _trackElementValue;
+  final TrackElementValue/*!*/ _trackElementValue;
 
-  final Element _element;
+  final Element/*!*/ _element;
 
-  final ElementValueGetter<T> _elementValueGetter;
+  final ElementValueGetter<T>/*!*/ _elementValueGetter;
 
-  final bool _periodicTracking;
+  final bool/*!*/ _periodicTracking;
 
   final OnElementTrackValueEvent<T> _onTrackValueEvent;
 
@@ -70,11 +70,11 @@ class _ElementTrack<T> {
   }
 }
 
-typedef OnElementTrackValueEvent<T> = bool Function(Element element, T value);
+typedef OnElementTrackValueEvent<T> = bool Function(Element/*!*/ element, T/*?*/ value);
 
 /// Tracks a DOM [Element] to identify when a value changes.
 class TrackElementValue {
-  Duration _checkInterval;
+  /*late final*/ Duration/*!*/ _checkInterval;
 
   TrackElementValue([Duration checkInterval]) {
     _checkInterval = checkInterval ?? Duration(milliseconds: 250);
@@ -88,16 +88,14 @@ class TrackElementValue {
   /// [elementValueGetter] The value getter.
   /// [onTrackValueEvent] Callback to call when value changes.
   /// [periodicTracking] If [true] this tracking will continue after first event.
-  T track<T>(Element element, ElementValueGetter<T> elementValueGetter,
-      OnElementTrackValueEvent<T> onTrackValueEvent,
-      [bool periodicTracking]) {
+  T/*?*/ track<T>(Element/*?*/ element, ElementValueGetter<T>/*?*/ elementValueGetter,
+      OnElementTrackValueEvent<T>/*?*/ onTrackValueEvent,
+      [bool/*!*/ periodicTracking = false]) {
     if (element == null ||
         elementValueGetter == null ||
         onTrackValueEvent == null) return null;
 
     if (_elements.containsKey(element)) return null;
-
-    periodicTracking ??= false;
 
     var elementTrack = _ElementTrack(
         this, element, elementValueGetter, periodicTracking, onTrackValueEvent);
@@ -158,7 +156,7 @@ class TrackElementValue {
 
   final Map<Element, Map<String, dynamic>> _elementsProperties = {};
 
-  dynamic setProperty(Element element, String key, dynamic value) {
+  Object/*?*/ setProperty(Element element, String key, Object/*?*/ value) {
     var elemProps = _elementsProperties[element];
     if (elemProps == null) {
       _elementsProperties[element] = elemProps = {};
@@ -168,7 +166,7 @@ class TrackElementValue {
     return prev;
   }
 
-  dynamic getProperty(Element element, String key) {
+  Object/*?*/ getProperty(Element element, String key) {
     var elemProps = _elementsProperties[element];
     return elemProps != null ? elemProps[key] : null;
   }
@@ -196,16 +194,14 @@ class TrackElementInViewport {
   bool track(Element element,
       {OnElementEvent onEnterViewport,
       OnElementEvent onLeaveViewport,
-      bool periodicTracking}) {
+      bool/*!*/ periodicTracking = false}) {
     if (element == null ||
         (onEnterViewport == null && onLeaveViewport == null)) {
       return null;
     }
 
-    periodicTracking ??= false;
-
     var initValue = _trackElementValue
-        .track(element, (elem) => isInViewport(elem), (elem, show) {
+        .track<bool>(element, (elem) => isInViewport(elem), (elem, show) {
       if (show) {
         _trackElementValue.setProperty(element, 'viewport', true);
         if (onEnterViewport != null) onEnterViewport(element);
@@ -355,13 +351,13 @@ class TrackElementResize {
 
   void _track_elementValue(TrackElementValue trackElementValue, Element element,
       OnElementEvent onResize) {
-    trackElementValue.track(element, (e) => e.offset, (e, v) {
+    trackElementValue.track<Object>(element, (e) => e.offset, (e, v) {
       onResize(e);
       return true;
     }, true);
   }
 
   void _onResizeWindow() {
-    _trackElementValueInstance.checkElements();
+    _trackElementValueInstance?.checkElements();
   }
 }

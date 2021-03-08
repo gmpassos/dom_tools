@@ -10,7 +10,7 @@ import 'dom_tools_base.dart';
 /// [text] The text to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogText(String text, {double transparency, String padding}) {
+DivElement showDialogText(String/*?*/ text, {double transparency, String padding}) {
   if (text == null || text.isEmpty) return null;
 
   var element = SpanElement();
@@ -27,7 +27,7 @@ DivElement showDialogText(String text, {double transparency, String padding}) {
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
 /// [validator] The [NodeValidator] for HTML generation.
-DivElement showDialogHTML(String html,
+DivElement showDialogHTML(String/*?*/ html,
     {double transparency, String padding, NodeValidator validator}) {
   if (html == null || html.isEmpty) return null;
 

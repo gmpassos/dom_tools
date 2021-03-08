@@ -94,7 +94,7 @@ class Color {
     return Color(color);
   }
 
-  factory Color.parse(String colorStr) {
+  factory Color.parse(String/*?*/ colorStr) {
     if (colorStr == null) return Color(0);
     colorStr = colorStr.trim();
 
@@ -343,25 +343,25 @@ class HSVColor {
 
   /// Alpha, from 0.0 to 1.0. The describes the transparency of the color.
   /// A value of 0.0 is fully transparent, and 1.0 is fully opaque.
-  final double alpha;
+  final double/*!*/ alpha;
 
   /// Hue, from 0.0 to 360.0. Describes which color of the spectrum is
   /// represented. A value of 0.0 represents red, as does 360.0. Values in
   /// between go through all the hues representable in RGB. You can think of
   /// this as selecting which pigment will be added to a color.
-  final double hue;
+  final double/*!*/ hue;
 
   /// Saturation, from 0.0 to 1.0. This describes how colorful the color is.
   /// 0.0 implies a shade of grey (i.e. no pigment), and 1.0 implies a color as
   /// vibrant as that hue gets. You can think of this as the equivalent of
   /// how much of a pigment is added.
-  final double saturation;
+  final double/*!*/ saturation;
 
   /// Value, from 0.0 to 1.0. The "value" of a color that, in this context,
   /// describes how bright a color is. A value of 0.0 indicates black, and 1.0
   /// indicates full intensity color. You can think of this as the equivalent of
   /// removing black from the color as value increases.
-  final double value;
+  final double/*!*/ value;
 
   /// Returns a copy of this color with the [alpha] parameter replaced with the
   /// given value.
@@ -416,7 +416,7 @@ class HSVColor {
   /// {@macro dart.ui.shadow.lerp}
   ///
   /// Values outside of the valid range for each channel will be clamped.
-  static HSVColor lerp(HSVColor a, HSVColor b, double t) {
+  static HSVColor/*?*/ lerp(HSVColor/*?*/ a, HSVColor/*?*/ b, double/*!*/ t) {
     assert(t != null);
     if (a == null && b == null) return null;
     if (a == null) return b._scaleAlpha(t);
@@ -600,7 +600,7 @@ class HSLColor {
   ///
   /// Values for `t` are usually obtained from an [Animation<double>], such as
   /// an [AnimationController].
-  static HSLColor lerp(HSLColor a, HSLColor b, double t) {
+  static HSLColor lerp(HSLColor/*?*/ a, HSLColor/*?*/ b, double/*!*/ t) {
     assert(t != null);
     if (a == null && b == null) return null;
     if (a == null) return b._scaleAlpha(t);
@@ -631,9 +631,9 @@ class HSLColor {
       'hsl($hue, ${Math.round(saturation * 100)}, ${Math.round(lightness * 100)}, $alpha)';
 }
 
-double _getHue(
+double/*!*/ _getHue(
     double red, double green, double blue, double max, double delta) {
-  double hue;
+  var hue = 0.0;
   if (max == 0.0) {
     hue = 0.0;
   } else if (max == red) {
@@ -649,7 +649,7 @@ double _getHue(
   return hue;
 }
 
-double lerpDouble(num a, num b, double t) {
+double/*?*/ lerpDouble(num a, num b, double t) {
   if (a == null && b == null) return null;
   a ??= 0.0;
   b ??= 0.0;
@@ -696,7 +696,7 @@ Color _colorFromHue(
 }
 
 /// Gets the width and height from [image] ([CanvasImageSource]).
-Rectangle<int> getImageDimension(CanvasImageSource image) {
+Rectangle<int>/*?*/ getImageDimension(CanvasImageSource/*!*/ image) {
   if (image is ImageElement) {
     return Rectangle(0, 0, image.naturalWidth, image.naturalHeight);
   } else if (image is CanvasElement) {
@@ -709,16 +709,17 @@ Rectangle<int> getImageDimension(CanvasImageSource image) {
 
 /// Crops an image using a [Rectangle] ([crop]),
 /// delegating to method [cropImage],
-CanvasElement cropImageByRectangle(CanvasImageSource image, Rectangle crop) {
+CanvasElement cropImageByRectangle(CanvasImageSource image, Rectangle/*?*/ crop) {
   if (crop == null) return null;
   return cropImage(image, crop.left, crop.top, crop.width, crop.height);
 }
 
 /// Crops the [image] using coordinates [x], [y], [width] and [height],
 /// returning new image ([CanvasElement]).
-CanvasElement cropImage(
+CanvasElement/*?*/ cropImage(
     CanvasImageSource image, int x, int y, int width, int height) {
-  if (!(image is CanvasElement)) {
+
+  if (image is! CanvasElement) {
     var imgDim = getImageDimension(image);
     var imgCanvas = CanvasElement(width: imgDim.width, height: imgDim.height);
     CanvasRenderingContext2D context = imgCanvas.getContext('2d');
@@ -726,14 +727,8 @@ CanvasElement cropImage(
     image = imgCanvas;
   }
 
-  var imgCropData;
-
-  if (image is CanvasElement) {
-    CanvasRenderingContext2D imgContext = image.getContext('2d');
-    imgCropData = imgContext.getImageData(x, y, width, height);
-  } else {
-    return null;
-  }
+  CanvasRenderingContext2D imgContext = (image as CanvasElement).getContext('2d');
+  var imgCropData = imgContext.getImageData(x, y, width, height);
 
   var canvasCrop = CanvasElement(width: width, height: height);
   CanvasRenderingContext2D contextCrop = canvasCrop.getContext('2d');
@@ -776,12 +771,14 @@ Future<ImageElement> createImageElementFromFile(File file) {
 /// Creates an image from a Base-64 with [mimeType].
 ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
   if (base64 == null || base64.isEmpty) return null;
+
   if (!base64.startsWith('data:')) {
     if (mimeType == null || mimeType.trim().isEmpty) mimeType = 'image/jpeg';
     base64 = 'data:$mimeType;base64,$base64';
   }
 
   var imgElement = ImageElement();
+  // ignore: unsafe_html
   imgElement.src = base64;
 
   return imgElement;
@@ -789,8 +786,7 @@ ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
 
 /// Converts a [List<num>], as pairs, to a [List<Point>].
 List<Point<num>> numsToPoints(List<num> perspective) {
-  // ignore: omit_local_variable_types
-  List<Point<num>> points = [];
+  var points = <Point<num>>[];
 
   for (var i = 1; i < perspective.length; i += 2) {
     var x = perspective[i - 1];
@@ -802,38 +798,38 @@ List<Point<num>> numsToPoints(List<num> perspective) {
 }
 
 /// Makes a copy of [points].
-List<Point<num>> copyPoints(List<Point<num>> points) {
+List<Point<num>> copyPoints(List<Point<num>/*!*/>/*!*/ points) {
   return points.map((p) => Point(p.x, p.y)).toList();
 }
 
 /// Scales [points] to [scale].
-List<Point<num>> scalePoints(List<Point<num>> points, double scale) {
+List<Point<num>> scalePoints(List<Point<num>/*!*/>/*!*/ points, double/*!*/ scale) {
   return points.map((p) => Point(p.x * scale, p.y * scale)).toList();
 }
 
 /// Scales [points] to [scaleX] and [scaleY].
 List<Point<num>> scalePointsXY(
-    List<Point<num>> points, double scaleX, double scaleY) {
+    List<Point<num>/*!*/>/*!*/ points, double/*!*/ scaleX, double/*!*/ scaleY) {
   return points.map((p) => Point(p.x * scaleX, p.y * scaleY)).toList();
 }
 
 /// Translate [pints] in [x] and [y].
-List<Point<num>> translatePoints(List<Point<num>> points, num x, num y) {
+List<Point<num>> translatePoints(List<Point<num>/*!*/>/*!*/ points, num/*!*/ x, num/*!*/ y) {
   return points.map((p) => Point(p.x + x, p.y + y)).toList();
 }
 
 /// A cache for scaled images.
 class ImageScaledCache {
-  final CanvasImageSource _image;
+  final CanvasImageSource/*!*/ _image;
 
-  int _width;
+  int/*!*/ _width;
 
-  int _height;
+  int/*!*/ _height;
 
-  int _maxScaleCacheEntries;
+  int/*!*/ _maxScaleCacheEntries;
 
   ImageScaledCache(this._image,
-      [int width, int height, int maxScaleCacheEntries]) {
+      [int/*?*/ width, int/*?*/ height, int/*?*/ maxScaleCacheEntries]) {
     if (width == null || height == null) {
       var wh = getImageDimension(_image);
 
@@ -841,8 +837,8 @@ class ImageScaledCache {
       height ??= wh.height;
     }
 
-    _width = width;
-    _height = height;
+    _width = width/*!*/;
+    _height = height/*!*/;
 
     _maxScaleCacheEntries =
         maxScaleCacheEntries != null && maxScaleCacheEntries > 0
@@ -926,62 +922,31 @@ typedef ValueCopier<T> = T Function(T value);
 
 /// Represents an element in the [CanvasImageViewer].
 class ViewerElement<T> {
-  static T copyValue<T>(ViewerElement<T> viewerElement) {
-    return viewerElement != null ? viewerElement.valueCopy : null;
-  }
-
-  static T getValue<T>(ViewerElement<T> viewerElement) {
-    return viewerElement != null ? viewerElement.value : null;
-  }
-
-  static Color getColor(ViewerElement viewerElement, [Color defaultColor]) {
-    return viewerElement != null
-        ? viewerElement.color ?? defaultColor
-        : defaultColor;
-  }
-
-  static int getStrokeSize(ViewerElement viewerElement,
-      [int defaultStrokeSize]) {
-    return viewerElement != null
-        ? viewerElement.strokeSize ?? defaultStrokeSize
-        : defaultStrokeSize;
-  }
-
-  static String getKey(ViewerElement viewerElement, [String defaultKey]) {
-    return viewerElement != null ? viewerElement.key ?? defaultKey : defaultKey;
-  }
-
-  T _value;
+  T/*?*/ value;
 
   final Color color;
   final int strokeSize;
 
   final ValueCopier<T> valueCopier;
 
-  ViewerElement(this._value, this.color, {this.valueCopier, int strokeSize})
+  ViewerElement(this.value, this.color, {this.valueCopier, int strokeSize})
       : strokeSize = strokeSize != null && strokeSize > 0 ? strokeSize : null;
 
-  bool get isNull => _value == null;
+  bool get isNull => value == null;
 
-  T get value => _value;
-
-  set value(T value) {
-    _value = value;
-  }
-
-  T get valueCopy => valueCopier != null ? valueCopier(_value) : null;
+  T get valueCopy => valueCopier != null ? valueCopier(value) : null;
 
   String key;
 
-  bool get isEmpty => isEmptyObject(_value);
+  bool get isEmpty => isEmptyObject(value);
 
   bool get isNotEmpty => !isEmpty;
 
   @override
   String toString() {
     return key != null
-        ? '{value: $_value, color: $color, key: $key}'
-        : '{value: $_value, color: $color}';
+        ? '{value: $value, color: $color, key: $key}'
+        : '{value: $value, color: $color}';
   }
 }
 
@@ -993,8 +958,8 @@ class _RenderImageResult {
   _RenderImageResult(this.quality, this.translate);
 }
 
-class Label<T extends num> extends Rectangle<T> {
-  final String label;
+class Label<T extends num/*!*/> extends Rectangle<T> {
+  final String/*!*/ label;
 
   Color color;
 
@@ -1024,35 +989,35 @@ class CanvasImageViewer {
   static final DATE_FORMAT_YYYY_MM_DD_HH_MM_SS =
       DateFormat('yyyy/MM/dd HH:mm:ss', Intl.getCurrentLocale());
 
-  CanvasElement _canvas;
+  CanvasElement/*!*/ _canvas;
 
-  final bool canvasSizeSameOfRenderedImageSize;
+  final bool/*!*/ canvasSizeSameOfRenderedImageSize;
 
-  int _width;
-  int _height;
-  int _renderedImageWidth;
-  int _renderedImageHeight;
+  int/*!*/ _width;
+  int/*!*/ _height;
+  int/*!*/ _renderedImageWidth;
+  int/*!*/ _renderedImageHeight;
 
-  final int _maxWidth;
-  final int _maxHeight;
+  final int/*?*/ _maxWidth;
+  final int/*?*/ _maxHeight;
 
   CanvasImageSource _image;
 
   final ImageFilter _imageFilter;
 
-  ViewerElement<Rectangle<num>> _clip;
+  ViewerElement<Rectangle<num>>/*?*/ _clip;
 
-  final ViewerElement<List<Rectangle<num>>> _rectangles;
+  final ViewerElement<List<Rectangle<num>>>/*?*/ _rectangles;
 
-  final ViewerElement<List<Point<num>>> _points;
+  final ViewerElement<List<Point<num>>>/*?*/ _points;
 
-  final ViewerElement<List<Label<num>>> _labels;
+  final ViewerElement<List<Label<num>>>/*?*/ _labels;
 
-  final ViewerElement<List<Point<num>>> _perspective;
+  final ViewerElement<List<Point<num>>>/*?*/ _perspective;
 
-  final ViewerElement<num> _gridSize;
+  final ViewerElement<num>/*?*/ _gridSize;
 
-  bool _cropPerspective;
+  bool/*!*/ _cropPerspective;
 
   /// Time of the image.
   final DateTime time;
@@ -1118,7 +1083,7 @@ class CanvasImageViewer {
     w ??= 100;
     h ??= 100;
 
-    if (_image is Element) {
+    if (_image is ImageElement) {
       ImageElement img = _image;
       img.onLoad.listen((_) => _onLoadImage());
     }
@@ -1209,13 +1174,13 @@ class CanvasImageViewer {
         border, border, _width - (border * 2), _height - (border * 2));
   }
 
-  Rectangle<num> _normalizeClip(Rectangle<num> clip) {
+  Rectangle<num>/*?*/ _normalizeClip(Rectangle<num>/*!*/ clip) {
     var rectangle = Rectangle<int>(0, 0, _width, _height);
     var intersection = clip.intersection(rectangle);
-    return intersection;
+    return intersection ;
   }
 
-  List<Point<num>> _defaultPerspective() {
+  List<Point<num>/*!*/> _defaultPerspective() {
     return [
       Point(0, 0),
       Point(width, 0),
@@ -1239,10 +1204,10 @@ class CanvasImageViewer {
   int get height => _height;
 
   /// Converts [Rectangle<num>] to [ViewerElement<Rectangle<num>>].
-  static ViewerElement<Rectangle<num>> clipViewerElement(Rectangle<num> clip,
+  static ViewerElement<Rectangle<num>> clipViewerElement(Rectangle<num>/*?*/ clip,
       [Color color]) {
     return ViewerElement<Rectangle<num>>(clip, color,
-        valueCopier: (v) => Rectangle<num>(v.left, v.top, v.width, v.height));
+        valueCopier: (v) => v == null ? null : Rectangle<num>(v.left, v.top, v.width, v.height));
   }
 
   static ViewerElement<Rectangle<num>> clipViewerElementFromNums(List clip,
@@ -1262,7 +1227,7 @@ class CanvasImageViewer {
     return clipViewerElement(rect, color);
   }
 
-  static ViewerElement<Rectangle<num>> clipViewerElementFromMap(Map clip,
+  static ViewerElement<Rectangle<num>> clipViewerElementFromMap(Map/*?*/ clip,
       [Color color]) {
     if (clip == null) {
       return clipViewerElement(null, color);
@@ -1278,9 +1243,9 @@ class CanvasImageViewer {
   }
 
   /// Clip area element rendered in the image.
-  Rectangle<num> get clip => ViewerElement.copyValue(_clip);
+  Rectangle<num> get clip => _clip?.valueCopy;
 
-  String get clipKey => ViewerElement.getKey(_clip, 'clip');
+  String get clipKey => _clip?.key ?? 'clip';
 
   /// Converts a [List] if rectangles to [ViewerElement< List<Rectangle<num>> >].
   ///
@@ -1328,9 +1293,9 @@ class CanvasImageViewer {
   }
 
   /// Rectangle elements rendered in the image.
-  List<Rectangle<num>> get rectangles => ViewerElement.copyValue(_rectangles);
+  List<Rectangle<num>> get rectangles => _rectangles?.valueCopy;
 
-  String get rectanglesKey => ViewerElement.getKey(_rectangles, 'rectangles');
+  String get rectanglesKey => _rectangles?.key ?? 'rectangles';
 
   /// Converts a [List] if labels to [ViewerElement< List<Label<num>> >].
   ///
@@ -1382,9 +1347,9 @@ class CanvasImageViewer {
   }
 
   /// Labels elements rendered in the image.
-  List<Label<num>> get labels => ViewerElement.copyValue(_labels);
+  List<Label<num>> get labels => _labels?.valueCopy;
 
-  String get labelsKey => ViewerElement.getKey(_labels, 'labels');
+  String get labelsKey => _labels?.key ?? 'labels';
 
   /// Converts a [List<Point<num>> ] to [ViewerElement< List<Point<num>> >].
   ///
@@ -1398,18 +1363,18 @@ class CanvasImageViewer {
   }
 
   /// Point elements rendered in the image.
-  List<Point<num>> get points => ViewerElement.copyValue(_points);
+  List<Point<num>> get points => _points?.valueCopy;
 
-  String get pointsKey => ViewerElement.getKey(_points, 'points');
+  String get pointsKey => _points?.key ?? 'points';
 
   static ViewerElement<num> gridSizeViewerElement(num gridSize, [Color color]) {
     return ViewerElement<num>(gridSize, color, valueCopier: (value) => value);
   }
 
   /// The size of grid boxes when rendering the grid.
-  num get gridSize => ViewerElement.copyValue(_gridSize);
+  num get gridSize => _gridSize?.valueCopy;
 
-  String get gridSizeKey => ViewerElement.getKey(_gridSize, 'gridSize');
+  String get gridSizeKey => _gridSize?.key ?? 'gridSize';
 
   /// Converts a [List<num>] (pairs of perspective points) to [ViewerElement< List<Point<num>> >].
   static ViewerElement<List<Point<num>>> perspectiveViewerElementFromNums(
@@ -1443,10 +1408,10 @@ class CanvasImageViewer {
   }
 
   /// The perspective points to use in the Perspective filter of the image.
-  List<Point<num>> get perspective => ViewerElement.copyValue(_perspective);
+  List<Point<num>> get perspective => _perspective?.valueCopy;
 
   String get perspectiveKey =>
-      ViewerElement.getKey(_perspective, 'perspective');
+      _perspective?.key ?? 'perspective';
 
   void _deselectDOM() {
     var selection = window.getSelection();
@@ -1649,7 +1614,7 @@ class CanvasImageViewer {
     if (clip2 != null) {
       var clipArea = clip2.width * clip2.height;
       if (clipArea > 1) {
-        _clip = clipViewerElement(clip2, ViewerElement.getColor(_clip));
+        _clip = clipViewerElement(clip2, _clip?.color);
         return Quality.HIGH;
       }
     }
@@ -1820,7 +1785,7 @@ class CanvasImageViewer {
     });
   }
 
-  Point nearestPoint(List<Point<num>> points, Point<num> p) {
+  Point nearestPoint(List<Point<num>/*!*/>/*?*/ points, Point<num>/*!*/ p) {
     if (points == null || points.isEmpty) return null;
 
     Point nearest;
@@ -1874,7 +1839,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse, false);
 
-    var points = _perspective.value ?? _defaultPerspective();
+    List<math.Point<num>/*!*/>/*!*/ points = _perspective.value ?? _defaultPerspective();
 
     if (points.length != 4) points = _defaultPerspective();
 
@@ -2024,36 +1989,40 @@ class CanvasImageViewer {
 
     var translate = renderImageResult.translate;
 
-    _renderGrid(context, translate, ViewerElement.getValue(_gridSize),
-        ViewerElement.getColor(_gridSize, Color.CYAN.withOpacity(0.70)), 2);
+    _renderGrid(context, translate, _gridSize?.value,
+        _gridSize?.color ?? Color.CYAN.withOpacity(0.70), 2);
 
     _renderRectangles(
         context,
         translate,
-        ViewerElement.getValue(_rectangles),
-        ViewerElement.getColor(_rectangles, Color.GREEN),
-        ViewerElement.getStrokeSize(_rectangles, 3));
+        _rectangles?.value,
+        _rectangles?.color ?? Color.GREEN,
+        _rectangles?.strokeSize ?? 3,
+        );
 
     _renderPoints(
         context,
         translate,
-        ViewerElement.getValue(_points),
-        ViewerElement.getColor(_points, Color.RED),
-        ViewerElement.getStrokeSize(_points, 1));
+        _points?.value,
+        _points?.color ?? Color.RED,
+        _points?.strokeSize ?? 1,
+        );
 
     _renderLabels(
         context,
         translate,
-        ViewerElement.getValue(_labels),
-        ViewerElement.getColor(_labels, Color.GREEN),
-        ViewerElement.getStrokeSize(_labels, 3));
+        _labels?.value,
+        _labels?.color ??Color.GREEN,
+        _labels?.strokeSize ?? 3,
+        );
 
     _renderClip(
         context,
         translate,
-        ViewerElement.getValue(_clip),
-        ViewerElement.getColor(_clip, Color.BLUE),
-        ViewerElement.getStrokeSize(_clip, 1));
+        _clip?.value,
+        _clip?.color ?? Color.BLUE,
+        _clip?.strokeSize ?? 1,
+        );
 
     _renderTime(context, translate, time);
 
@@ -2296,7 +2265,7 @@ class CanvasImageViewer {
 
     Point<num> translate;
     CanvasElement srcImage;
-    Rectangle dstCoords;
+    Rectangle<int> dstCoords;
 
     if (_cropPerspective) {
       var image = filterResult.imageResult;
@@ -2327,8 +2296,8 @@ class CanvasImageViewer {
       var maxW = Math.min(maxWidth, dstCoords.width);
       var maxH = Math.min(maxHeight, dstCoords.height);
 
-      var x = (dstCoords.width - maxW) ~/ 2;
-      var y = (dstCoords.height - maxH) ~/ 2;
+      int/*!*/ x = (dstCoords.width/*!*/ - maxW) ~/ 2;
+      int/*!*/ y = (dstCoords.height/*!*/ - maxH) ~/ 2;
 
       if (_clip != null && !_clip.isNull) {
         var clipW = _clip.value.width;
@@ -2372,8 +2341,8 @@ class CanvasImageViewer {
   void _renderClip(CanvasRenderingContext2D context, Point<num> translate,
       Rectangle clip, Color color, int strokeSize) {
     if (clip == null) return;
-
     clip = _normalizeClip(clip);
+    if (clip == null) return;
 
     _renderShadow(context, translate, clip);
 

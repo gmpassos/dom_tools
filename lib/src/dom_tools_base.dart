@@ -10,7 +10,7 @@ import 'package:swiss_knife/swiss_knife.dart';
 ///
 /// If the resolved value is null or empty, and def is not null,
 /// it will return [def].
-String getElementValue(Element element, [String def]) {
+String/*?*/ getElementValue(Element element, [String/*?*/ def]) {
   if (element == null) return def;
 
   String value;
@@ -35,7 +35,7 @@ String getElementValue(Element element, [String def]) {
 }
 
 /// Sets the [element] [value] depending of the identified type.
-bool setElementValue(Element element, String value) {
+bool/*!*/ setElementValue(Element/*?*/ element, String/*!*/ value) {
   if (element == null) return false;
 
   if (element is InputElement) {
@@ -1218,3 +1218,50 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
     }
   }
 }
+
+int get deviceWidth => window.innerWidth;
+
+int get deviceHeight => window.innerHeight;
+
+bool get isExtraSmallDevice => deviceWidth < 576;
+
+bool get isSmallDevice {
+  var w = deviceWidth;
+  return w >= 576 && w < 768;
+}
+
+bool get isSmallDeviceOrLower {
+  return deviceWidth < 768;
+}
+
+bool get isSmallDeviceOrHigher {
+  return deviceWidth >= 576;
+}
+
+bool get isMediumDevice {
+  var w = deviceWidth;
+  return w >= 768 && w < 992;
+}
+
+bool get isMediumDeviceOrLower {
+  return deviceWidth < 992;
+}
+
+bool get isMediumDeviceOrLHigher {
+  return deviceWidth >= 768;
+}
+
+bool get isLargeDevice {
+  var w = deviceWidth;
+  return w >= 992 && w < 1200;
+}
+
+bool get isLargeDeviceOrLower {
+  return deviceWidth < 1200;
+}
+
+bool get isLargeDeviceOrHigher {
+  return deviceWidth >= 992;
+}
+
+bool get isExtraLargeDevice => deviceWidth >= 1200;

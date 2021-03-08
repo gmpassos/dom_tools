@@ -15,7 +15,7 @@ Future<bool> addJavaScriptCode(String scriptCode) async {
   Future<bool> future;
 
   try {
-    HeadElement head = querySelector('head');
+    var head = querySelector('head')/*!*/;
 
     var script = ScriptElement()
       ..type = 'text/javascript'
@@ -42,8 +42,8 @@ Map<String, Future<bool>> _addedJavaScriptsSources = {};
 /// [addToBody] If [true] adds into `body` node instead of `head` node.
 /// [async] If true, the script will be executed asynchronously as soon as it is available,
 /// and not when the page has finished parsing.
-Future<bool> addJavaScriptSource(String scriptSource,
-    {bool addToBody, bool async}) async {
+Future<bool> addJavaScriptSource(String/*!*/ scriptSource,
+    {bool/*!*/ addToBody = false, bool/*!*/ async = false}) async {
   var scriptInDom = getScriptElementBySRC(scriptSource);
 
   var prevCall = _addedJavaScriptsSources[scriptSource];
@@ -61,12 +61,9 @@ Future<bool> addJavaScriptSource(String scriptSource,
     return true;
   }
 
-  addToBody ??= false;
-  async ??= false;
-
   print('ADDING <SCRIPT>: $scriptSource > into body: $addToBody');
 
-  Element parent;
+  Element/*!*/ parent;
   if (addToBody) {
     parent = querySelector('body');
   } else {
@@ -130,17 +127,17 @@ void mapJSFunction(String jsFunctionName, MappedFunction f) {
 }
 
 /// Calls JavaScript a [method] in object [o] with [args].
-dynamic callJSObjectMethod(dynamic o, String method, [List args]) {
+dynamic callJSObjectMethod(Object/*!*/ o, String/*!*/ method, [List args]) {
   return callMethod(o, method, args);
 }
 
 /// Calls JavaScript a function [method] with [args].
-dynamic callJSFunction(String method, [List args]) {
+dynamic callJSFunction(String/*!*/ method, [List args]) {
   return context.callMethod(method, args);
 }
 
 /// Returns the keys of [JsObject] [o].
-List<String> jsObjectKeys(JsObject o) {
+List<String> jsObjectKeys(JsObject/*!*/ o) {
   var keys = context['Object'].callMethod('keys', [o]);
   return jsArrayToList(keys).map((e) => '$e').toList();
 }
@@ -148,7 +145,7 @@ List<String> jsObjectKeys(JsObject o) {
 /// Converts [o] to Dart primitives or collections.
 ///
 /// [o] Can be any primitive value, a [JsArray] or a [JsObject]).
-dynamic jsToDart(dynamic o) {
+Object/*?*/ jsToDart(Object/*?*/ o) {
   if (o == null) return null;
 
   if (o is String) return o;
@@ -175,7 +172,7 @@ List jsArrayToList(JsArray a) {
 
 /// Converts a [JsObject] [o] to a [Map].
 /// Also converts keys and values using [jsToDart].
-Map jsObjectToMap(JsObject o) {
+Map/*?*/ jsObjectToMap(JsObject/*?*/ o) {
   if (o == null) return null;
 
   var keys = jsObjectKeys(o);

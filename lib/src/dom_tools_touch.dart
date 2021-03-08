@@ -24,6 +24,9 @@ TouchDeviceDetection detectTouchDevice() {
     _detectTouchDevice = TouchDeviceDetection.UNKNOWN;
 
     try {
+      // At the 1st, it won't be null:
+      assert(_detectTouchDeviceListen != null);
+
       _detectTouchDeviceListen
           .add(document.body.onTouchStart.listen(_onTouchEvent));
       _detectTouchDeviceListen
@@ -42,6 +45,8 @@ TouchDeviceDetection detectTouchDevice() {
 }
 
 void _onTouchEvent(event) {
+  if (_detectTouchDeviceListen == null) return ;
+
   for (var listen in _detectTouchDeviceListen) {
     try {
       listen.cancel();
@@ -113,7 +118,9 @@ MouseEvent touchEventToMouseEvent(TouchEvent event) {
 void redirect_onTouchStart_to_MouseEvent(Element element) {
   element.onTouchStart.listen((event) {
     var mouseEvent = touchEventToMouseEvent(event);
-    element.dispatchEvent(mouseEvent);
+    if (mouseEvent != null) {
+      element.dispatchEvent(mouseEvent);
+    }
   });
 }
 
@@ -121,7 +128,9 @@ void redirect_onTouchStart_to_MouseEvent(Element element) {
 void redirect_onTouchMove_to_MouseEvent(Element element) {
   element.onTouchMove.listen((event) {
     var mouseEvent = touchEventToMouseEvent(event);
-    element.dispatchEvent(mouseEvent);
+    if (mouseEvent != null) {
+      element.dispatchEvent(mouseEvent);
+    }
   });
 }
 
@@ -129,6 +138,8 @@ void redirect_onTouchMove_to_MouseEvent(Element element) {
 void redirect_onTouchEnd_to_MouseEvent(Element element) {
   element.onTouchEnd.listen((event) {
     var mouseEvent = touchEventToMouseEvent(event);
-    element.dispatchEvent(mouseEvent);
+    if (mouseEvent != null) {
+      element.dispatchEvent(mouseEvent);
+    }
   });
 }

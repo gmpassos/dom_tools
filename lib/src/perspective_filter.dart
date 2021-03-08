@@ -18,7 +18,7 @@ class _Rect {
 ///
 /// Used by [ImagePerspectiveFilter].
 class FilterResult {
-  final CanvasImageSource imageSource;
+  final CanvasImageSource/*?*/ imageSource;
 
   final CanvasElement imageResult;
 
@@ -26,7 +26,9 @@ class FilterResult {
 
   FilterResult(this.imageSource, this.imageResult, this.crop);
 
-  FilterResult copyWithSource() => FilterResult(null, imageResult, crop);
+  FilterResult copyWithSource(CanvasImageSource/*?*/ imageSource) => FilterResult(imageSource, imageResult, crop);
+
+  FilterResult copyWithoutSource() => FilterResult(null, imageResult, crop);
 
   Point<num> get translation => Point(crop.left, crop.top);
 
@@ -40,9 +42,9 @@ class FilterResult {
     return _imageResultCropped;
   }
 
-  int get resultWidth => imageResult.width;
+  int get resultWidth => imageResult.width/*!*/;
 
-  int get resultHeight => imageResult.height;
+  int get resultHeight => imageResult.height/*!*/;
 }
 
 /// A filter that applies a perspective to an image.

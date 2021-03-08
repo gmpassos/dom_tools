@@ -225,8 +225,8 @@ String markdownToHtml(String markdown,
   if (markdown == null || markdown.isEmpty) return '';
   if (normalize != null && normalize) markdown = normalizeIndent(markdown);
   var markdownHtml = mk.markdownToHtml(markdown,
-      blockSyntaxes: blockSyntaxes,
-      inlineSyntaxes: inlineSyntaxes,
+      blockSyntaxes: blockSyntaxes ?? [],
+      inlineSyntaxes: inlineSyntaxes ?? [],
       extensionSet: extensionSet,
       linkResolver: linkResolver,
       imageLinkResolver: imageLinkResolver,
@@ -252,7 +252,7 @@ Blob dataURLToBlob(DataURLBase64 dataURL) {
 
 /// Makes a HTTP request and returns [url] content as [Uint8List].
 Future<Uint8List> getURLData(String url,
-    {String user, String password, withCredentials = true}) {
+    {String user, String password, bool/*!*/ withCredentials = true}) {
   var httpRequest = HttpRequest();
 
   httpRequest.withCredentials = withCredentials ?? true;
@@ -287,27 +287,28 @@ Future<Uint8List> getURLData(String url,
 /// Downloads [dataURL], saving a file with [fileName].
 void downloadDataURL(DataURLBase64 dataURL, String fileName) {
   var blob = dataURLToBlob(dataURL);
-  downloadBlob(blob, dataURL.mimeType, fileName);
+  downloadBlob(blob, fileName);
 }
 
 /// Downloads [content] of type [mimeType], saving a file with [fileName].
 void downloadContent(List<String> content, MimeType mimeType, String fileName) {
   var blob = Blob(content, mimeType.toString());
-  downloadBlob(blob, mimeType, fileName);
+  downloadBlob(blob, fileName);
 }
 
 /// Downloads [bytes] of type [mimeType], saving a file with [fileName].
 void downloadBytes(List<int> bytes, MimeType mimeType, String fileName) {
   var blob = Blob([bytes], mimeType.toString());
-  downloadBlob(blob, mimeType, fileName);
+  downloadBlob(blob, fileName);
 }
 
 /// Downloads [blob] of type [mimeType], saving a file with [fileName].
-void downloadBlob(Blob blob, MimeType mimeType, String fileName) {
+void downloadBlob(Blob blob, String fileName) {
   var fileLink = AnchorElement();
   fileLink.style.display = 'none';
 
   if (isNotEmptyObject(fileName)) fileLink.download = fileName;
+  // ignore: unsafe_html
   fileLink.href = Url.createObjectUrlFromBlob(blob);
 
   fileLink.onClick.listen((event) {
@@ -359,7 +360,7 @@ class DataAssets {
   /// Returns a list of IDs of [mimeType].
   ///
   /// [matchSubType] If [true] also matches the [mimeType.subType].
-  List<String> getIDsWhereMimeTypeOf(MimeType mimeType,
+  List<String> getIDsWhereMimeTypeOf(MimeType/*?*/ mimeType,
       {bool matchSubType = true}) {
     if (mimeType == null) return [];
     matchSubType ??= true;
@@ -417,7 +418,7 @@ class DataAssets {
       getURLofIDs(getIDsWhereMimeTypeIsMedia());
 
   /// Returns a list of ObjectURL for [ids].
-  List<String> getURLofIDs(List<String> ids) {
+  List<String/*!*/>/*!*/ getURLofIDs(List<String> ids) {
     if (ids == null || ids.isEmpty) return [];
     return ids.map((id) => getURL(id)).toList();
   }
@@ -426,7 +427,7 @@ class DataAssets {
   String getURL(String id) => _assets[id]?.objectURL;
 
   /// Returns the ID of [url].
-  String getIDofURL(String url) {
+  String getIDofURL(String/*?*/ url) {
     if (url == null) return null;
     for (var entry in _assets.entries) {
       if (entry.value.objectURL == url) {
@@ -436,9 +437,9 @@ class DataAssets {
     return null;
   }
 
-  Future<Uint8List> getData(String id) {
+  Future<Uint8List>/*?*/ getData(String id) {
     var url = getURL(id);
-    return getURLData(url);
+    return url != null ? getURLData(url) : null ;
   }
 
   /// Returns [true] if contains [id].
