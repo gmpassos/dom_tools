@@ -94,7 +94,7 @@ class Color {
     return Color(color);
   }
 
-  factory Color.parse(String/*?*/ colorStr) {
+  factory Color.parse(String? colorStr) {
     if (colorStr == null) return Color(0);
     colorStr = colorStr.trim();
 
@@ -258,10 +258,8 @@ class Color {
   /// Returns an alpha value representative of the provided [opacity] value.
   ///
   /// The [opacity] value may not be null.
-  static int getAlphaFromOpacity(double opacity) {
-    assert(opacity != null);
-    return (opacity.clamp(0.0, 1.0) * 255).round();
-  }
+  static int getAlphaFromOpacity(double opacity) =>
+      (opacity.clamp(0.0, 1.0) * 255).round();
 
   @override
   bool operator ==(dynamic other) {
@@ -308,11 +306,7 @@ class HSVColor {
   /// All the arguments must not be null and be in their respective ranges. See
   /// the fields for each parameter for a description of their ranges.
   const HSVColor.fromAHSV(this.alpha, this.hue, this.saturation, this.value)
-      : assert(alpha != null),
-        assert(hue != null),
-        assert(saturation != null),
-        assert(value != null),
-        assert(alpha >= 0.0),
+      : assert(alpha >= 0.0),
         assert(alpha <= 1.0),
         assert(hue >= 0.0),
         assert(hue <= 360.0),
@@ -343,25 +337,25 @@ class HSVColor {
 
   /// Alpha, from 0.0 to 1.0. The describes the transparency of the color.
   /// A value of 0.0 is fully transparent, and 1.0 is fully opaque.
-  final double/*!*/ alpha;
+  final double alpha;
 
   /// Hue, from 0.0 to 360.0. Describes which color of the spectrum is
   /// represented. A value of 0.0 represents red, as does 360.0. Values in
   /// between go through all the hues representable in RGB. You can think of
   /// this as selecting which pigment will be added to a color.
-  final double/*!*/ hue;
+  final double hue;
 
   /// Saturation, from 0.0 to 1.0. This describes how colorful the color is.
   /// 0.0 implies a shade of grey (i.e. no pigment), and 1.0 implies a color as
   /// vibrant as that hue gets. You can think of this as the equivalent of
   /// how much of a pigment is added.
-  final double/*!*/ saturation;
+  final double saturation;
 
   /// Value, from 0.0 to 1.0. The "value" of a color that, in this context,
   /// describes how bright a color is. A value of 0.0 indicates black, and 1.0
   /// indicates full intensity color. You can think of this as the equivalent of
   /// removing black from the color as value increases.
-  final double/*!*/ value;
+  final double value;
 
   /// Returns a copy of this color with the [alpha] parameter replaced with the
   /// given value.
@@ -416,16 +410,15 @@ class HSVColor {
   /// {@macro dart.ui.shadow.lerp}
   ///
   /// Values outside of the valid range for each channel will be clamped.
-  static HSVColor/*?*/ lerp(HSVColor/*?*/ a, HSVColor/*?*/ b, double/*!*/ t) {
-    assert(t != null);
+  static HSVColor? lerp(HSVColor? a, HSVColor? b, double t) {
     if (a == null && b == null) return null;
-    if (a == null) return b._scaleAlpha(t);
+    if (a == null) return b!._scaleAlpha(t);
     if (b == null) return a._scaleAlpha(1.0 - t);
     return HSVColor.fromAHSV(
-      lerpDouble(a.alpha, b.alpha, t).clamp(0.0, 1.0) as double,
-      lerpDouble(a.hue, b.hue, t) % 360.0,
-      lerpDouble(a.saturation, b.saturation, t).clamp(0.0, 1.0) as double,
-      lerpDouble(a.value, b.value, t).clamp(0.0, 1.0) as double,
+      lerpDouble(a.alpha, b.alpha, t)!.clamp(0.0, 1.0),
+      lerpDouble(a.hue, b.hue, t)! % 360.0,
+      lerpDouble(a.saturation, b.saturation, t)!.clamp(0.0, 1.0),
+      lerpDouble(a.value, b.value, t)!.clamp(0.0, 1.0),
     );
   }
 
@@ -476,11 +469,7 @@ class HSLColor {
   /// All the arguments must not be null and be in their respective ranges. See
   /// the fields for each parameter for a description of their ranges.
   const HSLColor.fromAHSL(this.alpha, this.hue, this.saturation, this.lightness)
-      : assert(alpha != null),
-        assert(hue != null),
-        assert(saturation != null),
-        assert(lightness != null),
-        assert(alpha >= 0.0),
+      : assert(alpha >= 0.0),
         assert(alpha <= 1.0),
         assert(hue >= 0.0),
         assert(hue <= 360.0),
@@ -508,8 +497,7 @@ class HSLColor {
     // Saturation can exceed 1.0 with rounding errors, so clamp it.
     var saturation = lightness == 1.0
         ? 0.0
-        : ((delta / (1.0 - (2.0 * lightness - 1.0).abs())).clamp(0.0, 1.0)
-            as double);
+        : (delta / (1.0 - (2.0 * lightness - 1.0).abs())).clamp(0.0, 1.0);
     return HSLColor.fromAHSL(alpha, hue, saturation, lightness);
   }
 
@@ -600,16 +588,15 @@ class HSLColor {
   ///
   /// Values for `t` are usually obtained from an [Animation<double>], such as
   /// an [AnimationController].
-  static HSLColor lerp(HSLColor/*?*/ a, HSLColor/*?*/ b, double/*!*/ t) {
-    assert(t != null);
+  static HSLColor? lerp(HSLColor? a, HSLColor? b, double t) {
     if (a == null && b == null) return null;
-    if (a == null) return b._scaleAlpha(t);
+    if (a == null) return b!._scaleAlpha(t);
     if (b == null) return a._scaleAlpha(1.0 - t);
     return HSLColor.fromAHSL(
-      lerpDouble(a.alpha, b.alpha, t).clamp(0.0, 1.0) as double,
-      lerpDouble(a.hue, b.hue, t) % 360.0,
-      lerpDouble(a.saturation, b.saturation, t).clamp(0.0, 1.0) as double,
-      lerpDouble(a.lightness, b.lightness, t).clamp(0.0, 1.0) as double,
+      lerpDouble(a.alpha, b.alpha, t)!.clamp(0.0, 1.0),
+      lerpDouble(a.hue, b.hue, t)! % 360.0,
+      lerpDouble(a.saturation, b.saturation, t)!.clamp(0.0, 1.0),
+      lerpDouble(a.lightness, b.lightness, t)!.clamp(0.0, 1.0),
     );
   }
 
@@ -631,7 +618,7 @@ class HSLColor {
       'hsl($hue, ${Math.round(saturation * 100)}, ${Math.round(lightness * 100)}, $alpha)';
 }
 
-double/*!*/ _getHue(
+double _getHue(
     double red, double green, double blue, double max, double delta) {
   var hue = 0.0;
   if (max == 0.0) {
@@ -649,11 +636,8 @@ double/*!*/ _getHue(
   return hue;
 }
 
-double/*?*/ lerpDouble(num a, num b, double t) {
-  if (a == null && b == null) return null;
-  a ??= 0.0;
-  b ??= 0.0;
-  return a + (b - a) * t as double;
+double? lerpDouble(num a, num b, double t) {
+  return a + (b - a) * t;
 }
 
 Color _colorFromHue(
@@ -696,11 +680,11 @@ Color _colorFromHue(
 }
 
 /// Gets the width and height from [image] ([CanvasImageSource]).
-Rectangle<int>/*?*/ getImageDimension(CanvasImageSource/*!*/ image) {
+Rectangle<int>? getImageDimension(CanvasImageSource image) {
   if (image is ImageElement) {
     return Rectangle(0, 0, image.naturalWidth, image.naturalHeight);
   } else if (image is CanvasElement) {
-    return Rectangle(0, 0, image.width, image.height);
+    return Rectangle(0, 0, image.width!, image.height!);
   } else if (image is VideoElement) {
     return Rectangle(0, 0, image.width, image.height);
   }
@@ -709,29 +693,29 @@ Rectangle<int>/*?*/ getImageDimension(CanvasImageSource/*!*/ image) {
 
 /// Crops an image using a [Rectangle] ([crop]),
 /// delegating to method [cropImage],
-CanvasElement cropImageByRectangle(CanvasImageSource image, Rectangle/*?*/ crop) {
+CanvasElement? cropImageByRectangle(CanvasImageSource image, Rectangle? crop) {
   if (crop == null) return null;
-  return cropImage(image, crop.left, crop.top, crop.width, crop.height);
+  return cropImage(image, crop.left as int, crop.top as int, crop.width as int,
+      crop.height as int);
 }
 
 /// Crops the [image] using coordinates [x], [y], [width] and [height],
 /// returning new image ([CanvasElement]).
-CanvasElement/*?*/ cropImage(
+CanvasElement? cropImage(
     CanvasImageSource image, int x, int y, int width, int height) {
-
   if (image is! CanvasElement) {
-    var imgDim = getImageDimension(image);
+    var imgDim = getImageDimension(image)!;
     var imgCanvas = CanvasElement(width: imgDim.width, height: imgDim.height);
-    CanvasRenderingContext2D context = imgCanvas.getContext('2d');
+    var context = imgCanvas.getContext('2d') as CanvasRenderingContext2D;
     context.drawImage(image, 0, 0);
     image = imgCanvas;
   }
 
-  CanvasRenderingContext2D imgContext = (image as CanvasElement).getContext('2d');
+  var imgContext = image.getContext('2d') as CanvasRenderingContext2D;
   var imgCropData = imgContext.getImageData(x, y, width, height);
 
   var canvasCrop = CanvasElement(width: width, height: height);
-  CanvasRenderingContext2D contextCrop = canvasCrop.getContext('2d');
+  var contextCrop = canvasCrop.getContext('2d') as CanvasRenderingContext2D;
   contextCrop.putImageData(imgCropData, 0, 0, 0, 0, width, height);
 
   return canvasCrop;
@@ -745,8 +729,7 @@ CanvasImageSource createScaledImage(
   var h2 = (height * scale).toInt();
 
   var canvas = CanvasElement(width: w2, height: h2);
-
-  CanvasRenderingContext2D context = canvas.getContext('2d');
+  var context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   context.drawImageScaledFromSource(image, 0, 0, width, height, 0, 0, w2, h2);
 
@@ -760,7 +743,7 @@ Future<ImageElement> createImageElementFromFile(File file) {
   var completer = Completer<ImageElement>();
 
   reader.onLoadEnd.listen((e) {
-    completer.complete(createImageElementFromBase64(reader.result));
+    completer.complete(createImageElementFromBase64(reader.result as String?));
   });
 
   reader.readAsDataUrl(file);
@@ -769,7 +752,7 @@ Future<ImageElement> createImageElementFromFile(File file) {
 }
 
 /// Creates an image from a Base-64 with [mimeType].
-ImageElement createImageElementFromBase64(String base64, [String mimeType]) {
+ImageElement? createImageElementFromBase64(String? base64, [String? mimeType]) {
   if (base64 == null || base64.isEmpty) return null;
 
   if (!base64.startsWith('data:')) {
@@ -798,47 +781,45 @@ List<Point<num>> numsToPoints(List<num> perspective) {
 }
 
 /// Makes a copy of [points].
-List<Point<num>> copyPoints(List<Point<num>/*!*/>/*!*/ points) {
+List<Point<num>> copyPoints(List<Point<num>> points) {
   return points.map((p) => Point(p.x, p.y)).toList();
 }
 
 /// Scales [points] to [scale].
-List<Point<num>> scalePoints(List<Point<num>/*!*/>/*!*/ points, double/*!*/ scale) {
+List<Point<num>> scalePoints(List<Point<num>> points, double scale) {
   return points.map((p) => Point(p.x * scale, p.y * scale)).toList();
 }
 
 /// Scales [points] to [scaleX] and [scaleY].
 List<Point<num>> scalePointsXY(
-    List<Point<num>/*!*/>/*!*/ points, double/*!*/ scaleX, double/*!*/ scaleY) {
+    List<Point<num>> points, double scaleX, double scaleY) {
   return points.map((p) => Point(p.x * scaleX, p.y * scaleY)).toList();
 }
 
 /// Translate [pints] in [x] and [y].
-List<Point<num>> translatePoints(List<Point<num>/*!*/>/*!*/ points, num/*!*/ x, num/*!*/ y) {
+List<Point<num>> translatePoints(List<Point<num>> points, num x, num y) {
   return points.map((p) => Point(p.x + x, p.y + y)).toList();
 }
 
 /// A cache for scaled images.
 class ImageScaledCache {
-  final CanvasImageSource/*!*/ _image;
+  final CanvasImageSource _image;
 
-  int/*!*/ _width;
-
-  int/*!*/ _height;
-
-  int/*!*/ _maxScaleCacheEntries;
+  late final int _width;
+  late final int _height;
+  late final int _maxScaleCacheEntries;
 
   ImageScaledCache(this._image,
-      [int/*?*/ width, int/*?*/ height, int/*?*/ maxScaleCacheEntries]) {
+      [int? width, int? height, int? maxScaleCacheEntries]) {
     if (width == null || height == null) {
-      var wh = getImageDimension(_image);
+      var wh = getImageDimension(_image)!;
 
       width ??= wh.width;
       height ??= wh.height;
     }
 
-    _width = width/*!*/;
-    _height = height/*!*/;
+    _width = width;
+    _height = height;
 
     _maxScaleCacheEntries =
         maxScaleCacheEntries != null && maxScaleCacheEntries > 0
@@ -855,7 +836,7 @@ class ImageScaledCache {
   /// Height of the main [image].
   int get height => _height;
 
-  /// Maximoum number of entries in the cache.
+  /// Maximum number of entries in the cache.
   int get maxScaleCacheEntries => _maxScaleCacheEntries;
 
   final Map<double, CanvasImageSource> _scaleCache = {};
@@ -875,7 +856,7 @@ class ImageScaledCache {
   }
 
   /// Returns a cached image in [scale].
-  CanvasImageSource getImageScaled(double scale) {
+  CanvasImageSource? getImageScaled(double scale) {
     if (scale <= 0) return null;
     if (scale == 1.0) return _image;
 
@@ -893,9 +874,11 @@ class ImageScaledCache {
   }
 
   static int limitEntries(Map cache, int maxCacheEntries) {
-    if (cache == null || cache.isEmpty) return 0;
+    if (cache.isEmpty) return 0;
 
+    // Cache limit is never unlimited
     if (maxCacheEntries < 0) maxCacheEntries = 0;
+
     var removed = 0;
     while (cache.length > maxCacheEntries) {
       var key = cache.keys.first;
@@ -910,7 +893,7 @@ class ImageScaledCache {
 
 /// Applies a filter to [image], of [width] and [height].
 typedef ImageFilter = CanvasImageSource Function(
-    CanvasImageSource image, int width, int height);
+    CanvasImageSource? image, int width, int height);
 
 /// Quality of an image.
 enum Quality { HIGH, MEDIUM, LOW }
@@ -918,25 +901,25 @@ enum Quality { HIGH, MEDIUM, LOW }
 /// The type of edition for [CanvasImageViewer].
 enum EditionType { CLIP, POINTS, PERSPECTIVE, RECTANGLES, LABELS }
 
-typedef ValueCopier<T> = T Function(T value);
+typedef ValueCopier<T> = T? Function(T? value);
 
 /// Represents an element in the [CanvasImageViewer].
 class ViewerElement<T> {
-  T/*?*/ value;
+  T? value;
 
-  final Color color;
-  final int strokeSize;
+  final Color? color;
+  final int? strokeSize;
 
-  final ValueCopier<T> valueCopier;
+  final ValueCopier<T>? valueCopier;
 
-  ViewerElement(this.value, this.color, {this.valueCopier, int strokeSize})
+  ViewerElement(this.value, this.color, {this.valueCopier, int? strokeSize})
       : strokeSize = strokeSize != null && strokeSize > 0 ? strokeSize : null;
 
   bool get isNull => value == null;
 
-  T get valueCopy => valueCopier != null ? valueCopier(value) : null;
+  T? get valueCopy => valueCopier != null ? valueCopier!(value) : null;
 
-  String key;
+  String? key;
 
   bool get isEmpty => isEmptyObject(value);
 
@@ -958,10 +941,10 @@ class _RenderImageResult {
   _RenderImageResult(this.quality, this.translate);
 }
 
-class Label<T extends num/*!*/> extends Rectangle<T> {
-  final String/*!*/ label;
+class Label<T extends num> extends Rectangle<T> {
+  final String label;
 
-  Color color;
+  Color? color;
 
   Label(this.label, T left, T top, T width, T height, [this.color])
       : super(left, top, width, height);
@@ -989,61 +972,61 @@ class CanvasImageViewer {
   static final DATE_FORMAT_YYYY_MM_DD_HH_MM_SS =
       DateFormat('yyyy/MM/dd HH:mm:ss', Intl.getCurrentLocale());
 
-  CanvasElement/*!*/ _canvas;
+  late final CanvasElement _canvas;
 
-  final bool/*!*/ canvasSizeSameOfRenderedImageSize;
+  final bool canvasSizeSameOfRenderedImageSize;
 
-  int/*!*/ _width;
-  int/*!*/ _height;
-  int/*!*/ _renderedImageWidth;
-  int/*!*/ _renderedImageHeight;
+  late int _width;
+  late int _height;
+  late int _renderedImageWidth;
+  late int _renderedImageHeight;
 
-  final int/*?*/ _maxWidth;
-  final int/*?*/ _maxHeight;
+  final int? _maxWidth;
+  final int? _maxHeight;
 
-  CanvasImageSource _image;
+  late final CanvasImageSource? _image;
 
-  final ImageFilter _imageFilter;
+  final ImageFilter? _imageFilter;
 
-  ViewerElement<Rectangle<num>>/*?*/ _clip;
+  ViewerElement<Rectangle<num>>? _clip;
 
-  final ViewerElement<List<Rectangle<num>>>/*?*/ _rectangles;
+  final ViewerElement<List<Rectangle<num>>>? _rectangles;
 
-  final ViewerElement<List<Point<num>>>/*?*/ _points;
+  final ViewerElement<List<Point<num>>>? _points;
 
-  final ViewerElement<List<Label<num>>>/*?*/ _labels;
+  final ViewerElement<List<Label<num>>>? _labels;
 
-  final ViewerElement<List<Point<num>>>/*?*/ _perspective;
+  final ViewerElement<List<Point<num>>>? _perspective;
 
-  final ViewerElement<num>/*?*/ _gridSize;
+  final ViewerElement<num>? _gridSize;
 
-  bool/*!*/ _cropPerspective;
+  late final bool _cropPerspective;
 
   /// Time of the image.
-  final DateTime time;
+  final DateTime? time;
 
-  final EditionType _editionType;
+  final EditionType? _editionType;
 
-  ImagePerspectiveFilterCache _imagePerspectiveFilterCache;
+  late ImagePerspectiveFilterCache _imagePerspectiveFilterCache;
 
   CanvasImageViewer(
-      {CanvasElement canvas,
-      int width,
-      int height,
-      int maxWidth,
-      int maxHeight,
+      {CanvasElement? canvas,
+      int? width,
+      int? height,
+      int? maxWidth,
+      int? maxHeight,
       this.canvasSizeSameOfRenderedImageSize = true,
-      CanvasImageSource image,
-      ImageFilter imageFilter,
-      ViewerElement<Rectangle<num>> clip,
-      ViewerElement<List<Rectangle<num>>> rectangles,
-      ViewerElement<List<Point<num>>> points,
-      ViewerElement<List<Label<num>>> labels,
-      ViewerElement<List<Point<num>>> perspective,
-      ViewerElement<num> gridSize,
-      bool cropPerspective,
+      CanvasImageSource? image,
+      ImageFilter? imageFilter,
+      ViewerElement<Rectangle<num>>? clip,
+      ViewerElement<List<Rectangle<num>>>? rectangles,
+      ViewerElement<List<Point<num>>>? points,
+      ViewerElement<List<Label<num>>>? labels,
+      ViewerElement<List<Point<num>>>? perspective,
+      ViewerElement<num>? gridSize,
+      bool? cropPerspective,
       this.time,
-      EditionType editable})
+      EditionType? editable})
       : _clip = clip,
         _rectangles = rectangles,
         _points = points,
@@ -1058,22 +1041,22 @@ class CanvasImageViewer {
       var imgW = 100;
       var imgH = 100;
 
-      var wh = getImageDimension(image);
+      var wh = getImageDimension(image!);
       if (wh != null) {
         imgW = wh.width;
         imgH = wh.height;
       }
 
-      _image = _imageFilter(image, imgW, imgH) ?? image;
-    } else {
-      _image = image;
+      image = _imageFilter!(image, imgW, imgH);
     }
+
+    _image = image;
 
     var w = width;
     var h = height;
 
     if (w == null || h == null) {
-      var wh = getImageDimension(_image);
+      var wh = getImageDimension(_image!);
       if (wh != null) {
         w ??= wh.width;
         h ??= wh.height;
@@ -1084,7 +1067,7 @@ class CanvasImageViewer {
     h ??= 100;
 
     if (_image is ImageElement) {
-      ImageElement img = _image;
+      var img = _image as ImageElement;
       img.onLoad.listen((_) => _onLoadImage());
     }
 
@@ -1093,7 +1076,7 @@ class CanvasImageViewer {
 
     _canvas = canvas ?? CanvasElement(width: w, height: h);
 
-    _imagePerspectiveFilterCache = ImagePerspectiveFilterCache(_image, w, h);
+    _imagePerspectiveFilterCache = ImagePerspectiveFilterCache(_image!, w, h);
 
     _setCanvasSizeSameOfRenderedImageSize(w, h);
 
@@ -1103,7 +1086,7 @@ class CanvasImageViewer {
       _canvas.onClick.listen(_onMouseClick);
       _canvas.onMouseLeave.listen(_onMouseLeave);
       _canvas.onMouseMove.listen(_onMouseMove);
-    } else if (_labels != null && _labels.isNotEmpty) {
+    } else if (_labels != null && _labels!.isNotEmpty) {
       _canvas.onMouseMove.listen(_onMouseMove);
     }
 
@@ -1119,7 +1102,7 @@ class CanvasImageViewer {
   }
 
   void _updateImageDimension() {
-    var wh = getImageDimension(_image);
+    var wh = getImageDimension(_image!);
     if (wh != null) {
       var w = wh.width;
       var h = wh.height;
@@ -1134,15 +1117,12 @@ class CanvasImageViewer {
   }
 
   void _check_imagePerspectiveFilterCache() {
-    if (_imagePerspectiveFilterCache == null ||
-        _imagePerspectiveFilterCache.width != _width ||
+    if (_imagePerspectiveFilterCache.width != _width ||
         _imagePerspectiveFilterCache.height != _height) {
-      if (_imagePerspectiveFilterCache != null) {
-        _imagePerspectiveFilterCache.clearCaches();
-      }
+      _imagePerspectiveFilterCache.clearCaches();
 
       _imagePerspectiveFilterCache =
-          ImagePerspectiveFilterCache(_image, _width, _height);
+          ImagePerspectiveFilterCache(_image!, _width, _height);
     }
   }
 
@@ -1174,13 +1154,13 @@ class CanvasImageViewer {
         border, border, _width - (border * 2), _height - (border * 2));
   }
 
-  Rectangle<num>/*?*/ _normalizeClip(Rectangle<num>/*!*/ clip) {
+  Rectangle<num>? _normalizeClip(Rectangle<num> clip) {
     var rectangle = Rectangle<int>(0, 0, _width, _height);
     var intersection = clip.intersection(rectangle);
-    return intersection ;
+    return intersection;
   }
 
-  List<Point<num>/*!*/> _defaultPerspective() {
+  List<Point<num>> _defaultPerspective() {
     return [
       Point(0, 0),
       Point(width, 0),
@@ -1192,7 +1172,7 @@ class CanvasImageViewer {
   bool get cropPerspective => _cropPerspective;
 
   /// Type of edition (EditionType). If null edition is not enabled.
-  EditionType get editionType => _editionType;
+  EditionType? get editionType => _editionType;
 
   /// Returns [true] if edition is enable. See [editionType].
   bool get isEditable => _editionType != null;
@@ -1204,14 +1184,16 @@ class CanvasImageViewer {
   int get height => _height;
 
   /// Converts [Rectangle<num>] to [ViewerElement<Rectangle<num>>].
-  static ViewerElement<Rectangle<num>> clipViewerElement(Rectangle<num>/*?*/ clip,
-      [Color color]) {
+  static ViewerElement<Rectangle<num>> clipViewerElement(Rectangle<num>? clip,
+      [Color? color]) {
     return ViewerElement<Rectangle<num>>(clip, color,
-        valueCopier: (v) => v == null ? null : Rectangle<num>(v.left, v.top, v.width, v.height));
+        valueCopier: (v) => v == null
+            ? null
+            : Rectangle<num>(v.left, v.top, v.width, v.height));
   }
 
-  static ViewerElement<Rectangle<num>> clipViewerElementFromNums(List clip,
-      [Color color]) {
+  static ViewerElement<Rectangle<num>> clipViewerElementFromNums(List? clip,
+      [Color? color]) {
     if (clip == null) {
       return clipViewerElement(null, color);
     }
@@ -1227,23 +1209,23 @@ class CanvasImageViewer {
     return clipViewerElement(rect, color);
   }
 
-  static ViewerElement<Rectangle<num>> clipViewerElementFromMap(Map/*?*/ clip,
-      [Color color]) {
+  static ViewerElement<Rectangle<num>> clipViewerElementFromMap(Map? clip,
+      [Color? color]) {
     if (clip == null) {
       return clipViewerElement(null, color);
     }
 
-    var x = parseInt(findKeyValue(clip, ['x', 'left'], true));
-    var y = parseInt(findKeyValue(clip, ['y', 'top'], true));
-    var w = parseInt(findKeyValue(clip, ['w', 'width'], true));
-    var h = parseInt(findKeyValue(clip, ['h', 'height'], true));
+    var x = parseInt(findKeyValue(clip, ['x', 'left'], true))!;
+    var y = parseInt(findKeyValue(clip, ['y', 'top'], true))!;
+    var w = parseInt(findKeyValue(clip, ['w', 'width'], true))!;
+    var h = parseInt(findKeyValue(clip, ['h', 'height'], true))!;
 
     var rect = Rectangle(x, y, w, h);
     return clipViewerElement(rect, color);
   }
 
   /// Clip area element rendered in the image.
-  Rectangle<num> get clip => _clip?.valueCopy;
+  Rectangle<num>? get clip => _clip?.valueCopy;
 
   String get clipKey => _clip?.key ?? 'clip';
 
@@ -1253,22 +1235,22 @@ class CanvasImageViewer {
   /// [strokeSize] Optional stroke size to render the element.
   static ViewerElement<List<Rectangle<num>>> rectanglesViewerElementFromNums(
       List rectangles,
-      [Color color,
-      int strokeSize]) {
+      [Color? color,
+      int? strokeSize]) {
     var mapped = rectangles.map((e) {
       if (e is Map) {
         return Rectangle<num>(
-            parseNum(e['x'] ?? e['left']),
-            parseNum(e['y'] ?? e['top']),
-            parseNum(e['width'] ?? e['w']),
-            parseNum(e['height'] ?? e['h']));
+            parseNum(e['x'] ?? e['left'])!,
+            parseNum(e['y'] ?? e['top'])!,
+            parseNum(e['width'] ?? e['w'])!,
+            parseNum(e['height'] ?? e['h'])!);
       } else if (e is List) {
         return Rectangle<num>(
-            parseNum(e[0]), parseNum(e[1]), parseNum(e[2]), parseNum(e[3]));
+            parseNum(e[0])!, parseNum(e[1])!, parseNum(e[2])!, parseNum(e[3])!);
       } else if (e is String) {
-        var ns = parseNumsFromInlineList(e);
-        return Rectangle<num>(
-            parseNum(ns[0]), parseNum(ns[1]), parseNum(ns[2]), parseNum(ns[3]));
+        var ns = parseNumsFromInlineList(e)!;
+        return Rectangle<num>(parseNum(ns[0])!, parseNum(ns[1])!,
+            parseNum(ns[2])!, parseNum(ns[3])!);
       } else {
         throw ArgumentError('Invalid rectangles parameter: $rectangles');
       }
@@ -1283,17 +1265,19 @@ class CanvasImageViewer {
   /// [strokeSize] Optional stroke size to render the element.
   static ViewerElement<List<Rectangle<num>>> rectanglesViewerElement(
       List<Rectangle<num>> rectangles,
-      [Color color,
-      int strokeSize]) {
+      [Color? color,
+      int? strokeSize]) {
     return ViewerElement<List<Rectangle<num>>>(rectangles, color,
         strokeSize: strokeSize,
-        valueCopier: (value) => value
-            .map((r) => Rectangle<num>(r.left, r.top, r.width, r.height))
-            .toList());
+        valueCopier: (value) => value == null
+            ? null
+            : value
+                .map((r) => Rectangle<num>(r.left, r.top, r.width, r.height))
+                .toList());
   }
 
   /// Rectangle elements rendered in the image.
-  List<Rectangle<num>> get rectangles => _rectangles?.valueCopy;
+  List<Rectangle<num>>? get rectangles => _rectangles?.valueCopy;
 
   String get rectanglesKey => _rectangles?.key ?? 'rectangles';
 
@@ -1303,25 +1287,25 @@ class CanvasImageViewer {
   /// [strokeSize] Optional stroke size to render the element.
   static ViewerElement<List<Label<num>>> labelsViewerElementFromNums(
       List labels,
-      [Color color,
-      int strokeSize]) {
+      [Color? color,
+      int? strokeSize]) {
     var mapped = labels.map((e) {
       if (e is Map) {
         return Label<num>(
             e['label'] ?? e['title'] ?? e['name'] ?? e['id'],
-            parseNum(e['x'] ?? e['left']),
-            parseNum(e['y'] ?? e['top']),
-            parseNum(e['width'] ?? e['w']),
-            parseNum(e['height'] ?? e['h']));
+            parseNum(e['x'] ?? e['left'])!,
+            parseNum(e['y'] ?? e['top'])!,
+            parseNum(e['width'] ?? e['w'])!,
+            parseNum(e['height'] ?? e['h'])!);
       } else if (e is List) {
-        return Label<num>(parseString(e[0]), parseNum(e[1]), parseNum(e[2]),
-            parseNum(e[3]), parseNum(e[4]));
+        return Label<num>(parseString(e[0])!, parseNum(e[1])!, parseNum(e[2])!,
+            parseNum(e[3])!, parseNum(e[4])!);
       } else if (e is String) {
-        var list = parseStringFromInlineList(e);
+        var list = parseStringFromInlineList(e)!;
         var label = list.removeAt(0);
         var ns = parseNumsFromList(list);
-        return Label<num>(label, parseNum(ns[0]), parseNum(ns[1]),
-            parseNum(ns[2]), parseNum(ns[3]));
+        return Label<num>(label, parseNum(ns[0])!, parseNum(ns[1])!,
+            parseNum(ns[2])!, parseNum(ns[3])!);
       } else {
         throw ArgumentError('Invalid rectangles parameter: $labels');
       }
@@ -1336,18 +1320,20 @@ class CanvasImageViewer {
   /// [strokeSize] Optional stroke size to render the element.
   static ViewerElement<List<Label<num>>> labelsViewerElement(
       List<Label<num>> labels,
-      [Color color,
-      int strokeSize]) {
+      [Color? color,
+      int? strokeSize]) {
     return ViewerElement<List<Label<num>>>(labels, color,
         strokeSize: strokeSize,
-        valueCopier: (value) => value
-            .map((l) =>
-                Label<num>(l.label, l.left, l.top, l.width, l.height, l.color))
-            .toList());
+        valueCopier: (value) => value == null
+            ? null
+            : value
+                .map((l) => Label<num>(
+                    l.label, l.left, l.top, l.width, l.height, l.color))
+                .toList());
   }
 
   /// Labels elements rendered in the image.
-  List<Label<num>> get labels => _labels?.valueCopy;
+  List<Label<num>>? get labels => _labels?.valueCopy;
 
   String get labelsKey => _labels?.key ?? 'labels';
 
@@ -1356,30 +1342,32 @@ class CanvasImageViewer {
   /// [color] Optional color to render the element.
   static ViewerElement<List<Point<num>>> pointsViewerElement(
       List<Point<num>> points,
-      [Color color]) {
+      [Color? color]) {
     return ViewerElement<List<Point<num>>>(points, color,
-        valueCopier: (value) =>
-            value.map((p) => Point<num>(p.x, p.y)).toList());
+        valueCopier: (value) => value == null
+            ? null
+            : value.map((p) => Point<num>(p.x, p.y)).toList());
   }
 
   /// Point elements rendered in the image.
-  List<Point<num>> get points => _points?.valueCopy;
+  List<Point<num>>? get points => _points?.valueCopy;
 
   String get pointsKey => _points?.key ?? 'points';
 
-  static ViewerElement<num> gridSizeViewerElement(num gridSize, [Color color]) {
+  static ViewerElement<num> gridSizeViewerElement(num gridSize,
+      [Color? color]) {
     return ViewerElement<num>(gridSize, color, valueCopier: (value) => value);
   }
 
   /// The size of grid boxes when rendering the grid.
-  num get gridSize => _gridSize?.valueCopy;
+  num? get gridSize => _gridSize?.valueCopy;
 
   String get gridSizeKey => _gridSize?.key ?? 'gridSize';
 
   /// Converts a [List<num>] (pairs of perspective points) to [ViewerElement< List<Point<num>> >].
   static ViewerElement<List<Point<num>>> perspectiveViewerElementFromNums(
-      List perspective,
-      [Color color]) {
+      List? perspective,
+      [Color? color]) {
     if (perspective == null) {
       return perspectiveViewerElement(null, color);
     }
@@ -1400,18 +1388,18 @@ class CanvasImageViewer {
 
   /// Converts [List< Point<num> >] (perspective points) to [ViewerElement< List<Point<num>> >].
   static ViewerElement<List<Point<num>>> perspectiveViewerElement(
-      List<Point<num>> perspective,
-      [Color color]) {
+      List<Point<num>>? perspective,
+      [Color? color]) {
     return ViewerElement<List<Point<num>>>(perspective, color,
-        valueCopier: (value) =>
-            value.map((p) => Point<num>(p.x, p.y)).toList());
+        valueCopier: (value) => value == null
+            ? null
+            : value.map((p) => Point<num>(p.x, p.y)).toList());
   }
 
   /// The perspective points to use in the Perspective filter of the image.
-  List<Point<num>> get perspective => _perspective?.valueCopy;
+  List<Point<num>>? get perspective => _perspective?.valueCopy;
 
-  String get perspectiveKey =>
-      _perspective?.key ?? 'perspective';
+  String get perspectiveKey => _perspective?.key ?? 'perspective';
 
   void _deselectDOM() {
     var selection = window.getSelection();
@@ -1420,7 +1408,7 @@ class CanvasImageViewer {
     }
   }
 
-  Point _pressed;
+  Point? _pressed;
 
   void _onMouseDown(MouseEvent event) {
     _deselectDOM();
@@ -1481,34 +1469,35 @@ class CanvasImageViewer {
     return _renderedImageHeight / offsetH;
   }
 
-  Point _getMousePointInCanvas(Point<num> mouse, [bool fixTranslation = true]) {
+  Point<int> _getMousePointInCanvas(Point<num> mouse,
+      [bool fixTranslation = true]) {
     var wRatio = offsetWidthRatio;
     var hRatio = offsetHeightRatio;
 
-    var x = (clipNumber(mouse.x, 0, width) * wRatio).toInt();
-    var y = (clipNumber(mouse.y, 0, height) * hRatio).toInt();
+    var x = (clipNumber(mouse.x, 0, width)! * wRatio).toInt();
+    var y = (clipNumber(mouse.y, 0, height)! * hRatio).toInt();
 
     //print('mouse> xy: $x $y >> ratio: $wRatio $hRatio');
 
     if (fixTranslation &&
         _renderedTranslation != null &&
-        (_renderedTranslation.x != 0 || _renderedTranslation.y != 0)) {
-      x -= (_renderedTranslation.x * wRatio).toInt();
-      y -= (_renderedTranslation.y * hRatio).toInt();
+        (_renderedTranslation!.x != 0 || _renderedTranslation!.y != 0)) {
+      x -= (_renderedTranslation!.x * wRatio).toInt();
+      y -= (_renderedTranslation!.y * hRatio).toInt();
 
       //print('mouse[fixTranslation: $_renderedTranslation]> xy: $x $y >> ratio: $wRatio $hRatio');
     }
 
-    return Point(x, y);
+    return Point<int>(x, y);
   }
 
-  Rectangle _getElementRectangleInCanvas(Rectangle<num> element,
+  Rectangle<int> _getElementRectangleInCanvas(Rectangle<num> element,
       [bool fixTranslation = true]) {
     var wRatio = 1 / offsetWidthRatio;
     var hRatio = 1 / offsetHeightRatio;
 
-    var x = (clipNumber(element.left * wRatio, 0, width)).toInt();
-    var y = (clipNumber(element.top * hRatio, 0, height)).toInt();
+    var x = clipNumber(element.left * wRatio, 0, width)!.toInt();
+    var y = clipNumber(element.top * hRatio, 0, height)!.toInt();
     var w = (element.width * wRatio).toInt();
     var h = (element.height * hRatio).toInt();
 
@@ -1516,18 +1505,18 @@ class CanvasImageViewer {
 
     if (fixTranslation &&
         _renderedTranslation != null &&
-        (_renderedTranslation.x != 0 || _renderedTranslation.y != 0)) {
-      x += (_renderedTranslation.x * wRatio).toInt();
-      y += (_renderedTranslation.y * hRatio).toInt();
+        (_renderedTranslation!.x != 0 || _renderedTranslation!.y != 0)) {
+      x += (_renderedTranslation!.x * wRatio).toInt();
+      y += (_renderedTranslation!.y * hRatio).toInt();
 
       //print('mouse[fixTranslation: $_renderedTranslation]> xy: $x $y >> ratio: $wRatio $hRatio');
     }
 
-    return Rectangle(x, y, w, h);
+    return Rectangle<int>(x, y, w, h);
   }
 
-  Quality interact(Point mouse, bool click) {
-    Quality labelRender;
+  Quality? interact(Point mouse, bool click) {
+    Quality? labelRender;
 
     if (!click) {
       labelRender = showLabel(mouse);
@@ -1543,7 +1532,7 @@ class CanvasImageViewer {
     return labelRender;
   }
 
-  Quality edit(Point mouse, bool click) {
+  Quality? edit(Point mouse, bool click) {
     if (!isEditable) return null;
 
     switch (_editionType) {
@@ -1562,7 +1551,7 @@ class CanvasImageViewer {
     }
   }
 
-  Quality adjustClip(Point mouse, bool click) {
+  Quality? adjustClip(Point mouse, bool click) {
     if (click) return null;
     if (_clip == null) return null;
 
@@ -1570,7 +1559,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var clip = _clip.value ?? _defaultClip();
+    var clip = _clip?.value ?? _defaultClip();
     var edges = _toEdgePoints(clip);
 
     var target = nearestPoint(edges, point);
@@ -1584,14 +1573,14 @@ class CanvasImageViewer {
         target == edges[2] ||
         target == edges[3] ||
         target == edges[4]) {
-      int diffW = point.x - clip.left;
+      var diffW = point.x - clip.left as int;
       clip2 = Rectangle(point.x, clip.top, clip.width - diffW, clip.height);
     } else if (target == edges[5] ||
         target == edges[6] ||
         target == edges[7] ||
         target == edges[8] ||
         target == edges[9]) {
-      int diffH = point.y - clip.top;
+      var diffH = point.y - clip.top as int;
       clip2 = Rectangle(clip.left, point.y, clip.width, clip.height - diffH);
     } else if (target == edges[10] ||
         target == edges[11] ||
@@ -1624,7 +1613,7 @@ class CanvasImageViewer {
 
   Point<num> _boundPoint(Point<num> val, Point<num> min, Point<num> max) {
     return Point(
-        clipNumber(val.x, min.x, max.x), clipNumber(val.y, min.y, max.y));
+        clipNumber(val.x, min.x, max.x)!, clipNumber(val.y, min.y, max.y)!);
   }
 
   List<Point> _toEdgePoints(Rectangle r) {
@@ -1664,12 +1653,12 @@ class CanvasImageViewer {
     ];
   }
 
-  Rectangle<num> nearestRectangle(
+  Rectangle<num>? nearestRectangle(
       List<Rectangle<num>> rectangles, Point<num> p) {
-    if (rectangles == null || rectangles.isEmpty) return null;
+    if (rectangles.isEmpty) return null;
 
-    Rectangle<num> nearest;
-    double nearestDistance;
+    Rectangle<num>? nearest;
+    double? nearestDistance;
 
     for (var rect in rectangles) {
       var rectCenter = getRectangleCenter(rect);
@@ -1686,7 +1675,7 @@ class CanvasImageViewer {
   static Point<num> getRectangleCenter(Rectangle<num> r) =>
       Point<num>(r.left + (r.width / 2), r.top + (r.height / 2));
 
-  Quality adjustRectangles(Point mouse, bool click) {
+  Quality? adjustRectangles(Point mouse, bool click) {
     if (!click) return null;
     if (_rectangles == null) return null;
 
@@ -1694,7 +1683,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var rectangles = _rectangles.value ?? [];
+    var rectangles = _rectangles?.value ?? [];
 
     var target = nearestRectangle(rectangles, point);
 
@@ -1706,12 +1695,12 @@ class CanvasImageViewer {
       }
     }
 
-    _rectangles.value = rectangles;
+    _rectangles!.value = rectangles;
 
     return Quality.HIGH;
   }
 
-  Quality adjustLabels(Point mouse, bool click) {
+  Quality? adjustLabels(Point mouse, bool click) {
     if (!click) return null;
     if (_labels == null) return null;
 
@@ -1719,9 +1708,9 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var labels = _labels.value ?? [];
+    var labels = _labels?.value ?? [];
 
-    var target = nearestRectangle(labels, point) as Label;
+    var target = nearestRectangle(labels, point) as Label?;
 
     if (target == null) {
       //rectangles.add(point);
@@ -1740,23 +1729,23 @@ class CanvasImageViewer {
       }
     }
 
-    _labels.value = labels;
+    _labels!.value = labels;
 
     return Quality.HIGH;
   }
 
-  Label _pointerLabel;
+  Label? _pointerLabel;
 
-  Quality showLabel(Point mouse) {
+  Quality? showLabel(Point mouse) {
     if (_labels == null) return null;
 
     //print('--- showLabels ---');
 
     var point = _getMousePointInCanvas(mouse);
 
-    var labels = _labels.value ?? [];
+    var labels = _labels?.value ?? [];
 
-    var target = nearestRectangle(labels, point) as Label;
+    var target = nearestRectangle(labels, point) as Label?;
 
     if (target == null) {
       _hideLabel();
@@ -1785,11 +1774,11 @@ class CanvasImageViewer {
     });
   }
 
-  Point nearestPoint(List<Point<num>/*!*/>/*?*/ points, Point<num>/*!*/ p) {
+  Point<num>? nearestPoint(List<Point<num>>? points, Point<num> p) {
     if (points == null || points.isEmpty) return null;
 
-    Point nearest;
-    double nearestDistance;
+    Point<num>? nearest;
+    double? nearestDistance;
 
     for (var point in points) {
       var distance = point.distanceTo(p);
@@ -1802,7 +1791,7 @@ class CanvasImageViewer {
     return nearest;
   }
 
-  Quality adjustPoints(Point mouse, bool click) {
+  Quality? adjustPoints(Point mouse, bool click) {
     if (!click) return null;
     if (_points == null) return null;
 
@@ -1810,7 +1799,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var points = _points.value ?? [];
+    var points = _points?.value ?? [];
 
     var target = nearestPoint(points, point);
 
@@ -1826,26 +1815,26 @@ class CanvasImageViewer {
       }
     }
 
-    _points.value = points;
+    _points!.value = points;
 
     return Quality.HIGH;
   }
 
-  Quality adjustPerspective(Point<num> mouse, bool click) {
+  Quality? adjustPerspective(Point<num> mouse, bool click) {
     //if (click) return null ;
     if (_perspective == null) return null;
 
     print('--- adjustPerspective ---');
 
-    var point = _getMousePointInCanvas(mouse, false);
+    Point<num> point = _getMousePointInCanvas(mouse, false);
 
-    List<math.Point<num>/*!*/>/*!*/ points = _perspective.value ?? _defaultPerspective();
+    var points = _perspective?.value ?? _defaultPerspective();
 
     if (points.length != 4) points = _defaultPerspective();
 
     var initialBounds = _getPointsBounds(points);
 
-    var target = nearestPoint(points, point);
+    var target = nearestPoint(points, point)!;
     var targetIdx = points.indexOf(target);
 
     print('target: $target #$targetIdx');
@@ -1876,9 +1865,9 @@ class CanvasImageViewer {
 
       if (xDiff < tolerance && yDiff < tolerance) {
         if (wDiff > 0 && xDiff < yDiff || xDiff < tolerance) {
-          pointFixed = Point(target.x, point.y);
+          pointFixed = Point<num>(target.x, point.y);
         } else if (hDiff > 0 && yDiff < xDiff || yDiff < tolerance) {
-          pointFixed = Point(point.x, target.y);
+          pointFixed = Point<num>(point.x, target.y);
         }
       }
 
@@ -1919,7 +1908,7 @@ class CanvasImageViewer {
     print(
         'pointsInBounds: $pointsInBounds >> ${_getPointsBounds(pointsInBounds)}');
 
-    _perspective.value = pointsInBounds;
+    _perspective!.value = pointsInBounds;
 
     return Quality.MEDIUM;
   }
@@ -1949,7 +1938,7 @@ class CanvasImageViewer {
     _renderAsyncImpl(delay, Quality.HIGH, false);
   }
 
-  void _renderAsyncImpl(Duration delay, Quality quality, bool forceQuality) {
+  void _renderAsyncImpl(Duration? delay, Quality quality, bool forceQuality) {
     if (delay != null) {
       Future.delayed(delay, () => _renderImpl(quality, forceQuality, true));
     } else {
@@ -1972,9 +1961,9 @@ class CanvasImageViewer {
     _renderImpl(Quality.HIGH, false);
   }
 
-  Point<num> _renderedTranslation;
+  Point<num>? _renderedTranslation;
 
-  void _renderImpl(Quality quality, bool forceQuality,
+  void _renderImpl(Quality? quality, bool forceQuality,
       [bool scheduledRender = false]) {
     quality ??= Quality.HIGH;
 
@@ -1993,50 +1982,50 @@ class CanvasImageViewer {
         _gridSize?.color ?? Color.CYAN.withOpacity(0.70), 2);
 
     _renderRectangles(
-        context,
-        translate,
-        _rectangles?.value,
-        _rectangles?.color ?? Color.GREEN,
-        _rectangles?.strokeSize ?? 3,
-        );
+      context,
+      translate,
+      _rectangles?.value,
+      _rectangles?.color ?? Color.GREEN,
+      _rectangles?.strokeSize ?? 3,
+    );
 
     _renderPoints(
-        context,
-        translate,
-        _points?.value,
-        _points?.color ?? Color.RED,
-        _points?.strokeSize ?? 1,
-        );
+      context,
+      translate,
+      _points?.value,
+      _points?.color ?? Color.RED,
+      _points?.strokeSize ?? 1,
+    );
 
     _renderLabels(
-        context,
-        translate,
-        _labels?.value,
-        _labels?.color ??Color.GREEN,
-        _labels?.strokeSize ?? 3,
-        );
+      context,
+      translate,
+      _labels?.value,
+      _labels?.color ?? Color.GREEN,
+      _labels?.strokeSize ?? 3,
+    );
 
     _renderClip(
-        context,
-        translate,
-        _clip?.value,
-        _clip?.color ?? Color.BLUE,
-        _clip?.strokeSize ?? 1,
-        );
+      context,
+      translate,
+      _clip?.value,
+      _clip?.color ?? Color.BLUE,
+      _clip?.strokeSize ?? 1,
+    );
 
     _renderTime(context, translate, time);
 
     _renderedTranslation = translate;
   }
 
-  _RenderImageResult _renderImage(CanvasRenderingContext2D context,
+  _RenderImageResult? _renderImage(CanvasRenderingContext2D context,
       Quality quality, bool forceQuality, bool scheduledRender) {
     if (_image == null) {
       print('** IMAGE NOT LOADED: $_image');
       return null;
     }
 
-    if (_perspective != null && !_perspective.isNull) {
+    if (_perspective != null && !_perspective!.isNull) {
       return _renderImageWithPerspective(
           context, quality, forceQuality, scheduledRender);
     } else {
@@ -2047,29 +2036,29 @@ class CanvasImageViewer {
   _RenderImageResult _renderImageImpl(CanvasRenderingContext2D context) {
     context.clearRect(0, 0, width, height);
     context.drawImageScaledFromSource(
-        _image, 0, 0, width, height, 0, 0, width, height);
+        _image!, 0, 0, width, height, 0, 0, width, height);
     return _RenderImageResult(Quality.HIGH, Point(0, 0));
   }
 
   DateTime _renderImageWithPerspective_lastTime = DateTime.now();
 
-  Quality _renderImageWithPerspective_lastQuality;
+  Quality? _renderImageWithPerspective_lastQuality;
 
-  String _renderImageWithPerspective_renderSign;
+  String? _renderImageWithPerspective_renderSign;
 
   String _renderSign(Quality quality) {
-    var perspectiveValue = _perspective != null ? _perspective.value : null;
-    var rectanglesValue = _rectangles != null ? _rectangles.value : null;
-    var pointsValue = _points != null ? _points.value : null;
-    var labelsValue = _labels != null ? _labels.value : null;
-    var gridSizeValue = _gridSize != null ? _gridSize.value : null;
-    var clipSizeValue = _clip != null ? _clip.value : null;
+    var perspectiveValue = _perspective != null ? _perspective!.value : null;
+    var rectanglesValue = _rectangles != null ? _rectangles!.value : null;
+    var pointsValue = _points != null ? _points!.value : null;
+    var labelsValue = _labels != null ? _labels!.value : null;
+    var gridSizeValue = _gridSize != null ? _gridSize!.value : null;
+    var clipSizeValue = _clip != null ? _clip!.value : null;
     var selectedLabel = _selectedLabel;
 
     return '$quality > $perspectiveValue > $rectanglesValue > $pointsValue > $labelsValue > $clipSizeValue > $gridSizeValue > $selectedLabel';
   }
 
-  _RenderImageResult _renderImageWithPerspective(
+  _RenderImageResult? _renderImageWithPerspective(
       CanvasRenderingContext2D context,
       Quality quality,
       bool forceQuality,
@@ -2124,7 +2113,7 @@ class CanvasImageViewer {
 
     context.clearRect(0, 0, width, height);
 
-    _RenderImageResult renderImageResult;
+    _RenderImageResult? renderImageResult;
 
     if (renderQuality == Quality.LOW) {
       renderImageResult = _renderImageWithPerspective_qualityLow(context);
@@ -2171,7 +2160,7 @@ class CanvasImageViewer {
       if (scheduleDelay != null && scheduleQuality != null) {
         _renderAsyncImpl(scheduleDelay, scheduleQuality, true);
         print(
-            'schedulled render> scheduleDelay: $scheduleDelay ; scheduleQuality: $scheduleQuality');
+            'CanvasImageViewer[RENDER SCHEDULED]> scheduleDelay: $scheduleDelay ; scheduleQuality: $scheduleQuality');
       }
     }
 
@@ -2193,13 +2182,13 @@ class CanvasImageViewer {
   //bool get _isImageWithPerspectiveInCache_QualityLow => _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(_perspective.value, renderScale_QualityLow) ;
   bool get _isImageWithPerspectiveInCache_QualityMedium =>
       _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(
-          _perspective.value, renderScale_QualityMedium);
+          _perspective!.value, renderScale_QualityMedium);
 
   bool get _isImageWithPerspectiveInCache_QualityHigh =>
       _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(
-          _perspective.value, renderScale_QualityHigh);
+          _perspective!.value, renderScale_QualityHigh);
 
-  _RenderImageResult _renderImageWithPerspective_qualityLow(
+  _RenderImageResult? _renderImageWithPerspective_qualityLow(
       CanvasRenderingContext2D context) {
     var scaleOffset = offsetRenderScale;
     var scale = renderScale_QualityLow;
@@ -2212,12 +2201,12 @@ class CanvasImageViewer {
     }
 
     var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(
-        _perspective.value, scale);
+        _perspective!.value, scale);
 
     return _renderImageResult(context, Quality.LOW, scale, filterResult);
   }
 
-  _RenderImageResult _renderImageWithPerspective_qualityMedium(
+  _RenderImageResult? _renderImageWithPerspective_qualityMedium(
       CanvasRenderingContext2D context) {
     var scaleOffset = offsetRenderScale;
     var scale = renderScale_QualityMedium;
@@ -2230,14 +2219,14 @@ class CanvasImageViewer {
     }
 
     var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(
-        _perspective.value, scale);
+        _perspective!.value, scale);
 
     return _renderImageResult(context, Quality.MEDIUM, scale, filterResult);
   }
 
   final bool _forceImageQualityHigh = false;
 
-  _RenderImageResult _renderImageWithPerspective_qualityHigh(
+  _RenderImageResult? _renderImageWithPerspective_qualityHigh(
       CanvasRenderingContext2D context) {
     var scaleOffset = offsetRenderScale;
     var scale = renderScale_QualityHigh;
@@ -2250,13 +2239,13 @@ class CanvasImageViewer {
     }
 
     var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(
-        _perspective.value, scale);
+        _perspective!.value, scale);
 
     return _renderImageResult(context, Quality.HIGH, scale, filterResult);
   }
 
-  _RenderImageResult _renderImageResult(CanvasRenderingContext2D context,
-      Quality quality, double scale, FilterResult filterResult) {
+  _RenderImageResult? _renderImageResult(CanvasRenderingContext2D context,
+      Quality quality, double scale, FilterResult? filterResult) {
     if (filterResult == null) {
       print(
           '** _renderImageResult> quality: $quality ; scale: $scale ; filterResult: $filterResult');
@@ -2269,9 +2258,9 @@ class CanvasImageViewer {
 
     if (_cropPerspective) {
       var image = filterResult.imageResult;
-      var imageCropped = filterResult.imageResultCropped;
-      var cropWRatio = imageCropped.width / image.width;
-      var cropHRatio = imageCropped.height / image.height;
+      var imageCropped = filterResult.imageResultCropped!;
+      var cropWRatio = imageCropped.width! / image.width!;
+      var cropHRatio = imageCropped.height! / image.height!;
 
       srcImage = imageCropped;
       translate = Point(0, 0);
@@ -2284,7 +2273,7 @@ class CanvasImageViewer {
       dstCoords = Rectangle(0, 0, width, height);
     }
 
-    var srcCoords = Rectangle(0, 0, srcImage.width, srcImage.height);
+    var srcCoords = Rectangle(0, 0, srcImage.width!, srcImage.height!);
 
     var srWRatio = srcCoords.width / dstCoords.width;
     var srHRatio = srcCoords.height / dstCoords.height;
@@ -2296,21 +2285,21 @@ class CanvasImageViewer {
       var maxW = Math.min(maxWidth, dstCoords.width);
       var maxH = Math.min(maxHeight, dstCoords.height);
 
-      int/*!*/ x = (dstCoords.width/*!*/ - maxW) ~/ 2;
-      int/*!*/ y = (dstCoords.height/*!*/ - maxH) ~/ 2;
+      var x = (dstCoords.width - maxW) ~/ 2;
+      var y = (dstCoords.height - maxH) ~/ 2;
 
-      if (_clip != null && !_clip.isNull) {
-        var clipW = _clip.value.width;
-        var clipH = _clip.value.height;
-        var cX = _clip.value.left;
-        var cY = _clip.value.top;
+      if (_clip != null && !_clip!.isNull) {
+        var clipW = _clip!.value!.width;
+        var clipH = _clip!.value!.height;
+        var cX = _clip!.value!.left;
+        var cY = _clip!.value!.top;
 
-        x = cX - ((maxW - clipW) ~/ 2);
-        y = cY - ((maxH - clipH) ~/ 2);
+        x = cX - ((maxW - clipW) ~/ 2) as int;
+        y = cY - ((maxH - clipH) ~/ 2) as int;
       }
 
-      x = clipNumber(x, 0, maxWidth);
-      y = clipNumber(y, 0, maxHeight);
+      x = clipNumber(x, 0, maxWidth)!;
+      y = clipNumber(y, 0, maxHeight)!;
 
       var srcW = (maxW * srWRatio).toInt();
       var srcH = (maxH * srHRatio).toInt();
@@ -2339,7 +2328,7 @@ class CanvasImageViewer {
   }
 
   void _renderClip(CanvasRenderingContext2D context, Point<num> translate,
-      Rectangle clip, Color color, int strokeSize) {
+      Rectangle? clip, Color color, int strokeSize) {
     if (clip == null) return;
     clip = _normalizeClip(clip);
     if (clip == null) return;
@@ -2353,13 +2342,11 @@ class CanvasImageViewer {
 
   void _renderShadow(
       CanvasRenderingContext2D context, Point<num> translate, Rectangle clip) {
-    if (clip == null) return;
-
     context.setFillColorRgb(0, 0, 0, 0.40);
 
     _translate(context, null);
 
-    if (translate != null && (translate.x != 0 || translate.y != 0)) {
+    if (translate.x != 0 || translate.y != 0) {
       var x = translate.x;
       var y = translate.y;
 
@@ -2377,40 +2364,37 @@ class CanvasImageViewer {
         width - (clip.left + clip.width), clip.height);
   }
 
-  Label<num> _selectedLabel;
+  Label<num>? _selectedLabel;
 
   void _renderLabels(CanvasRenderingContext2D context, Point<num> translate,
-      List<Label<num>> rectangles, Color color, int strokeSize) {
+      List<Label<num>>? rectangles, Color color, int strokeSize) {
     if (isEmptyObject(rectangles)) return;
 
     _translate(context, translate);
-    _strokeLabels(
-        context, rectangles, color, strokeSize, _selectedLabel, strokeSize * 2);
+    _strokeLabels(context, rectangles!, color, strokeSize, _selectedLabel,
+        strokeSize * 2);
   }
 
   void _renderRectangles(CanvasRenderingContext2D context, Point<num> translate,
-      List<Rectangle<num>> rectangles, Color color, int strokeSize) {
+      List<Rectangle<num>>? rectangles, Color color, int strokeSize) {
     if (isEmptyObject(rectangles)) return;
 
     _translate(context, translate);
-    _strokeRects(context, rectangles, color, strokeSize);
+    _strokeRects(context, rectangles!, color, strokeSize);
   }
 
   void _renderPoints(CanvasRenderingContext2D context, Point<num> translate,
-      List<Point<num>> points, Color color, int strokeSize) {
+      List<Point<num>>? points, Color color, int strokeSize) {
     if (isEmptyObject(points)) return;
 
     _translate(context, translate);
 
-    _strokePoints(context, points, color, strokeSize);
+    _strokePoints(context, points!, color, strokeSize);
   }
 
   void _renderGrid(CanvasRenderingContext2D context, Point<num> translate,
-      num gridSize, Color color, int lineWidth) {
-    if (gridSize == null ||
-        gridSize <= 0 ||
-        lineWidth == null ||
-        lineWidth < 1) {
+      num? gridSize, Color color, int lineWidth) {
+    if (gridSize == null || gridSize <= 0 || lineWidth < 1) {
       return;
     }
 
@@ -2445,7 +2429,7 @@ class CanvasImageViewer {
   }
 
   void _renderTime(
-      CanvasRenderingContext2D context, Point<num> translate, DateTime time) {
+      CanvasRenderingContext2D context, Point<num> translate, DateTime? time) {
     if (time == null) return;
 
     _translate(context, null);
@@ -2464,7 +2448,7 @@ class CanvasImageViewer {
     context.fillText(timeStr, margin + shadow, height - (margin + shadow));
   }
 
-  void _translate(CanvasRenderingContext2D context, Point<num> translate) {
+  void _translate(CanvasRenderingContext2D context, Point<num>? translate) {
     context.resetTransform();
     if (translate != null) {
       context.translate(translate.x, translate.y);
@@ -2472,7 +2456,7 @@ class CanvasImageViewer {
   }
 
   void _strokeLabels(CanvasRenderingContext2D context, List<Label<num>> labels,
-      Color color, int lineWidth, Label sel, int selLineWidth) {
+      Color color, int lineWidth, Label? sel, int selLineWidth) {
     var hasSel = sel != null;
     var selHasColor = sel != null && sel.color != null;
 
@@ -2482,7 +2466,7 @@ class CanvasImageViewer {
     for (var label in labels) {
       var isSelectedLabel = label == sel;
       if (isSelectedLabel) continue;
-      var isSelectedGroup = hasSel && label.label == sel.label;
+      var isSelectedGroup = hasSel && label.label == sel!.label;
       if (isSelectedGroup) continue;
 
       var labelColor = label.color ?? color;
@@ -2496,7 +2480,7 @@ class CanvasImageViewer {
     if (hasSel) {
       for (var label in labels) {
         var isSelectedLabel = label == sel;
-        var isSelectedGroup = hasSel && label.label == sel.label;
+        var isSelectedGroup = hasSel && label.label == sel!.label;
         if (!isSelectedLabel && !isSelectedGroup) continue;
 
         var labelColor = label.color ?? color;
@@ -2507,7 +2491,7 @@ class CanvasImageViewer {
   }
 
   void _strokeRects(CanvasRenderingContext2D context,
-      List<Rectangle<num>> rects, Color color, int lineWidth) {
+      List<Rectangle<num>> rects, Color? color, int lineWidth) {
     for (var rect in rects) {
       if (rect is Label && rect.color != null) {
         color = rect.color;
@@ -2517,8 +2501,8 @@ class CanvasImageViewer {
   }
 
   void _strokeRect(CanvasRenderingContext2D context, Rectangle<num> rect,
-      Color color, int lineWidth,
-      [int lineAlphaWidth]) {
+      Color? color, int lineWidth,
+      [int? lineAlphaWidth]) {
     if (color == null) return;
 
     if (lineAlphaWidth != null) {
@@ -2565,11 +2549,11 @@ class CanvasImageViewer {
     context.strokeRect(p.x - b, p.y - b, l, l);
   }
 
-  DivElement _currentHint;
+  DivElement? _currentHint;
 
   void hideHint() {
     if (_currentHint != null) {
-      _currentHint.remove();
+      _currentHint!.remove();
       _currentHint = null;
     }
   }
@@ -2588,8 +2572,8 @@ class CanvasImageViewer {
 
     var arrowSize = 6;
 
-    var x = point.x * (1 / offsetWidthRatio);
-    var y = point.y * (1 / offsetHeightRatio);
+    num x = point.x * (1 / offsetWidthRatio);
+    num y = point.y * (1 / offsetHeightRatio);
 
     x += canvas.offset.left - (8 + arrowSize - 1);
     y += canvas.offset.top + arrowSize;
@@ -2621,7 +2605,7 @@ class CanvasImageViewer {
 
     hint.append(arrow);
 
-    canvas.parent.children.add(hint);
+    canvas.parent!.children.add(hint);
 
     _currentHint = hint;
   }
@@ -2634,7 +2618,7 @@ class CanvasImageViewer {
 CanvasElement toCanvasElement(
     CanvasImageSource imageSource, int width, int height) {
   var canvas = CanvasElement(width: width, height: height);
-  CanvasRenderingContext2D context = canvas.getContext('2d');
+  var context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   context.drawImage(imageSource, 0, 0);
 
@@ -2646,7 +2630,7 @@ CanvasElement toCanvasElement(
 /// [mimeType] MIME-Type of the image.
 /// [quality] Quality of the image.
 ImageElement canvasToImageElement(CanvasElement canvas,
-    [String mimeType, num quality]) {
+    [String? mimeType, num? quality]) {
   mimeType ??= 'image/png';
   quality ??= 0.99;
 
@@ -2659,8 +2643,8 @@ ImageElement canvasToImageElement(CanvasElement canvas,
 
 /// Rotates [image] with [angleDegree].
 CanvasElement rotateImageElement(ImageElement image, [angleDegree = 90]) {
-  var w = image.width;
-  var h = image.height;
+  var w = image.width!;
+  var h = image.height!;
   return rotateCanvasImageSource(image, w, h, angleDegree);
 }
 
@@ -2674,9 +2658,9 @@ CanvasElement rotateCanvasImageSource(
   angleDegree ??= 90;
 
   var canvas = CanvasElement(width: height, height: width);
-  CanvasRenderingContext2D context = canvas.getContext('2d');
+  var context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-  context.translate(canvas.width / 2, canvas.height / 2);
+  context.translate(canvas.width! / 2, canvas.height! / 2);
   context.rotate(angleDegree * math.pi / 180);
   context.drawImage(image, -width / 2, -height / 2);
 

@@ -18,7 +18,7 @@ class _Rect {
 ///
 /// Used by [ImagePerspectiveFilter].
 class FilterResult {
-  final CanvasImageSource/*?*/ imageSource;
+  final CanvasImageSource? imageSource;
 
   final CanvasElement imageResult;
 
@@ -26,7 +26,8 @@ class FilterResult {
 
   FilterResult(this.imageSource, this.imageResult, this.crop);
 
-  FilterResult copyWithSource(CanvasImageSource/*?*/ imageSource) => FilterResult(imageSource, imageResult, crop);
+  FilterResult copyWithSource(CanvasImageSource? imageSource) =>
+      FilterResult(imageSource, imageResult, crop);
 
   FilterResult copyWithoutSource() => FilterResult(null, imageResult, crop);
 
@@ -35,16 +36,16 @@ class FilterResult {
   Point<num> translationScaled(double scale) =>
       Point(crop.left * scale, crop.top * scale);
 
-  CanvasElement _imageResultCropped;
+  CanvasElement? _imageResultCropped;
 
-  CanvasElement get imageResultCropped {
+  CanvasElement? get imageResultCropped {
     _imageResultCropped ??= cropImageByRectangle(imageResult, crop);
     return _imageResultCropped;
   }
 
-  int get resultWidth => imageResult.width/*!*/;
+  int get resultWidth => imageResult.width!;
 
-  int get resultHeight => imageResult.height/*!*/;
+  int get resultHeight => imageResult.height!;
 }
 
 /// A filter that applies a perspective to an image.
@@ -58,29 +59,29 @@ class ImagePerspectiveFilter {
   /// Image height.
   final int height;
 
-  double _x0;
-  double _y0;
-  double _x1;
-  double _y1;
-  double _x2;
-  double _y2;
-  double _x3;
-  double _y3;
-  double _dx1;
-  double _dy1;
-  double _dx2;
-  double _dy2;
-  double _dx3;
-  double _dy3;
-  double _A;
-  double _B;
-  double _C;
-  double _D;
-  double _E;
-  double _F;
-  double _G;
-  double _H;
-  double _I;
+  late double _x0;
+  late double _y0;
+  late double _x1;
+  late double _y1;
+  late double _x2;
+  late double _y2;
+  late double _x3;
+  late double _y3;
+  late double _dx1;
+  late double _dy1;
+  late double _dx2;
+  late double _dy2;
+  double? _dx3;
+  double? _dy3;
+  late double _A;
+  late double _B;
+  late double _C;
+  late double _D;
+  late double _E;
+  late double _F;
+  late double _G;
+  late double _H;
+  late double _I;
 
   ImagePerspectiveFilter(this.image, this.width, this.height);
 
@@ -153,8 +154,8 @@ class ImagePerspectiveFilter {
       a32 = y0;
       a13 = a23 = 0.0;
     } else {
-      a13 = (_dx3 * _dy2 - _dx2 * _dy3) / (_dx1 * _dy2 - _dy1 * _dx2);
-      a23 = (_dx1 * _dy3 - _dy1 * _dx3) / (_dx1 * _dy2 - _dy1 * _dx2);
+      a13 = (_dx3! * _dy2 - _dx2 * _dy3!) / (_dx1 * _dy2 - _dy1 * _dx2);
+      a23 = (_dx1 * _dy3! - _dy1 * _dx3!) / (_dx1 * _dy2 - _dy1 * _dx2);
       a11 = (x1 - x0) + a13 * x1;
       a21 = (x3 - x0) + a23 * x3;
       a31 = x0;
@@ -176,8 +177,8 @@ class ImagePerspectiveFilter {
     _updateSpaces();
   }
 
-  _Rect _originalSpace;
-  _Rect _transformedSpace;
+  late _Rect _originalSpace;
+  late _Rect _transformedSpace;
 
   void _updateSpaces() {
     _originalSpace = _Rect(0, 0, width, height);
@@ -231,11 +232,12 @@ class ImagePerspectiveFilter {
     }
   }
 
-  Uint8ClampedList _getImagePixels() {
+  Uint8ClampedList? _getImagePixels() {
     if (width == 0 || height == 0) return null;
     var selectedImgCanvas = CanvasElement(width: width, height: height);
 
-    CanvasRenderingContext2D context = selectedImgCanvas.getContext('2d');
+    var context =
+        selectedImgCanvas.getContext('2d') as CanvasRenderingContext2D;
 
     context.clearRect(0, 0, width, height);
     context.drawImage(image, 0, 0);
@@ -246,9 +248,9 @@ class ImagePerspectiveFilter {
   }
 
   /// Filters the image into [resultCanvas].
-  FilterResult filter([CanvasElement resultCanvas]) {
+  FilterResult? filter([CanvasElement? resultCanvas]) {
     // ignore: omit_local_variable_types
-    Uint8ClampedList inPixels = _getImagePixels();
+    Uint8ClampedList? inPixels = _getImagePixels();
     if (inPixels == null) return null;
 
     var srcWidth = _originalSpace.width;
@@ -301,7 +303,7 @@ class ImagePerspectiveFilter {
 
     resultCanvas ??= CanvasElement(width: canvasW, height: canvasH);
 
-    CanvasRenderingContext2D context = resultCanvas.getContext('2d');
+    var context = resultCanvas.getContext('2d') as CanvasRenderingContext2D;
 
     var imgData = context.createImageData(outWidth, outHeight);
     imgData.data.setAll(0, outPixels);
@@ -334,9 +336,9 @@ class ImagePerspectiveFilter {
 }
 
 /// Apply [perspective] filter to [image].
-FilterResult applyPerspective(
+FilterResult? applyPerspective(
     CanvasImageSource image, List<Point<num>> perspective) {
-  var wh = getImageDimension(image);
+  var wh = getImageDimension(image)!;
 
   var w = wh.width;
   var h = wh.height;
@@ -351,23 +353,22 @@ FilterResult applyPerspective(
 ///
 /// Useful for consecutive calls to perspective on the same image.
 class ImagePerspectiveFilterCache extends ImageScaledCache {
-  int _maxPerspectiveCacheEntries;
+  final int _maxPerspectiveCacheEntries;
 
   ImagePerspectiveFilterCache(CanvasImageSource image,
-      [int width,
-      int height,
-      int maxScaleCacheEntries,
-      int maxPerspectiveCacheEntries])
-      : super(image, width, height, maxScaleCacheEntries) {
-    _maxPerspectiveCacheEntries =
-        maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0
-            ? maxPerspectiveCacheEntries
-            : 2;
-  }
+      [int? width,
+      int? height,
+      int? maxScaleCacheEntries,
+      int? maxPerspectiveCacheEntries])
+      : _maxPerspectiveCacheEntries =
+            maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0
+                ? maxPerspectiveCacheEntries
+                : 2,
+        super(image, width, height, maxScaleCacheEntries);
 
-  int get maxPerspectiveCacheEntries => _maxPerspectiveCacheEntries;
+  int? get maxPerspectiveCacheEntries => _maxPerspectiveCacheEntries;
 
-  final Map<String, FilterResult> _perspectiveCache = {};
+  final Map<String, FilterResult?> _perspectiveCache = {};
 
   void clearPerspectiveCache() {
     _perspectiveCache.clear();
@@ -378,7 +379,7 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
     clearPerspectiveCache();
   }
 
-  bool isImageWithPerspectiveInCache(List<Point<num>> points, double scale) {
+  bool isImageWithPerspectiveInCache(List<Point<num>>? points, double scale) {
     if (scale <= 0) return false;
 
     var cacheKey = '$scale > $points';
@@ -387,7 +388,8 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
     return imageWithPerspective != null;
   }
 
-  FilterResult getImageWithPerspective(List<Point<num>> points, double scale) {
+  FilterResult? getImageWithPerspective(
+      List<Point<num>>? points, double scale) {
     if (scale <= 0) return null;
 
     var cacheKey = '$scale > $points';
@@ -395,7 +397,7 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
     var imageWithPerspective = _perspectiveCache[cacheKey];
 
     if (imageWithPerspective == null) {
-      var imageScaled = getImageScaled(scale);
+      var imageScaled = getImageScaled(scale)!;
       var imageScaledDim = getImageDimension(imageScaled);
       if (imageScaledDim == null ||
           imageScaledDim.width == 0 ||
@@ -403,7 +405,7 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
         getImageScaled(scale);
       }
 
-      var perspective = scalePoints(points, scale);
+      var perspective = scalePoints(points!, scale);
 
       imageWithPerspective = applyPerspective(imageScaled, perspective);
 

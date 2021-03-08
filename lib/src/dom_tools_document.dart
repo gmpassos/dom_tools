@@ -144,7 +144,7 @@ final CSSThemeSet CODE_THEME =
 /// Useful to remove indent caused due declaration inside a multiline String
 /// with it's own indentation.
 String normalizeIndent(String text) {
-  if (text == null || text.isEmpty) return text;
+  if (text.isEmpty) return text;
 
   var lines = text.split(RegExp(r'[\r\n]'));
 
@@ -162,7 +162,7 @@ String normalizeIndent(String text) {
   if (indentCount.isEmpty) return text;
 
   var identList = List.from(indentCount.keys)
-    ..sort((a, b) => indentCount[b].compareTo(indentCount[a]));
+    ..sort((a, b) => indentCount[b]!.compareTo(indentCount[a]!));
 
   String mainIdent = identList[0];
 
@@ -193,13 +193,13 @@ String normalizeIndent(String text) {
 /// [normalize] If [true] normalizes indent.
 DivElement markdownToDiv(String markdown,
     {bool normalize = true,
-    Iterable<mk.BlockSyntax> blockSyntaxes,
-    Iterable<mk.InlineSyntax> inlineSyntaxes,
-    mk.ExtensionSet extensionSet,
-    mk.Resolver linkResolver,
-    mk.Resolver imageLinkResolver,
+    Iterable<mk.BlockSyntax>? blockSyntaxes,
+    Iterable<mk.InlineSyntax>? inlineSyntaxes,
+    mk.ExtensionSet? extensionSet,
+    mk.Resolver? linkResolver,
+    mk.Resolver? imageLinkResolver,
     bool inlineOnly = false}) {
-  if (markdown == null || markdown.isEmpty) return createDivInline();
+  if (markdown.isEmpty) return createDivInline();
   var html = markdownToHtml(markdown,
       blockSyntaxes: blockSyntaxes,
       inlineSyntaxes: inlineSyntaxes,
@@ -216,14 +216,15 @@ DivElement markdownToDiv(String markdown,
 /// [normalize] If [true] normalizes indent.
 String markdownToHtml(String markdown,
     {bool normalize = true,
-    Iterable<mk.BlockSyntax> blockSyntaxes,
-    Iterable<mk.InlineSyntax> inlineSyntaxes,
-    mk.ExtensionSet extensionSet,
-    mk.Resolver linkResolver,
-    mk.Resolver imageLinkResolver,
+    Iterable<mk.BlockSyntax>? blockSyntaxes,
+    Iterable<mk.InlineSyntax>? inlineSyntaxes,
+    mk.ExtensionSet? extensionSet,
+    mk.Resolver? linkResolver,
+    mk.Resolver? imageLinkResolver,
     bool inlineOnly = false}) {
-  if (markdown == null || markdown.isEmpty) return '';
-  if (normalize != null && normalize) markdown = normalizeIndent(markdown);
+  if (markdown.isEmpty) return '';
+  if (normalize) markdown = normalizeIndent(markdown);
+
   var markdownHtml = mk.markdownToHtml(markdown,
       blockSyntaxes: blockSyntaxes ?? [],
       inlineSyntaxes: inlineSyntaxes ?? [],
@@ -252,22 +253,23 @@ Blob dataURLToBlob(DataURLBase64 dataURL) {
 
 /// Makes a HTTP request and returns [url] content as [Uint8List].
 Future<Uint8List> getURLData(String url,
-    {String user, String password, bool/*!*/ withCredentials = true}) {
+    {String? user, String? password, bool withCredentials = true}) {
   var httpRequest = HttpRequest();
 
-  httpRequest.withCredentials = withCredentials ?? true;
+  httpRequest.withCredentials = withCredentials;
 
   httpRequest.responseType = 'arraybuffer';
 
   var completer = Completer<Uint8List>();
 
   httpRequest.onLoad.listen((event) {
-    if (httpRequest.status == 200) {
+    var status = httpRequest.status;
+    if (status == 200) {
       var response = httpRequest.response;
       var data = Uint8List.view(response);
       completer.complete(data);
     } else {
-      completer.completeError(null);
+      completer.completeError('Invalid response status: $status');
     }
   }, onError: (error) {
     completer.completeError(error);
@@ -315,7 +317,7 @@ void downloadBlob(Blob blob, String fileName) {
     fileLink.remove();
   });
 
-  document.body.append(fileLink);
+  document.body!.append(fileLink);
 
   fileLink.click();
 }
@@ -323,7 +325,7 @@ void downloadBlob(Blob blob, String fileName) {
 class _AssetObjectURL {
   final String objectURL;
 
-  final MimeType mimeType;
+  final MimeType? mimeType;
 
   _AssetObjectURL(this.objectURL, [this.mimeType]);
 }
@@ -360,10 +362,9 @@ class DataAssets {
   /// Returns a list of IDs of [mimeType].
   ///
   /// [matchSubType] If [true] also matches the [mimeType.subType].
-  List<String> getIDsWhereMimeTypeOf(MimeType/*?*/ mimeType,
+  List<String> getIDsWhereMimeTypeOf(MimeType? mimeType,
       {bool matchSubType = true}) {
     if (mimeType == null) return [];
-    matchSubType ??= true;
 
     var ids = _assets.entries
         .where((e) {
@@ -403,31 +404,31 @@ class DataAssets {
 
   /// Returns a list of ObjectURL of type 'image/*'.
   List<String> getURLsWhereMimeTypeIsImage() =>
-      getURLofIDs(getIDsWhereMimeTypeIsImage());
+      getURLofIDs(getIDsWhereMimeTypeIsImage()).whereType<String>().toList();
 
   /// Returns a list of ObjectURL of type 'video/*'.
   List<String> getURLsWhereMimeTypeIsVideo() =>
-      getURLofIDs(getIDsWhereMimeTypeIsVideo());
+      getURLofIDs(getIDsWhereMimeTypeIsVideo()).whereType<String>().toList();
 
   /// Returns a list of ObjectURL of type 'audio/*'.
   List<String> getURLsWhereMimeTypeIsAudio() =>
-      getURLofIDs(getIDsWhereMimeTypeIsAudio());
+      getURLofIDs(getIDsWhereMimeTypeIsAudio()).whereType<String>().toList();
 
   /// Returns a list of ObjectURL of type 'image/*', 'video/*' or 'audio/*'.
   List<String> getURLsWhereMimeTypeIsMedia() =>
-      getURLofIDs(getIDsWhereMimeTypeIsMedia());
+      getURLofIDs(getIDsWhereMimeTypeIsMedia()).whereType<String>().toList();
 
   /// Returns a list of ObjectURL for [ids].
-  List<String/*!*/>/*!*/ getURLofIDs(List<String> ids) {
-    if (ids == null || ids.isEmpty) return [];
+  List<String?> getURLofIDs(List<String> ids) {
+    if (ids.isEmpty) return [];
     return ids.map((id) => getURL(id)).toList();
   }
 
   /// Returns the ObjectURL of [id].
-  String getURL(String id) => _assets[id]?.objectURL;
+  String? getURL(String id) => _assets[id]?.objectURL;
 
   /// Returns the ID of [url].
-  String getIDofURL(String/*?*/ url) {
+  String? getIDofURL(String? url) {
     if (url == null) return null;
     for (var entry in _assets.entries) {
       if (entry.value.objectURL == url) {
@@ -437,9 +438,9 @@ class DataAssets {
     return null;
   }
 
-  Future<Uint8List>/*?*/ getData(String id) {
+  Future<Uint8List>? getData(String id) {
     var url = getURL(id);
-    return url != null ? getURLData(url) : null ;
+    return url != null ? getURLData(url) : null;
   }
 
   /// Returns [true] if contains [id].
@@ -477,45 +478,45 @@ class DataAssets {
   }
 
   /// Put an asset [id] of value [content] and [mimeType].
-  String putContent(String id, String content, MimeType mimeType) {
-    if (isEmptyString(id) || content == null) return null;
+  String? putContent(String id, String content, MimeType mimeType) {
+    if (isEmptyString(id)) return null;
     var blob = Blob([content], mimeType.toString());
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [data].
-  String putData(String id, List<int> data, MimeType mimeType) {
-    if (isEmptyString(id) || data == null) return null;
+  String? putData(String id, List<int> data, MimeType mimeType) {
+    if (id.isEmpty) return null;
     var blob = Blob([data], mimeType.toString());
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [dataURL].
-  String putDataURL(String id, DataURLBase64 dataURL) {
-    if (isEmptyString(id) || dataURL == null) return null;
+  String? putDataURL(String id, DataURLBase64 dataURL) {
+    if (id.isEmpty) return null;
     var blob = dataURLToBlob(dataURL);
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [blob].
-  String putBlob(String id, Blob blob) {
-    if (isEmptyString(id) || blob == null) return null;
+  String? putBlob(String id, Blob blob) {
+    if (id.isEmpty) return null;
     var objURL = Url.createObjectUrlFromBlob(blob);
     _assets[id] = _AssetObjectURL(objURL, MimeType.parse(blob.type));
     return objURL;
   }
 
   /// Put an asset [id] of value [source].
-  String putMediaSource(String id, MediaSource source, [MimeType mimeType]) {
-    if (isEmptyString(id) || source == null) return null;
+  String? putMediaSource(String id, MediaSource source, [MimeType? mimeType]) {
+    if (id.isEmpty) return null;
     var objURL = Url.createObjectUrlFromSource(source);
     _assets[id] = _AssetObjectURL(objURL, mimeType);
     return objURL;
   }
 
   /// Put an asset [id] of value [stream].
-  String putMediaStream(String id, MediaStream stream, [MimeType mimeType]) {
-    if (isEmptyString(id) || stream == null) return null;
+  String? putMediaStream(String id, MediaStream stream, [MimeType? mimeType]) {
+    if (id.isEmpty) return null;
     var objURL = Url.createObjectUrlFromStream(stream);
     _assets[id] = _AssetObjectURL(objURL, mimeType);
     return objURL;
@@ -526,8 +527,8 @@ class DataAssets {
 ///
 /// [assetsURLAndTag] A [Map] of URL as key and tag as value. Accepts '?' as tag (will be defined by URL extension).
 Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
-    {Duration timeout}) async {
-  if (assetsURLAndTag == null || assetsURLAndTag.isEmpty) return false;
+    {Duration? timeout}) async {
+  if (assetsURLAndTag.isEmpty) return false;
 
   var doc = '<html><body>';
 
@@ -559,7 +560,7 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
   iFrame.setAttribute('loading', 'eager');
 
   var completer = Completer<bool>();
-  StreamSubscription<Event> listen;
+  StreamSubscription<Event>? listen;
 
   var reloadCounter = 0;
 
@@ -574,8 +575,9 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
     }
   });
 
+  // ignore: unsafe_html
   iFrame.srcdoc = doc;
-  document.body.append(iFrame);
+  document.body!.append(iFrame);
 
   if (timeout != null) {
     Future.delayed(timeout, () {
@@ -591,7 +593,7 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
 }
 
 /// Reloads an IFrame document.
-Future<bool> reloadIframe(IFrameElement iFrame, [bool forceGet]) async {
+Future<bool> reloadIframe(IFrameElement iFrame, [bool? forceGet]) async {
   var loaded = await addJavaScriptCode('''
     window.__dom_tools_reloadIFrame = function(iframe,forceGet) {
       iframe.contentWindow.location.reload(forceGet);

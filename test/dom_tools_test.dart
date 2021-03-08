@@ -16,7 +16,7 @@ void main() {
     test('touchEventToMouseEvent', () {
       var div = DivElement();
 
-      Touch touch;
+      Touch? touch;
 
       try {
         touch = Touch({
@@ -44,7 +44,7 @@ void main() {
         'metaKey': false,
       });
 
-      var mouseEvent = touchEventToMouseEvent(touchEvent);
+      var mouseEvent = touchEventToMouseEvent(touchEvent)!;
       expect(mouseEvent, isNotNull);
       expect(mouseEvent.ctrlKey, isFalse);
       expect(mouseEvent.shiftKey, isTrue);

@@ -10,7 +10,8 @@ import 'dom_tools_base.dart';
 /// [text] The text to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogText(String/*?*/ text, {double transparency, String padding}) {
+DivElement? showDialogText(String? text,
+    {double? transparency, String? padding}) {
   if (text == null || text.isEmpty) return null;
 
   var element = SpanElement();
@@ -27,8 +28,8 @@ DivElement showDialogText(String/*?*/ text, {double transparency, String padding
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
 /// [validator] The [NodeValidator] for HTML generation.
-DivElement showDialogHTML(String/*?*/ html,
-    {double transparency, String padding, NodeValidator validator}) {
+DivElement? showDialogHTML(String? html,
+    {double? transparency, String? padding, NodeValidator? validator}) {
   if (html == null || html.isEmpty) return null;
 
   var element = SpanElement();
@@ -44,6 +45,7 @@ DivElement showDialogHTML(String/*?*/ html,
 /// [src] The image source.
 void showDialogImage(String src) {
   var img = ImageElement()
+    // ignore: unsafe_html
     ..src = src
     ..style.width = '95%'
     ..style.height = 'auto'
@@ -58,7 +60,7 @@ void showDialogImage(String src) {
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
 DivElement showDialogElement(Element content,
-    {double transparency, String padding}) {
+    {double? transparency, String? padding}) {
   if (transparency == null || transparency <= 0) transparency = 0.90;
 
   padding ??= '2vh 0 0 0';
@@ -92,8 +94,8 @@ DivElement showDialogElement(Element content,
 
   dialog.children.add(close);
 
-  String src;
-  String title;
+  String? src;
+  String? title;
   var isImage = false;
 
   if (content is ImageElement) {
@@ -105,10 +107,10 @@ DivElement showDialogElement(Element content,
     title = content.title;
   }
 
-  AnchorElement download;
+  AnchorElement? download;
 
   if (src != null) {
-    String file;
+    String? file;
 
     if (src.startsWith('data:')) {
       var mimeType = DataURLBase64.parseMimeType(src);
@@ -156,10 +158,10 @@ DivElement showDialogElement(Element content,
           .where((e) => e is ImageElement || e is CanvasImageSource)
           .first;
 
-      CanvasElement canvasRotated;
+      late CanvasElement canvasRotated;
 
       if (img is CanvasElement) {
-        canvasRotated = rotateCanvasImageSource(img, img.width, img.height);
+        canvasRotated = rotateCanvasImageSource(img, img.width!, img.height!);
       } else if (img is ImageElement) {
         canvasRotated =
             rotateCanvasImageSource(img, img.naturalWidth, img.naturalHeight);
@@ -169,6 +171,7 @@ DivElement showDialogElement(Element content,
       imgRotated.style.cssText = img.style.cssText;
 
       if (download != null) {
+        // ignore: unsafe_html
         download.href = imgRotated.src;
       }
 
@@ -187,7 +190,7 @@ DivElement showDialogElement(Element content,
 
   dialog.children.add(content);
 
-  document.body.children.add(dialog);
+  document.body!.children.add(dialog);
 
   return dialog;
 }

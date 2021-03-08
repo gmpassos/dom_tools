@@ -11,15 +11,15 @@ enum TouchDeviceDetection {
   DETECTED,
 }
 
-TouchDeviceDetection _detectTouchDevice;
+TouchDeviceDetection? _detectTouchDevice;
 
-List<StreamSubscription<TouchEvent>> _detectTouchDeviceListen = [];
+List<StreamSubscription<TouchEvent>>? _detectTouchDeviceListen = [];
 
 /// Will fire a [TouchDeviceDetection] when detection finishes.
 final EventStream<TouchDeviceDetection> onDetectTouchDevice = EventStream();
 
 /// Starts touch device detection. Returns the current status.
-TouchDeviceDetection detectTouchDevice() {
+TouchDeviceDetection? detectTouchDevice() {
   if (_detectTouchDevice == null) {
     _detectTouchDevice = TouchDeviceDetection.UNKNOWN;
 
@@ -27,12 +27,12 @@ TouchDeviceDetection detectTouchDevice() {
       // At the 1st, it won't be null:
       assert(_detectTouchDeviceListen != null);
 
-      _detectTouchDeviceListen
-          .add(document.body.onTouchStart.listen(_onTouchEvent));
-      _detectTouchDeviceListen
-          .add(document.body.onTouchEnd.listen(_onTouchEvent));
-      _detectTouchDeviceListen
-          .add(document.body.onTouchMove.listen(_onTouchEvent));
+      _detectTouchDeviceListen!
+          .add(document.body!.onTouchStart.listen(_onTouchEvent));
+      _detectTouchDeviceListen!
+          .add(document.body!.onTouchEnd.listen(_onTouchEvent));
+      _detectTouchDeviceListen!
+          .add(document.body!.onTouchMove.listen(_onTouchEvent));
 
       _detectTouchDevice = TouchDeviceDetection.MAYBE;
     } catch (e) {
@@ -45,9 +45,9 @@ TouchDeviceDetection detectTouchDevice() {
 }
 
 void _onTouchEvent(event) {
-  if (_detectTouchDeviceListen == null) return ;
+  if (_detectTouchDeviceListen == null) return;
 
-  for (var listen in _detectTouchDeviceListen) {
+  for (var listen in _detectTouchDeviceListen!) {
     try {
       listen.cancel();
       // ignore: empty_catches
@@ -65,7 +65,7 @@ void _onTouchEvent(event) {
 ///
 /// This helps to use [TouchEvent] as normal [MouseEvent],
 /// simplifying UI support for touch events and mouse events.
-MouseEvent touchEventToMouseEvent(TouchEvent event) {
+MouseEvent? touchEventToMouseEvent(TouchEvent event) {
   var touches = event.touches;
   if (touches == null || touches.isEmpty) return null;
 
@@ -86,7 +86,7 @@ MouseEvent touchEventToMouseEvent(TouchEvent event) {
       return null;
   }
 
-  EventTarget target;
+  EventTarget? target;
 
   // If `event.target` is null, not dispatched, it will throw an exception.
   try {
@@ -96,18 +96,18 @@ MouseEvent touchEventToMouseEvent(TouchEvent event) {
   catch (ignore) {}
 
   var simulatedEvent = MouseEvent(type,
-      canBubble: event.bubbles,
-      cancelable: event.cancelable,
+      canBubble: event.bubbles!,
+      cancelable: event.cancelable!,
       view: window,
       detail: 1,
-      screenX: first.screen.x,
-      screenY: first.screen.y,
-      clientX: first.client.x,
-      clientY: first.client.y,
-      ctrlKey: event.ctrlKey,
-      altKey: event.altKey,
-      shiftKey: event.shiftKey,
-      metaKey: event.metaKey,
+      screenX: first.screen.x as int,
+      screenY: first.screen.y as int,
+      clientX: first.client.x as int,
+      clientY: first.client.y as int,
+      ctrlKey: event.ctrlKey!,
+      altKey: event.altKey!,
+      shiftKey: event.shiftKey!,
+      metaKey: event.metaKey!,
       button: 0,
       relatedTarget: target);
 

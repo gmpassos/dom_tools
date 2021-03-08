@@ -12,10 +12,11 @@ void main() {
   var imageElement = ImageElement();
 
   tracker.track(imageElement, onEnterViewport: (elem) {
+    // ignore: unsafe_html
     imageElement.src = imgSrc;
   });
 
-  document.body.children.add(imageElement);
+  document.body!.children.add(imageElement);
 
   Future.delayed(Duration(seconds: 10), () {
     var img = getElementBySRC('img', imgSrc);

@@ -3,6 +3,7 @@ import 'dart:html';
 import 'dart:math';
 import 'dart:svg' as dart_svg;
 
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:dom_tools/src/dom_tools_css.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
@@ -10,17 +11,15 @@ import 'package:swiss_knife/swiss_knife.dart';
 ///
 /// If the resolved value is null or empty, and def is not null,
 /// it will return [def].
-String/*?*/ getElementValue(Element element, [String/*?*/ def]) {
-  if (element == null) return def;
-
-  String value;
+String? getElementValue(Element element, [String? def]) {
+  String? value;
 
   if (element is InputElement) {
     value = element.value;
   } else if (element is CanvasImageSource) {
     value = getElementSRC(element);
   } else if (element is CheckboxInputElement) {
-    value = element.checked ? 'true' : 'false';
+    value = element.checked! ? 'true' : 'false';
   } else if (element is TextAreaElement) {
     value = element.value;
   } else if (isElementWithSRC(element)) {
@@ -35,7 +34,7 @@ String/*?*/ getElementValue(Element element, [String/*?*/ def]) {
 }
 
 /// Sets the [element] [value] depending of the identified type.
-bool/*!*/ setElementValue(Element/*?*/ element, String/*!*/ value) {
+bool setElementValue(Element? element, String value) {
   if (element == null) return false;
 
   if (element is InputElement) {
@@ -60,42 +59,42 @@ bool/*!*/ setElementValue(Element/*?*/ element, String/*!*/ value) {
 }
 
 /// Returns a value from an [Element].
-typedef ElementValueGetter<T> = T Function(Element element);
+typedef ElementValueGetter<T> = T? Function(Element element);
 
 /// selects in DOM an [Element] with [tag] and one of [values] provided by [getter].
-Element getElementByValues<V>(
+Element? getElementByValues<V>(
     String tag, ElementValueGetter getter, List<V> values,
-    [ElementValueGetter getter2, List<V> values2]) {
-  if (tag == null || tag.isEmpty) return null;
-  if (values == null || values.isEmpty) return null;
+    [ElementValueGetter? getter2, List<V>? values2]) {
+  if (tag.isEmpty) return null;
+  if (values.isEmpty) return null;
 
   var allLinks = document.querySelectorAll(tag);
-  if (allLinks == null || allLinks.isEmpty) return null;
+  if (allLinks.isEmpty) return null;
 
   if (getter2 != null) {
     if (values2 == null || values2.isEmpty) return null;
 
-    var fond = allLinks.firstWhere((l) {
+    var fond = allLinks.firstWhereOrNull((l) {
       var elemValue = getter(l);
       var ok = values.contains(elemValue);
       if (!ok) return false;
       var elemValue2 = getter2(l);
       var ok2 = values2.contains(elemValue2);
       return ok2;
-    }, orElse: () => null);
+    });
     return fond;
   } else {
-    var fond = allLinks.firstWhere((l) {
+    var fond = allLinks.firstWhereOrNull((l) {
       var elemValue = getter(l);
       return values.contains(elemValue);
-    }, orElse: () => null);
+    });
 
     return fond;
   }
 }
 
 /// Returns `href` value for different [Element] types.
-String getElementHREF(Element element) {
+String? getElementHREF(Element element) {
   if (element is LinkElement) return element.href;
   if (element is AnchorElement) return element.href;
   if (element is BaseElement) return element.href;
@@ -110,6 +109,7 @@ bool setElementHREF(Element element, String href) {
     element.href = href;
     return true;
   } else if (element is AnchorElement) {
+    // ignore: unsafe_html
     element.href = href;
     return true;
   } else if (element is BaseElement) {
@@ -134,7 +134,7 @@ bool isElementWithHREF(Element element) {
 }
 
 /// Returns `src` value for different [Element] types.
-String getElementSRC(Element element) {
+String? getElementSRC(Element element) {
   if (element is ImageElement) return element.src;
   if (element is ScriptElement) return element.src;
   if (element is InputElement) return element.src;
@@ -153,12 +153,12 @@ String getElementSRC(Element element) {
 
 /// Sets the [element] [src] depending of the identified type.
 bool setElementSRC(Element element, String src) {
-  if (element == null) return false;
-
   if (element is ImageElement) {
+    // ignore: unsafe_html
     element.src = src;
     return true;
   } else if (element is ScriptElement) {
+    // ignore: unsafe_html
     element.src = src;
     return true;
   } else if (element is InputElement) {
@@ -168,9 +168,11 @@ bool setElementSRC(Element element, String src) {
     element.src = src;
     return true;
   } else if (element is EmbedElement) {
+    // ignore: unsafe_html
     element.src = src;
     return true;
   } else if (element is IFrameElement) {
+    // ignore: unsafe_html
     element.src = src;
     return true;
   } else if (element is SourceElement) {
@@ -206,15 +208,15 @@ bool isElementWithSRC(Element element) {
 }
 
 /// Selects an [Element] in DOM with [tag] and [href].
-Element getElementByHREF(String tag, String href) {
-  if (href == null || href.isEmpty) return null;
+Element? getElementByHREF(String tag, String href) {
+  if (href.isEmpty) return null;
   var resolvedURL = resolveUri(href).toString();
   return getElementByValues(tag, getElementHREF, [href, resolvedURL]);
 }
 
 /// Selects an [Element] in DOM with [tag] and [src].
-Element getElementBySRC(String tag, String src) {
-  if (src == null || src.isEmpty) return null;
+Element? getElementBySRC(String tag, String src) {
+  if (src.isEmpty) return null;
 
   var values = [src];
 
@@ -227,36 +229,35 @@ Element getElementBySRC(String tag, String src) {
 }
 
 /// Selects an [AnchorElement] in DOM with [href].
-AnchorElement getAnchorElementByHREF(String href) {
-  return getElementByHREF('a', href);
+AnchorElement? getAnchorElementByHREF(String href) {
+  return getElementByHREF('a', href) as AnchorElement?;
 }
 
 /// Selects an [LinkElement] in DOM with [href].
-LinkElement getLinkElementByHREF(String href, [String rel]) {
-  if (href == null || href.isEmpty) return null;
+LinkElement? getLinkElementByHREF(String href, [String? rel]) {
+  if (href.isEmpty) return null;
 
   if (isNotEmptyString(rel)) {
     var resolvedURL = resolveUri(href).toString();
     return getElementByValues('link', getElementHREF, [href, resolvedURL],
-        (e) => e.getAttribute('rel'), [rel]);
+        (e) => e.getAttribute('rel'), [rel]) as LinkElement?;
   } else {
-    return getElementByHREF('link', href);
+    return getElementByHREF('link', href) as LinkElement?;
   }
 }
 
 /// Selects an [ScriptElement] in DOM with [src].
-ScriptElement getScriptElementBySRC(String src) {
-  return getElementBySRC('script', src);
+ScriptElement? getScriptElementBySRC(String src) {
+  return getElementBySRC('script', src) as ScriptElement?;
 }
 
 /// Returns [element] width. Tries to use 'offsetWidth' or 'style.width' values.
 ///
 /// [def] default value if width is `null` or `0`.
-int getElementWidth(Element element, [int def]) {
-  if (element == null) return null;
+int? getElementWidth(Element element, [int? def]) {
   var w = element.offsetWidth;
   if (w <= 0) {
-    w = parseCSSLength(element.style.width, unit: 'px', def: def ?? 0);
+    w = parseCSSLength(element.style.width, unit: 'px', def: def ?? 0) as int;
   }
   return w <= 0 ? def : w;
 }
@@ -264,11 +265,10 @@ int getElementWidth(Element element, [int def]) {
 /// Returns [element] height. Tries to use 'offsetHeight' or 'style.height' values.
 ///
 /// [def] default value if width is `null` or `0`.
-int getElementHeight(Element element, [int def]) {
-  if (element == null) return null;
+int? getElementHeight(Element element, [int? def]) {
   var h = element.offsetHeight;
   if (h <= 0) {
-    h = parseCSSLength(element.style.height, unit: 'px', def: def ?? 0);
+    h = parseCSSLength(element.style.height, unit: 'px', def: def ?? 0) as int;
   }
   return h <= 0 ? def : h;
 }
@@ -289,7 +289,7 @@ DivElement createDivInlineBlock() =>
 /// [inline] If [true] sets `display: inline-block`.
 /// [html] The HTML to parse as content.
 DivElement createDiv(
-    [bool inline = false, String html, NodeValidator validator]) {
+    [bool inline = false, String? html, NodeValidator? validator]) {
   var div = DivElement();
 
   if (inline) div.style.display = 'inline-block';
@@ -304,14 +304,14 @@ DivElement createDiv(
 /// Creates a `div` with `display: inline-block`.
 ///
 /// [html] The HTML to parse as content.
-DivElement createDivInline([String html]) {
+DivElement createDivInline([String? html]) {
   return createDiv(true, html);
 }
 
 /// Creates a `span` element.
 ///
 /// [html] The HTML to parse as content.
-SpanElement createSpan([String html, NodeValidator validator]) {
+SpanElement createSpan([String? html, NodeValidator? validator]) {
   var span = SpanElement();
 
   if (html != null) {
@@ -324,7 +324,7 @@ SpanElement createSpan([String html, NodeValidator validator]) {
 /// Creates a `label` element.
 ///
 /// [html] The HTML to parse as content.
-LabelElement createLabel([String html, NodeValidator validator]) {
+LabelElement createLabel([String? html, NodeValidator? validator]) {
   var label = LabelElement();
 
   if (html != null) {
@@ -336,18 +336,20 @@ LabelElement createLabel([String html, NodeValidator validator]) {
 
 /// Returns the [node] tag name.
 /// Returns null if [node] is not an [Element].
-String getElementTagName(Node node) =>
-    node != null && node is Element ? node.tagName.toLowerCase() : null;
+String? getElementTagName(Node node) =>
+    node is Element ? node.tagName.toLowerCase() : null;
 
 final RegExp _REGEXP_DEPENDENT_TAG =
     RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
 
 /// Creates a HTML [Element]. Returns 1st node form parsed HTML.
-Element createHTML([String html, NodeValidator validator]) {
+Element createHTML([String? html, NodeValidator? validator]) {
+  if (html == null || html.isEmpty) return SpanElement();
+
   var dependentTagMatch = _REGEXP_DEPENDENT_TAG.firstMatch(html);
 
   if (dependentTagMatch != null) {
-    var dependentTagName = dependentTagMatch.group(1).toLowerCase();
+    var dependentTagName = dependentTagMatch.group(1)!.toLowerCase();
 
     DivElement div;
     if (dependentTagName == 'td' || dependentTagName == 'th') {
@@ -363,15 +365,14 @@ Element createHTML([String html, NodeValidator validator]) {
     }
 
     var childNode = div.querySelector(dependentTagName);
-    return childNode;
+    return childNode!;
   } else {
     var div = createDiv(true, html, validator);
     if (div.nodes.isEmpty) return div;
 
-    var childNode =
-        div.nodes.firstWhere((e) => e is Element, orElse: () => null);
+    var childNode = div.nodes.firstWhereOrNull((e) => e is Element);
 
-    if (childNode != null) {
+    if (childNode is Element) {
       return childNode;
     }
 
@@ -478,8 +479,8 @@ NodeValidatorBuilder createStandardNodeValidator(
     ..allowNavigation(_anyUriPolicy)
     ..allowInlineStyles();
 
-  if (svg ?? true) {
-    if (allowSvgForeignObject ?? false) {
+  if (svg) {
+    if (allowSvgForeignObject) {
       validator.add(_FullSvgNodeValidator());
     } else {
       validator.allowSvg();
@@ -493,20 +494,21 @@ NodeValidatorBuilder _defaultNodeValidator = createStandardNodeValidator();
 
 /// Sets the inner HTML of [element] with parsed result of [html].
 void setElementInnerHTML(Element element, String html,
-    {NodeValidator validator}) {
+    {NodeValidator? validator}) {
   validator ??= _defaultNodeValidator;
+  // ignore: unsafe_html
   element.setInnerHtml(html, validator: validator);
 }
 
 /// Appends to the inner HTML of [element] with parsed result of [html].
 void appendElementInnerHTML(Element element, String html,
-    {NodeValidator validator}) {
+    {NodeValidator? validator}) {
   validator ??= _defaultNodeValidator;
   element.appendHtml(html, validator: validator);
 }
 
 /// Transform [html] to plain text.
-String htmlToText(String html, [NodeValidator validator]) {
+String? htmlToText(String html, [NodeValidator? validator]) {
   var elem = createHTML('<div>$html</div>', validator);
   return elem.text;
 }
@@ -530,7 +532,7 @@ void scrollToTop() {
 /// Scrolls viewport to the bottom.
 void scrollToBottom() {
   window.scrollTo(
-      window.scrollX, document.body.scrollHeight, {'behavior': 'smooth'});
+      window.scrollX, document.body!.scrollHeight, {'behavior': 'smooth'});
 }
 
 /// Scrolls viewport to the left border.
@@ -541,7 +543,7 @@ void scrollToLeft() {
 /// Scrolls viewport to the right border.
 void scrollToRight() {
   window.scrollTo(
-      document.body.scrollWidth, window.scrollY, {'behavior': 'smooth'});
+      document.body!.scrollWidth, window.scrollY, {'behavior': 'smooth'});
 }
 
 /// Resets viewport zoom.
@@ -564,7 +566,7 @@ void _resetZoomImpl(int retry) {
   if (!_resettingZoom) {
     _resettingZoom = true;
 
-    var prev = document.body.style.zoom;
+    var prev = document.body!.style.zoom;
     setZoom('normal');
 
     Future.delayed(Duration(milliseconds: 10), () {
@@ -585,7 +587,7 @@ void _resetZoomImpl(int retry) {
       setMetaViewportScale(minimumScale: '*', maximumScale: '*');
 
       Future.delayed(Duration(milliseconds: 10), () {
-        metaViewport.setAttribute('content', content);
+        metaViewport.setAttribute('content', content!);
         _resettingViewportScale = false;
       });
     }
@@ -594,11 +596,11 @@ void _resetZoomImpl(int retry) {
 
 /// Sets the viewport [zoom].
 void setZoom(String zoom) {
-  document.body.style.zoom = zoom;
+  document.body!.style.zoom = zoom;
 }
 
 /// Sets the `meta` viewport with [minimumScale] and [maximumScale].
-bool setMetaViewportScale({String minimumScale, String maximumScale}) {
+bool setMetaViewportScale({String? minimumScale, String? maximumScale}) {
   if (minimumScale == null && maximumScale == null) return false;
 
   var metaViewportList = getMetaTagsWithName('viewport');
@@ -606,7 +608,7 @@ bool setMetaViewportScale({String minimumScale, String maximumScale}) {
 
   var metaViewport = metaViewportList[0];
 
-  var content = metaViewport.getAttribute('content');
+  var content = metaViewport.getAttribute('content')!;
   var params = parseMetaContent(content);
 
   var defaultScale = params['initial-scale'] ?? '1.0';
@@ -614,7 +616,7 @@ bool setMetaViewportScale({String minimumScale, String maximumScale}) {
   var changed = false;
 
   if (maximumScale != null) {
-    minimumScale = minimumScale.trim();
+    minimumScale = minimumScale!.trim();
     if (minimumScale.isEmpty || minimumScale == '*') {
       minimumScale = defaultScale;
     }
@@ -643,11 +645,11 @@ bool setMetaViewportScale({String minimumScale, String maximumScale}) {
 }
 
 /// Parses a `meta` content to [Map<String,String>].
-Map<String, String> parseMetaContent(String content) {
+Map<String, String?> parseMetaContent(String content) {
   var parts = content.split(RegExp(r'\s*,\s*'));
 
   // ignore: omit_local_variable_types
-  Map<String, String> map = {};
+  Map<String, String?> map = {};
 
   for (var p in parts) {
     var pair = split(p, '=', 2);
@@ -665,7 +667,7 @@ Map<String, String> parseMetaContent(String content) {
 }
 
 /// Builds a `meta` content from [map].
-String buildMetaContent(Map<String, String> map) {
+String buildMetaContent(Map<String, String?> map) {
   var content = '';
 
   for (var entry in map.entries) {
@@ -689,8 +691,8 @@ String buildMetaContent(Map<String, String> map) {
 /// Returns [element] attribute with [key].
 ///
 /// [key] Can be a [RegExp] or a [String].
-String getElementAttribute(Element element, dynamic key) {
-  if (element == null || key == null) return null;
+String? getElementAttribute(Element element, Object? key) {
+  if (key == null) return null;
 
   if (key is RegExp) {
     return getElementAttributeRegExp(element, key);
@@ -700,9 +702,7 @@ String getElementAttribute(Element element, dynamic key) {
 }
 
 /// Returns [element] attribute with [RegExp] [key].
-String getElementAttributeRegExp(Element element, RegExp key) {
-  if (element == null || key == null) return null;
-
+String? getElementAttributeRegExp(Element element, RegExp key) {
   var attrs = element.attributes;
 
   for (var k in attrs.keys) {
@@ -715,9 +715,7 @@ String getElementAttributeRegExp(Element element, RegExp key) {
 }
 
 /// Returns [element] attribute with [String] [key].
-String getElementAttributeStr(Element element, String key) {
-  if (element == null || key == null) return null;
-
+String? getElementAttributeStr(Element element, String key) {
   var val = element.getAttribute(key);
   if (val != null) return val;
 
@@ -770,11 +768,11 @@ String _toHTML_any(Element e) {
 
   html += '>';
 
-  if (e.innerHtml != null && e.innerHtml.isNotEmpty) {
+  if (e.innerHtml != null && e.innerHtml!.isNotEmpty) {
     if (e is SelectElement) {
       html += _toHTML_innerHtml_Select(e);
     } else {
-      html += e.innerHtml;
+      html += e.innerHtml!;
     }
   }
 
@@ -801,9 +799,9 @@ bool isInViewport(Element element) {
   var rect = element.getBoundingClientRect();
 
   var windowWidth =
-      min(window.innerWidth, document.documentElement.clientWidth);
+      min(window.innerWidth!, document.documentElement!.clientWidth);
   var windowHeight =
-      min(window.innerHeight, document.documentElement.clientHeight);
+      min(window.innerHeight!, document.documentElement!.clientHeight);
 
   return rect.bottom > 0 &&
       rect.right > 0 &&
@@ -842,7 +840,7 @@ bool onOrientationchange(EventListener listener) {
 
 /// Returns [true] if [node] is in DOM tree.
 bool isNodeInDOM(Node node) {
-  return document.body.contains(node);
+  return document.body!.contains(node);
 }
 
 /// Returns [true] if [element] is in DOM tree.
@@ -852,7 +850,7 @@ bool isInDOM(dynamic element) {
   if (element == null) return false;
 
   if (element is Node) {
-    return document.body.contains(element);
+    return document.body!.contains(element);
   } else if (element is List) {
     for (var elem in element) {
       var inDom = isInDOM(elem);
@@ -871,9 +869,8 @@ bool nodeTreeContains(Node rootNode, Node target) {
 
 /// Returns [true] if [rootNode] contains any [Node] in [list].
 bool nodeTreeContainsAny(Node rootNode, Iterable<Node> list) {
-  if (list == null || list.isEmpty) return false;
-  return list.firstWhere((e) => e == rootNode || rootNode.contains(e),
-          orElse: () => null) !=
+  if (list.isEmpty) return false;
+  return list.firstWhereOrNull((e) => e == rootNode || rootNode.contains(e)) !=
       null;
 }
 
@@ -881,15 +878,15 @@ bool nodeTreeContainsAny(Node rootNode, Iterable<Node> list) {
 ///
 /// [defaultCSS] if [currentCSS] and [appendCSS] are [null].
 CssStyleDeclaration defineCSS(
-    CssStyleDeclaration currentCSS, CssStyleDeclaration appendCSS,
+    CssStyleDeclaration? currentCSS, CssStyleDeclaration? appendCSS,
     [dynamic defaultCSS]) {
   if (currentCSS == null) {
     return appendCSS ?? asCssStyleDeclaration(defaultCSS);
   } else if (appendCSS == null) {
-    return currentCSS ?? asCssStyleDeclaration(defaultCSS);
+    return currentCSS;
   } else {
     return CssStyleDeclaration()
-      ..cssText = currentCSS.cssText + ' ; ' + appendCSS.cssText;
+      ..cssText = currentCSS.cssText! + ' ; ' + appendCSS.cssText!;
   }
 }
 
@@ -905,7 +902,6 @@ CssStyleDeclaration asCssStyleDeclaration(dynamic css) {
 
 /// Returns [true] if [CssStyleDeclaration] is empty.
 bool isCssEmpty(CssStyleDeclaration css) {
-  if (css == null) return true;
   var cssText = css.cssText;
   return cssText == null || cssText.trim().isEmpty;
 }
@@ -917,7 +913,7 @@ bool isCssNotEmpty(CssStyleDeclaration css) {
 
 /// Applies [css] to [element] and [extraElements] list if present.
 bool applyCSS(CssStyleDeclaration css, Element element,
-    [List<Element> extraElements]) {
+    [List<Element>? extraElements]) {
   if (!isCssNotEmpty(css)) return false;
 
   var apply = _applyCSS(css, element);
@@ -933,12 +929,9 @@ bool applyCSS(CssStyleDeclaration css, Element element,
 }
 
 bool _applyCSS(CssStyleDeclaration css, Element element) {
-  if (element != null) {
-    var newCss = element.style.cssText + ' ; ' + css.cssText;
-    element.style.cssText = newCss;
-    return true;
-  }
-  return false;
+  var newCss = element.style.cssText! + ' ; ' + css.cssText!;
+  element.style.cssText = newCss;
+  return true;
 }
 
 /// Returns [true] if [element] matches [attributes].
@@ -978,7 +971,7 @@ bool elementMatchesAttribute(
 /// [matchAttributes] Attributes to match in selection.
 List<Element> getElementsWithAttributes(
     String tag, Map<String, dynamic> matchAttributes) {
-  var tags = (document.getElementsByTagName(tag) ?? []).whereType<Element>();
+  var tags = (document.getElementsByTagName(tag)).whereType<Element>();
   return tags
       .where((e) => elementMatchesAttributes(e, matchAttributes))
       .toList();
@@ -986,13 +979,13 @@ List<Element> getElementsWithAttributes(
 
 /// Returns a list of `meta` [Element] with [name].
 List<Element> getMetaTagsWithName(String name) {
-  return getElementsWithAttributes('meta', {'name': name}) ?? [];
+  return getElementsWithAttributes('meta', {'name': name});
 }
 
 /// Returns a list of `meta` contet with [name].
-List<String> getMetaTagsContentWithName(String name) {
+List<String?> getMetaTagsContentWithName(String name) {
   var tags = getMetaTagsWithName(name);
-  if (tags == null || tags.isEmpty) return [];
+  if (tags.isEmpty) return [];
   return tags.map((e) => e.getAttribute('content')).toList();
 }
 
@@ -1001,33 +994,33 @@ List<String> getMetaTagsContentWithName(String name) {
 bool isMobileAppStatusBarTranslucent() {
   var metaTagsContents =
       getMetaTagsContentWithName('apple-mobile-web-app-status-bar-style');
-  if (metaTagsContents == null || metaTagsContents.isEmpty) return false;
-  var metaStatusContent = metaTagsContents[0];
+  if (metaTagsContents.isEmpty) return false;
+  var metaStatusContent = metaTagsContents[0]!;
   return metaStatusContent.contains('translucent');
 }
 
 /// Copies [element] text to Clipboard.
-void copyElementToClipboard(Element element) {
+bool copyElementToClipboard(Element element) {
   var selection = window.getSelection();
-  var range = document.createRange();
+  // Selection not supported or blocked:
+  if (selection == null) return false;
 
+  var range = document.createRange();
   range.selectNodeContents(element);
+
   selection.removeAllRanges();
   selection.addRange(range);
 
-  var selectedText = selection.toString();
-
   document.execCommand('copy');
 
-  if (selectedText != null) {
-    window.getSelection().removeAllRanges();
-  }
+  window.getSelection()?.removeAllRanges();
+  return true;
 }
 
 /// Set all [element] sub div with [className] to centered content.
 void setTreeElementsDivCentered(Element element, String className,
     {bool centerVertically = true, bool centerHorizontally = true}) {
-  if (element == null || isEmptyString(className, trim: true)) return;
+  if (isEmptyString(className, trim: true)) return;
 
   var elements = element.querySelectorAll('div.$className');
 
@@ -1058,12 +1051,6 @@ void setDivCentered(DivElement div,
     {bool centerVertically = true,
     bool centerHorizontally = true,
     bool checkBootstrapClasses = true}) {
-  if (div == null) return;
-
-  centerVertically ??= true;
-  centerHorizontally ??= true;
-  checkBootstrapClasses ??= true;
-
   div.style.display =
       isInlineElement(div, checkBootstrapClasses: checkBootstrapClasses)
           ? 'inline-table'
@@ -1090,7 +1077,7 @@ void setDivCentered(DivElement div,
     var contentDivs = subDiv.querySelectorAll(':scope > div');
 
     for (var contentDiv in contentDivs) {
-      if (!isInlineElement(contentDiv,
+      if (!isInlineElement(contentDiv as DivElement,
           checkBootstrapClasses: checkBootstrapClasses)) {
         contentDiv.style.display = 'inline-block';
       }
@@ -1100,15 +1087,14 @@ void setDivCentered(DivElement div,
 
 /// Returns [true] if [element] `display` property is inline.
 bool isInlineElement(DivElement element, {bool checkBootstrapClasses = true}) {
-  if (element == null) return false;
-
   if (element.style.display.toLowerCase().contains('inline')) return true;
 
-  if (checkBootstrapClasses ?? true) {
+  if (checkBootstrapClasses) {
     return element.classes.contains('d-inline') ||
         element.classes.contains('d-inline-block') ||
         element.classes.contains('d-inline-flex');
   }
+
   return false;
 }
 
@@ -1118,7 +1104,8 @@ Map<String, Future<bool>> _prefetchedHref = {};
 ///
 /// [href] The path to the CSS source file.
 /// [insertIndex] optional index of insertion inside `head` node.
-Future<bool> prefetchHref(String href, {int insertIndex, bool preLoad}) async {
+Future<bool> prefetchHref(String href,
+    {int? insertIndex, bool? preLoad}) async {
   var rel = 'prefetch';
 
   if (preLoad ?? false) {
@@ -1142,7 +1129,7 @@ Future<bool> prefetchHref(String href, {int insertIndex, bool preLoad}) async {
     return true;
   }
 
-  HeadElement head = querySelector('head');
+  var head = querySelector('head') as HeadElement?;
 
   var script = LinkElement()
     ..rel = rel
@@ -1157,10 +1144,10 @@ Future<bool> prefetchHref(String href, {int insertIndex, bool preLoad}) async {
   });
 
   if (insertIndex != null) {
-    insertIndex = Math.min(insertIndex, head.children.length);
+    insertIndex = Math.min(insertIndex, head!.children.length);
     head.children.insert(insertIndex, script);
   } else {
-    head.children.add(script);
+    head!.children.add(script);
   }
 
   var call = completer.future;
@@ -1173,7 +1160,7 @@ Future<bool> prefetchHref(String href, {int insertIndex, bool preLoad}) async {
 ///
 /// Returns [true] if replace was performed.
 bool replaceElement(Node n1, Node n2) {
-  var parent = n1?.parent;
+  var parent = n1.parent;
 
   if (parent != null) {
     var idx = parent.nodes.indexOf(n1);
@@ -1183,6 +1170,7 @@ bool replaceElement(Node n1, Node n2) {
       return true;
     }
   }
+
   return false;
 }
 
@@ -1191,8 +1179,8 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
   DOMTreeReferenceMap(Node root,
       {bool autoPurge = false,
       bool keepPurgedKeys = false,
-      Duration purgedEntriesTimeout,
-      int maxPurgedEntries})
+      Duration? purgedEntriesTimeout,
+      int? maxPurgedEntries})
       : super(root,
             autoPurge: autoPurge,
             keepPurgedKeys: keepPurgedKeys,
@@ -1200,18 +1188,19 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
             maxPurgedEntries: maxPurgedEntries);
 
   @override
-  bool isInTree(Node node) => root.contains(node);
+  bool isInTree(Node? node) => node != null && root.contains(node);
 
   @override
-  Node getParentOf(Node key) => key?.parent;
+  Node? getParentOf(Node? key) => key?.parent;
 
   @override
-  Iterable<Node> getChildrenOf(Node key) => key?.nodes;
+  Iterable<Node> getChildrenOf(Node? key) => key?.nodes ?? [];
 
   @override
-  bool isChildOf(Node parent, Node child, bool deep) {
+  bool isChildOf(Node? parent, Node? child, bool deep) {
     if (parent == null || child == null) return false;
-    if (deep ?? false) {
+
+    if (deep) {
       return !identical(parent, child) && parent.contains(child);
     } else {
       return parent.nodes.contains(child);
@@ -1219,49 +1208,49 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
   }
 }
 
-int get deviceWidth => window.innerWidth;
+int? get deviceWidth => window.innerWidth;
 
-int get deviceHeight => window.innerHeight;
+int? get deviceHeight => window.innerHeight;
 
-bool get isExtraSmallDevice => deviceWidth < 576;
+bool get isExtraSmallDevice => deviceWidth! < 576;
 
 bool get isSmallDevice {
-  var w = deviceWidth;
+  var w = deviceWidth!;
   return w >= 576 && w < 768;
 }
 
 bool get isSmallDeviceOrLower {
-  return deviceWidth < 768;
+  return deviceWidth! < 768;
 }
 
 bool get isSmallDeviceOrHigher {
-  return deviceWidth >= 576;
+  return deviceWidth! >= 576;
 }
 
 bool get isMediumDevice {
-  var w = deviceWidth;
+  var w = deviceWidth!;
   return w >= 768 && w < 992;
 }
 
 bool get isMediumDeviceOrLower {
-  return deviceWidth < 992;
+  return deviceWidth! < 992;
 }
 
 bool get isMediumDeviceOrLHigher {
-  return deviceWidth >= 768;
+  return deviceWidth! >= 768;
 }
 
 bool get isLargeDevice {
-  var w = deviceWidth;
+  var w = deviceWidth!;
   return w >= 992 && w < 1200;
 }
 
 bool get isLargeDeviceOrLower {
-  return deviceWidth < 1200;
+  return deviceWidth! < 1200;
 }
 
 bool get isLargeDeviceOrHigher {
-  return deviceWidth >= 992;
+  return deviceWidth! >= 992;
 }
 
-bool get isExtraLargeDevice => deviceWidth >= 1200;
+bool get isExtraLargeDevice => deviceWidth! >= 1200;

@@ -1,3 +1,12 @@
+## 2.0.0-nullsafety.1
+
+- Dart 2.12.0:
+  - Sound null safety compatibility.
+  - Update CI dart commands.
+  - sdk: '>=2.12.0 <3.0.0'
+- swiss_knife: ^3.0.1
+- collection: ^1.15.0
+
 ## 1.3.20
 
 - swiss_knife: ^2.5.24

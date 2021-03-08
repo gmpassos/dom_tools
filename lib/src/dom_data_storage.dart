@@ -10,9 +10,9 @@ abstract class _SimpleStorage {
 
   Future<List<String>> listKeys(String prefix);
 
-  Future<String> get(String key);
+  Future<String?> get(String key);
 
-  Future<bool> set(String key, String value);
+  Future<bool> set(String key, String? value);
 
   Future<bool> remove(String key);
 
@@ -32,7 +32,7 @@ abstract class _SimpleStorage {
     return Future.value(true);
   }
 
-  Future<StorageValue> getStorageValue(String key) async {
+  Future<StorageValue?> getStorageValue(String key) async {
     var timeStr = await get('$key/time');
     if (timeStr == null) return null;
 
@@ -84,20 +84,20 @@ class _SessionSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  Future<bool> set(String key, String value) {
-    window.sessionStorage[key] = value;
+  Future<bool> set(String key, String? value) {
+    window.sessionStorage[key] = value!;
     return Future.value(true);
   }
 }
 
 class _PersistentSimpleStorage extends _SimpleStorage {
-  _SimpleStorage _storage;
+  _SimpleStorage? _storage;
 
   _PersistentSimpleStorage() {
     _loadStorage();
   }
 
-  Future<_SimpleStorage> _storageLoader;
+  Future<_SimpleStorage>? _storageLoader;
 
   Future<_SimpleStorage> _loadStorage() {
     if (_DBSimpleStorage.isSupported) {
@@ -136,37 +136,37 @@ class _PersistentSimpleStorage extends _SimpleStorage {
     onLoad.add(true);
   }
 
-  Future<_SimpleStorage> _getStorage() {
+  Future<_SimpleStorage>? _getStorage() {
     if (_storage != null) return Future.value(_storage);
     return _storageLoader;
   }
 
   @override
   bool isLoaded() {
-    return _storage != null && _storage.isLoaded();
+    return _storage != null && _storage!.isLoaded();
   }
 
   @override
-  Future<String> get(String key) async {
-    var storage = await _getStorage();
+  Future<String?> get(String key) async {
+    var storage = await _getStorage()!;
     return storage.get(key);
   }
 
   @override
   Future<List<String>> listKeys(String prefix) async {
-    var storage = await _getStorage();
+    var storage = await _getStorage()!;
     return storage.listKeys(prefix);
   }
 
   @override
   Future<bool> remove(String key) async {
-    var storage = await _getStorage();
+    var storage = await _getStorage()!;
     return storage.remove(key);
   }
 
   @override
-  Future<bool> set(String key, String value) async {
-    var storage = await _getStorage();
+  Future<bool> set(String key, String? value) async {
+    var storage = await _getStorage()!;
     return storage.set(key, value);
   }
 }
@@ -204,8 +204,8 @@ class _LocalSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  Future<bool> set(String key, String value) {
-    window.localStorage[key] = value;
+  Future<bool> set(String key, String? value) {
+    window.localStorage[key] = value!;
     return Future.value(true);
   }
 }
@@ -217,18 +217,18 @@ class _DBSimpleStorage extends _SimpleStorage {
     return IdbFactory.supported;
   }
 
-  Future<Database> _open;
+  Future<Database>? _open;
 
-  Database _db;
+  Database? _db;
 
   _DBSimpleStorage() {
     _openVersioned();
   }
 
   void _openVersioned() {
-    _open = window.indexedDB.open(INDEXED_DB_NAME,
+    _open = window.indexedDB!.open(INDEXED_DB_NAME,
         version: 1, onUpgradeNeeded: _initializeDatabase);
-    _open.then(_setDB).catchError(_onOpenVersionedError);
+    _open!.then(_setDB).catchError(_onOpenVersionedError);
   }
 
   bool _loadError = false;
@@ -253,7 +253,7 @@ class _DBSimpleStorage extends _SimpleStorage {
     onLoad.add(true);
   }
 
-  Future<Database> _getDB() {
+  Future<Database>? _getDB() {
     if (_db != null) return Future.value(_db);
     return _open;
   }
@@ -266,19 +266,20 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  Future<String> get(String key) async {
-    var db = await _getDB();
+  Future<String?> get(String key) async {
+    var db = await _getDB()!;
     var transaction = db.transaction(OBJ_STORE, 'readonly');
     var objectStore = transaction.objectStore(OBJ_STORE);
-    Map obj = await objectStore.getObject(key);
+    var obj =
+        await (objectStore.getObject(key) as FutureOr<Map<dynamic, dynamic>?>);
     if (obj == null) return null;
-    String value = obj['v'];
+    String? value = obj['v'];
     return value;
   }
 
   @override
   Future<List<String>> listKeys(String prefix) async {
-    var db = await _getDB();
+    var db = await _getDB()!;
     var transaction = db.transaction(OBJ_STORE, 'readonly');
     var objectStore = transaction.objectStore(OBJ_STORE);
 
@@ -287,7 +288,7 @@ class _DBSimpleStorage extends _SimpleStorage {
 
     var cursors = objectStore.openCursor(autoAdvance: true).asBroadcastStream();
     cursors.listen((cursor) {
-      String k = cursor.key;
+      var k = cursor.key as String;
       if (k.startsWith(prefix)) {
         keys.add(k);
       }
@@ -300,7 +301,7 @@ class _DBSimpleStorage extends _SimpleStorage {
 
   @override
   Future<bool> remove(String key) async {
-    var db = await _getDB();
+    var db = await _getDB()!;
     var transaction = db.transaction(OBJ_STORE, 'readwrite');
     var objectStore = transaction.objectStore(OBJ_STORE);
     return objectStore.delete(key).then((_) {
@@ -309,13 +310,13 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  Future<bool> set(String key, String value) async {
-    var db = await _getDB();
+  Future<bool> set(String key, String? value) async {
+    var db = await _getDB()!;
     var transaction = db.transaction(OBJ_STORE, 'readwrite');
     var objectStore = transaction.objectStore(OBJ_STORE);
 
     // ignore: omit_local_variable_types
-    Map<String, String> obj = {'k': key, 'v': value};
+    Map<String, String?> obj = {'k': key, 'v': value};
 
     return objectStore.put(obj).then((dbKey) {
       return dbKey != null;
@@ -352,7 +353,7 @@ class DataStorage {
   /// Type of this storage.
   final DataStorageType storageType;
 
-  _SimpleStorage _simpleStorage;
+  late _SimpleStorage _simpleStorage;
 
   DataStorage(this.id, [this.storageType = DataStorageType.SESSION]) {
     if (!isValidKeyName(id)) {
@@ -384,7 +385,7 @@ class DataStorage {
   }
 
   /// Unregister a [State] by [name].
-  State unregisterState(String name) {
+  State? unregisterState(String name) {
     var prev = _states.remove(name);
     return prev;
   }
@@ -397,7 +398,7 @@ class DataStorage {
   }
 
   /// Gets a stored [State] with [name].
-  State getState(String name) {
+  State? getState(String name) {
     return _states[name];
   }
 
@@ -406,7 +407,7 @@ class DataStorage {
     return _states[name] != null;
   }
 
-  Future<StorageValue> _getStorageValue(String fullKey) async {
+  Future<StorageValue?> _getStorageValue(String fullKey) async {
     try {
       var storageValue = await _simpleStorage.getStorageValue(fullKey);
       return storageValue;
@@ -452,7 +453,7 @@ class StorageValue extends JSONObject {
   final int storeTime;
 
   /// The stored value.
-  String value;
+  String? value;
 
   @override
   List<String> getObjectFields() {

@@ -9,17 +9,17 @@ import 'package:swiss_knife/swiss_knife.dart';
 import 'dom_tools_base.dart';
 
 class _ElementTrack<T> {
-  final TrackElementValue/*!*/ _trackElementValue;
+  final TrackElementValue _trackElementValue;
 
-  final Element/*!*/ _element;
+  final Element _element;
 
-  final ElementValueGetter<T>/*!*/ _elementValueGetter;
+  final ElementValueGetter<T> _elementValueGetter;
 
-  final bool/*!*/ _periodicTracking;
+  final bool _periodicTracking;
 
   final OnElementTrackValueEvent<T> _onTrackValueEvent;
 
-  T _lastCheck_value;
+  T? _lastCheck_value;
 
   _ElementTrack(
       this._trackElementValue,
@@ -28,7 +28,7 @@ class _ElementTrack<T> {
       this._periodicTracking,
       this._onTrackValueEvent);
 
-  T _initialize() {
+  T? _initialize() {
     _lastCheck_value = _elementValueGetter(_element);
 
     _notifyValue(_lastCheck_value);
@@ -46,7 +46,7 @@ class _ElementTrack<T> {
     _lastCheck_value = value;
   }
 
-  void _notifyValue(T value) {
+  void _notifyValue(T? value) {
     var keepTracking;
     try {
       keepTracking = _onTrackValueEvent(_element, value);
@@ -70,13 +70,13 @@ class _ElementTrack<T> {
   }
 }
 
-typedef OnElementTrackValueEvent<T> = bool Function(Element/*!*/ element, T/*?*/ value);
+typedef OnElementTrackValueEvent<T> = bool Function(Element element, T? value);
 
 /// Tracks a DOM [Element] to identify when a value changes.
 class TrackElementValue {
-  /*late final*/ Duration/*!*/ _checkInterval;
+  late final Duration _checkInterval;
 
-  TrackElementValue([Duration checkInterval]) {
+  TrackElementValue([Duration? checkInterval]) {
     _checkInterval = checkInterval ?? Duration(milliseconds: 250);
   }
 
@@ -88,9 +88,9 @@ class TrackElementValue {
   /// [elementValueGetter] The value getter.
   /// [onTrackValueEvent] Callback to call when value changes.
   /// [periodicTracking] If [true] this tracking will continue after first event.
-  T/*?*/ track<T>(Element/*?*/ element, ElementValueGetter<T>/*?*/ elementValueGetter,
-      OnElementTrackValueEvent<T>/*?*/ onTrackValueEvent,
-      [bool/*!*/ periodicTracking = false]) {
+  T? track<T>(Element? element, ElementValueGetter<T>? elementValueGetter,
+      OnElementTrackValueEvent<T>? onTrackValueEvent,
+      [bool periodicTracking = false]) {
     if (element == null ||
         elementValueGetter == null ||
         onTrackValueEvent == null) return null;
@@ -109,7 +109,7 @@ class TrackElementValue {
   }
 
   /// Untracks [element].
-  T untrack<T>(Element element) {
+  T? untrack<T>(Element element) {
     var removed = _elements.remove(element);
 
     _elementsProperties.remove(element);
@@ -133,7 +133,7 @@ class TrackElementValue {
     }
   }
 
-  Timer _timer;
+  Timer? _timer;
 
   void _scheduleCheck() {
     _timer ??= Timer.periodic(_checkInterval, _checkFromTimer);
@@ -141,7 +141,7 @@ class TrackElementValue {
 
   void _cancelTimer() {
     if (_timer != null) {
-      _timer.cancel();
+      _timer!.cancel();
       _timer = null;
     }
   }
@@ -156,7 +156,7 @@ class TrackElementValue {
 
   final Map<Element, Map<String, dynamic>> _elementsProperties = {};
 
-  Object/*?*/ setProperty(Element element, String key, Object/*?*/ value) {
+  Object? setProperty(Element element, String key, Object? value) {
     var elemProps = _elementsProperties[element];
     if (elemProps == null) {
       _elementsProperties[element] = elemProps = {};
@@ -166,7 +166,7 @@ class TrackElementValue {
     return prev;
   }
 
-  Object/*?*/ getProperty(Element element, String key) {
+  Object? getProperty(Element element, String key) {
     var elemProps = _elementsProperties[element];
     return elemProps != null ? elemProps[key] : null;
   }
@@ -176,9 +176,9 @@ typedef OnElementEvent = void Function(Element element);
 
 /// Tracks a DOM [Element] to identify when its visible in viewport.
 class TrackElementInViewport {
-  TrackElementValue _trackElementValue;
+  late TrackElementValue _trackElementValue;
 
-  TrackElementInViewport([Duration checkInterval]) {
+  TrackElementInViewport([Duration? checkInterval]) {
     _trackElementValue = TrackElementValue(checkInterval);
   }
 
@@ -192,17 +192,16 @@ class TrackElementInViewport {
   /// [onLeaveViewport] Callback to call when element leaves viewport.
   /// [periodicTracking] If [true] this tracking will continue after first event.
   bool track(Element element,
-      {OnElementEvent onEnterViewport,
-      OnElementEvent onLeaveViewport,
-      bool/*!*/ periodicTracking = false}) {
-    if (element == null ||
-        (onEnterViewport == null && onLeaveViewport == null)) {
-      return null;
+      {OnElementEvent? onEnterViewport,
+      OnElementEvent? onLeaveViewport,
+      bool periodicTracking = false}) {
+    if ((onEnterViewport == null && onLeaveViewport == null)) {
+      return false;
     }
 
     var initValue = _trackElementValue
         .track<bool>(element, (elem) => isInViewport(elem), (elem, show) {
-      if (show) {
+      if (show!) {
         _trackElementValue.setProperty(element, 'viewport', true);
         if (onEnterViewport != null) onEnterViewport(element);
         return periodicTracking || onLeaveViewport != null;
@@ -210,7 +209,7 @@ class TrackElementInViewport {
         var alreadyViewed =
             _trackElementValue.getProperty(element, 'viewport') ?? false;
         if (onLeaveViewport != null) onLeaveViewport(element);
-        return !alreadyViewed || periodicTracking;
+        return !(alreadyViewed as bool) || periodicTracking;
       }
     });
 
@@ -225,9 +224,9 @@ class TrackElementInViewport {
 
 /// Tracks a DOM [Element] to identify when its size changes.
 class TrackElementResize {
-  TrackElementValue _trackElementValueInstance;
+  TrackElementValue? _trackElementValueInstance;
 
-  TrackElementValue get _trackElementValue {
+  TrackElementValue? get _trackElementValue {
     if (_trackElementValueInstance == null) {
       _trackElementValueInstance = TrackElementValue();
       window.onResize.listen((e) => _onResizeWindow());
@@ -236,11 +235,11 @@ class TrackElementResize {
     return _trackElementValueInstance;
   }
 
-  ResizeObserver _resizeObserverInstance;
+  ResizeObserver? _resizeObserverInstance;
 
   bool _resizeObserverInstanceError = false;
 
-  ResizeObserver get _resizeObserver {
+  ResizeObserver? get _resizeObserver {
     if (_resizeObserverInstanceError) return null;
 
     if (_resizeObserverInstance == null) {

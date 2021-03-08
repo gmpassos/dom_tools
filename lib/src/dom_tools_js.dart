@@ -15,7 +15,7 @@ Future<bool> addJavaScriptCode(String scriptCode) async {
   Future<bool> future;
 
   try {
-    var head = querySelector('head')/*!*/;
+    var head = querySelector('head')!;
 
     var script = ScriptElement()
       ..type = 'text/javascript'
@@ -42,8 +42,8 @@ Map<String, Future<bool>> _addedJavaScriptsSources = {};
 /// [addToBody] If [true] adds into `body` node instead of `head` node.
 /// [async] If true, the script will be executed asynchronously as soon as it is available,
 /// and not when the page has finished parsing.
-Future<bool> addJavaScriptSource(String/*!*/ scriptSource,
-    {bool/*!*/ addToBody = false, bool/*!*/ async = false}) async {
+Future<bool> addJavaScriptSource(String scriptSource,
+    {bool addToBody = false, bool async = false}) async {
   var scriptInDom = getScriptElementBySRC(scriptSource);
 
   var prevCall = _addedJavaScriptsSources[scriptSource];
@@ -63,15 +63,16 @@ Future<bool> addJavaScriptSource(String/*!*/ scriptSource,
 
   print('ADDING <SCRIPT>: $scriptSource > into body: $addToBody');
 
-  Element/*!*/ parent;
+  Element parent;
   if (addToBody) {
-    parent = querySelector('body');
+    parent = querySelector('body')!;
   } else {
-    parent = querySelector('head');
+    parent = querySelector('head')!;
   }
 
   var script = ScriptElement()
     ..type = 'text/javascript'
+    // ignore: unsafe_html
     ..src = scriptSource;
 
   if (async) {
@@ -100,9 +101,7 @@ Future<bool> addJavaScriptSource(String/*!*/ scriptSource,
 /// [parameters] Parameters names of the function.
 /// [body] Content of the function.
 Future<bool> addJSFunction(String name, List<String> parameters, String body) {
-  if (name == null || name.isEmpty) throw ArgumentError('Empty name');
-  parameters ??= [];
-  body ??= '';
+  if (name.isEmpty) throw ArgumentError('Empty name');
 
   var args = parameters.join(' , ');
   var code = '$name = function( $args ) {\n$body\n}';
@@ -120,32 +119,32 @@ typedef MappedFunction = dynamic Function(dynamic o);
 
 /// Maps a JavaScript function to a Dart function.
 ///
-/// [jsFunctionName] Name of the functin.
+/// [jsFunctionName] Name of the function.
 /// [f] Dart function to map.
 void mapJSFunction(String jsFunctionName, MappedFunction f) {
   context[jsFunctionName] = f;
 }
 
 /// Calls JavaScript a [method] in object [o] with [args].
-dynamic callJSObjectMethod(Object/*!*/ o, String/*!*/ method, [List args]) {
-  return callMethod(o, method, args);
+dynamic callJSObjectMethod(Object o, String method, [List? args]) {
+  return callMethod(o, method, args ?? []);
 }
 
 /// Calls JavaScript a function [method] with [args].
-dynamic callJSFunction(String/*!*/ method, [List args]) {
+dynamic callJSFunction(String method, [List? args]) {
   return context.callMethod(method, args);
 }
 
 /// Returns the keys of [JsObject] [o].
-List<String> jsObjectKeys(JsObject/*!*/ o) {
+List<String> jsObjectKeys(JsObject o) {
   var keys = context['Object'].callMethod('keys', [o]);
-  return jsArrayToList(keys).map((e) => '$e').toList();
+  return jsArrayToList(keys)!.map((e) => '$e').toList();
 }
 
 /// Converts [o] to Dart primitives or collections.
 ///
 /// [o] Can be any primitive value, a [JsArray] or a [JsObject]).
-Object/*?*/ jsToDart(Object/*?*/ o) {
+Object? jsToDart(Object? o) {
   if (o == null) return null;
 
   if (o is String) return o;
@@ -165,18 +164,18 @@ Object/*?*/ jsToDart(Object/*?*/ o) {
 
 /// Converts a [JsArray] [a] to a [List].
 /// Also converts values using [jsToDart].
-List jsArrayToList(JsArray a) {
+List? jsArrayToList(JsArray? a) {
   if (a == null) return null;
   return a.map(jsToDart).toList();
 }
 
 /// Converts a [JsObject] [o] to a [Map].
 /// Also converts keys and values using [jsToDart].
-Map/*?*/ jsObjectToMap(JsObject/*?*/ o) {
+Map? jsObjectToMap(JsObject? o) {
   if (o == null) return null;
 
   var keys = jsObjectKeys(o);
-  if (keys == null || keys.isEmpty) return {};
+  if (keys.isEmpty) return {};
 
   return Map.fromEntries(keys.map((k) {
     var v = o[k];
