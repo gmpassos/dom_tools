@@ -35,8 +35,8 @@ jobs:
         run: su -c 'cd $(< /tmp/test-dir.txt) && dart pub get' tester
       - name: dart format
         run: su -c 'cd $(< /tmp/test-dir.txt) && dart format -o none --set-exit-if-changed .' tester
-      - name: dart analyze
-        run: su -c 'cd $(< /tmp/test-dir.txt) && dart analyze --fatal-infos --fatal-warnings .' tester
+      #- name: dart analyze
+      #  run: su -c 'cd $(< /tmp/test-dir.txt) && dart analyze --fatal-infos --fatal-warnings .' tester
       - name: Run Browser tests (Firefox)
         run: su -c 'DISPLAY=:0 cd $(< /tmp/test-dir.txt) && dart test -p firefox' tester
       - name: Run VM tests
