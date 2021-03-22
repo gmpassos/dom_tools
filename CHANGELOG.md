@@ -1,3 +1,11 @@
+## 2.0.1
+
+- Sound null safety compatibility.
+- swiss_knife: ^3.0.6
+- json_object_mapper: ^2.0.1
+- enum_to_string: ^2.0.1
+- html_unescape: ^2.0.0
+
 ## 2.0.0-nullsafety.1
 
 - Dart 2.12.0:

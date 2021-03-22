@@ -680,9 +680,11 @@ Future<void>? _animateCSSSequence(List<CSSAnimationConfig> animationsList) {
 
   var playIdx = 0;
   for (; playIdx < animationsList.length; ++playIdx) {
-    var play = animationsList[0].play();
+    var play = animationsList[playIdx].play();
     if (play != null) {
       futures.add(play);
+      ++playIdx;
+      break;
     }
   }
 
