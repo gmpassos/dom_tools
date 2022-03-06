@@ -19,7 +19,7 @@ class _ElementTrack<T> {
 
   final OnElementTrackValueEvent<T> _onTrackValueEvent;
 
-  T? _lastCheck_value;
+  T? _lastCheckValue;
 
   _ElementTrack(
       this._trackElementValue,
@@ -29,25 +29,25 @@ class _ElementTrack<T> {
       this._onTrackValueEvent);
 
   T? _initialize() {
-    _lastCheck_value = _elementValueGetter(_element);
+    _lastCheckValue = _elementValueGetter(_element);
 
-    _notifyValue(_lastCheck_value);
+    _notifyValue(_lastCheckValue);
 
-    return _lastCheck_value;
+    return _lastCheckValue;
   }
 
   void check() {
     var value = _elementValueGetter(_element);
 
-    if (!isEquals(value, _lastCheck_value)) {
+    if (!isEquals(value, _lastCheckValue)) {
       _notifyValue(value);
     }
 
-    _lastCheck_value = value;
+    _lastCheckValue = value;
   }
 
   void _notifyValue(T? value) {
-    var keepTracking;
+    bool keepTracking;
     try {
       keepTracking = _onTrackValueEvent(_element, value);
     } catch (e, s) {
@@ -56,13 +56,7 @@ class _ElementTrack<T> {
       keepTracking = false;
     }
 
-    var untrack;
-
-    if (keepTracking != null) {
-      untrack = !keepTracking;
-    } else {
-      untrack = !_periodicTracking;
-    }
+    var untrack = !keepTracking;
 
     if (untrack) {
       _trackElementValue.untrack(_element);
@@ -90,7 +84,7 @@ class TrackElementValue {
   /// [periodicTracking] If [true] this tracking will continue after first event.
   T? track<T>(Element? element, ElementValueGetter<T>? elementValueGetter,
       OnElementTrackValueEvent<T>? onTrackValueEvent,
-      [bool periodicTracking = false]) {
+      {bool periodicTracking = false}) {
     if (element == null ||
         elementValueGetter == null ||
         onTrackValueEvent == null) return null;
@@ -118,18 +112,21 @@ class TrackElementValue {
       _cancelTimer();
     }
 
-    return removed != null ? removed._lastCheck_value : null;
+    return removed?._lastCheckValue;
   }
 
   /// Checks tracked elements for values changes.
   void checkElements() {
     if (_elements.isEmpty) return;
 
-    // ignore: omit_local_variable_types
-    List<_ElementTrack> values = List.from(_elements.values);
+    var values = _elements.values.toList(growable: false);
 
-    for (var elem in values) {
-      elem.check();
+    for (var e in values) {
+      e.check();
+
+      if (!e._periodicTracking) {
+        _elements.remove(e._element);
+      }
     }
   }
 
@@ -265,14 +262,14 @@ class TrackElementResize {
     var resizeObserver = _resizeObserver;
 
     if (resizeObserver != null) {
-      _track_ResizeObserver(resizeObserver, element, onResize);
+      _trackResizeObserver(resizeObserver, element, onResize);
       return;
     }
 
     var trackElementValue = _trackElementValue;
 
     if (trackElementValue != null) {
-      _track_elementValue(trackElementValue, element, onResize);
+      _trackResizeFallbackByElementValue(trackElementValue, element, onResize);
       return;
     }
 
@@ -284,7 +281,7 @@ class TrackElementResize {
     var resizeObserver = _resizeObserver;
 
     if (resizeObserver != null) {
-      _untrack_ResizeObserver(resizeObserver, element);
+      _untrackResizeObserver(resizeObserver, element);
       return;
     }
 
@@ -300,13 +297,13 @@ class TrackElementResize {
 
   final Map<Element, OnElementEvent> _resizeObserverListeners = {};
 
-  void _track_ResizeObserver(
+  void _trackResizeObserver(
       ResizeObserver resizeObserver, Element element, OnElementEvent onResize) {
     _resizeObserverListeners[element] = onResize;
     resizeObserver.observe(element);
   }
 
-  void _untrack_ResizeObserver(ResizeObserver resizeObserver, Element element) {
+  void _untrackResizeObserver(ResizeObserver resizeObserver, Element element) {
     resizeObserver.unobserve(element);
     _resizeObserverListeners.remove(element);
   }
@@ -348,12 +345,12 @@ class TrackElementResize {
     return targets;
   }
 
-  void _track_elementValue(TrackElementValue trackElementValue, Element element,
-      OnElementEvent onResize) {
+  void _trackResizeFallbackByElementValue(TrackElementValue trackElementValue,
+      Element element, OnElementEvent onResize) {
     trackElementValue.track<Object>(element, (e) => e.offset, (e, v) {
       onResize(e);
       return true;
-    }, true);
+    }, periodicTracking: true);
   }
 
   void _onResizeWindow() {

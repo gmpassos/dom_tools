@@ -1,3 +1,13 @@
+## 2.1.0
+
+- Dart `2.16`:
+  - Organize imports.
+  - Fix new lints (breaks some enum names).
+- sdk: '>=2.13.0 <3.0.0'
+- swiss_knife: ^3.0.8
+- markdown: ^4.0.1
+- lints: ^1.0.1
+
 ## 2.0.1
 
 - Sound null safety compatibility.

@@ -6,7 +6,7 @@ import 'package:dom_tools/dom_tools.dart';
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
-final RegExp _PATTERN_CSS_LENGTH_UNIT =
+final RegExp _patternCssLengthUnit =
     RegExp(r'(px|%|vw|vh|vmin|vmax|em|ex|ch|rem|cm|mm|in|pc|pt)$');
 
 /// Parses a CSS length, using optional [unit].
@@ -31,7 +31,7 @@ num? parseCSSLength(String cssValue,
       return parseNum(cssValue, def);
     }
   } else {
-    var match = _PATTERN_CSS_LENGTH_UNIT.firstMatch(cssValue);
+    var match = _patternCssLengthUnit.firstMatch(cssValue);
     if (match != null) {
       var unit = match.group(1)!;
       var s = cssValue.substring(0, cssValue.length - unit.length).trim();
@@ -280,7 +280,6 @@ void loadCSS(String cssClassPrefix, Map<String, CSSValueBase>? css) {
   var id = '__dom_tools__dynamic_css__$cssClassPrefix';
 
   var styleElement = StyleElement()..id = id;
-  ;
 
   var prev = document.head!.querySelector('#$id');
   if (prev != null) {
@@ -549,8 +548,9 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
       Map<Element, String> prevTransitions, AnimationCallback? callback) async {
     var durationMs = duration.inMilliseconds;
 
-    _elements.forEach(
-        (e) => e.style.transition = 'all ${durationMs}ms $timingFunction');
+    for (var e in _elements) {
+      e.style.transition = 'all ${durationMs}ms $timingFunction';
+    }
 
     var setValues = <Element, Map<String, String>>{};
 
@@ -637,18 +637,15 @@ Future<void>? animateCSSSequence(Iterable<CSSAnimationConfig> animationsConfig,
 
   if (initialDelay != null && initialDelay.inMilliseconds > 0) {
     return Future.delayed(initialDelay, () {
-      return _animateCSSSequence_repeat(
-          animationsList, repeat!, repeatInfinity);
+      return _animateCSSSequenceRepeat(animationsList, repeat!, repeatInfinity);
     });
   } else {
-    return _animateCSSSequence_repeat(animationsList, repeat, repeatInfinity);
+    return _animateCSSSequenceRepeat(animationsList, repeat, repeatInfinity);
   }
 }
 
-Future<void>? _animateCSSSequence_repeat(
-    List<CSSAnimationConfig> animationsList,
-    int repeat,
-    bool? repeatInfinity) async {
+Future<void>? _animateCSSSequenceRepeat(List<CSSAnimationConfig> animationsList,
+    int repeat, bool? repeatInfinity) async {
   var future = _animateCSSSequence(animationsList);
 
   while (repeat > 0 || repeatInfinity!) {
@@ -659,7 +656,7 @@ Future<void>? _animateCSSSequence_repeat(
       ListenerWrapper(document.onVisibilityChange, (dynamic event) {
         print(
             'ANIMATION_SEQUENCE: PAGE SHOW! continue sequence: repeat $repeat ; repeatInfinity: $repeatInfinity');
-        _animateCSSSequence_repeat(animationsList, repeat - 1, repeatInfinity);
+        _animateCSSSequenceRepeat(animationsList, repeat - 1, repeatInfinity);
       }, oneShot: true)
           .listen();
       break;
@@ -850,7 +847,7 @@ void removeElementBackgroundBlur(Element element, [int? blurSize]) {
   }
 }
 
-const int CSS_MAX_Z_INDEX = 2147483647;
+const int cssMaxZIndex = 2147483647;
 
 /// Returns the [element] `z-index` or [element.parent] `z-index` recursively.
 String? getElementZIndex(Element? element, [String? def]) {
@@ -982,7 +979,7 @@ List<String> getAllOutOfViewportMediaCssRuleAsClassRule(
 /// Returns all [CssMediaRule] not applied for [viewportWidth] and [viewportHeight].
 List<CssMediaRule> getAllOutOfViewportMediaCssRule(
     int viewportWidth, viewportHeight) {
-  var rules = getAllMediaCssRule('(?:min|max)-(?:width|height):\s*.*?');
+  var rules = getAllMediaCssRule(r'(?:min|max)-(?:width|height):\s*.*?');
 
   var viewportRules = <CssMediaRule>[];
 
@@ -1027,7 +1024,7 @@ List<CssMediaRule> getAllOutOfViewportMediaCssRule(
 /// Returns all [CssMediaRule] applied for [viewportWidth] [viewportHeight].
 List<CssMediaRule> getAllViewportMediaCssRule(
     int viewportWidth, viewportHeight) {
-  var rules = getAllMediaCssRule('(?:min|max)-(?:width|height):\s*.*?');
+  var rules = getAllMediaCssRule(r'(?:min|max)-(?:width|height):\s*.*?');
 
   var viewportRules = <CssMediaRule>[];
 
@@ -1121,15 +1118,15 @@ List<CssRule> getAllCssRuleBySelector(
   if (targetSelector is String) {
     var s = targetSelector.trim().toLowerCase();
     if (s.isEmpty) return [];
-    return _getAllCssRuleBySelector_String(s, sheet);
+    return _getAllCssRuleBySelectorString(s, sheet);
   } else if (targetSelector is RegExp) {
-    return _getAllCssRuleBySelector_RegExp(targetSelector, sheet);
+    return _getAllCssRuleBySelectorRegExp(targetSelector, sheet);
   } else {
     throw StateError('Invalid targetSelector: $targetSelector');
   }
 }
 
-List<CssRule> _getAllCssRuleBySelector_String(
+List<CssRule> _getAllCssRuleBySelectorString(
     String targetSelector, CssStyleSheet sheet) {
   var rules = <CssRule>[];
 
@@ -1146,7 +1143,7 @@ List<CssRule> _getAllCssRuleBySelector_String(
   return rules;
 }
 
-List<CssRule> _getAllCssRuleBySelector_RegExp(
+List<CssRule> _getAllCssRuleBySelectorRegExp(
     RegExp targetSelector, CssStyleSheet sheet) {
   var rules = <CssRule>[];
 

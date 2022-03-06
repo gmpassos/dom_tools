@@ -73,15 +73,15 @@ class ImagePerspectiveFilter {
   late double _dy2;
   double? _dx3;
   double? _dy3;
-  late double _A;
-  late double _B;
-  late double _C;
-  late double _D;
-  late double _E;
-  late double _F;
-  late double _G;
-  late double _H;
-  late double _I;
+  late double _a;
+  late double _b;
+  late double _c;
+  late double _d;
+  late double _e;
+  late double _f;
+  late double _g;
+  late double _h;
+  late double _i;
 
   ImagePerspectiveFilter(this.image, this.width, this.height);
 
@@ -164,15 +164,15 @@ class ImagePerspectiveFilter {
       a32 = y0;
     }
 
-    _A = a22 - a32 * a23;
-    _B = a31 * a23 - a21;
-    _C = a21 * a32 - a31 * a22;
-    _D = a32 * a13 - a12;
-    _E = a11 - a31 * a13;
-    _F = a31 * a12 - a11 * a32;
-    _G = a12 * a23 - a22 * a13;
-    _H = a21 * a13 - a11 * a23;
-    _I = a11 * a22 - a21 * a12;
+    _a = a22 - a32 * a23;
+    _b = a31 * a23 - a21;
+    _c = a21 * a32 - a31 * a22;
+    _d = a32 * a13 - a12;
+    _e = a11 - a31 * a13;
+    _f = a31 * a12 - a11 * a32;
+    _g = a12 * a23 - a22 * a13;
+    _h = a21 * a13 - a11 * a23;
+    _i = a11 * a22 - a21 * a12;
 
     _updateSpaces();
   }
@@ -198,14 +198,14 @@ class ImagePerspectiveFilter {
 
   void _transformInverse(_Rect originalSpace, int x, int y, Float32List out) {
     out[0] =
-        (originalSpace.width * (_A * x + _B * y + _C)) / (_G * x + _H * y + _I);
-    out[1] = (originalSpace.height * (_D * x + _E * y + _F)) /
-        (_G * x + _H * y + _I);
+        (originalSpace.width * (_a * x + _b * y + _c)) / (_g * x + _h * y + _i);
+    out[1] = (originalSpace.height * (_d * x + _e * y + _f)) /
+        (_g * x + _h * y + _i);
   }
 
   void _getPixel(Uint8ClampedList pixels, int x, int y, int width, int height,
       Uint8ClampedList rgba) {
-    _getPixel_edgeBlack(pixels, x, y, width, height, rgba);
+    _getPixelEdgeBlack(pixels, x, y, width, height, rgba);
   }
 
   void _getPixelRGBA(Uint8ClampedList pixels, int idx, Uint8ClampedList rgba) {
@@ -215,7 +215,7 @@ class ImagePerspectiveFilter {
     rgba[3] = pixels[idx + 3];
   }
 
-  void _getPixel_edgeBlack(Uint8ClampedList pixels, int x, int y, int width,
+  void _getPixelEdgeBlack(Uint8ClampedList pixels, int x, int y, int width,
       int height, Uint8ClampedList rgba) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
       rgba[0] = 0;

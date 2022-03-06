@@ -1,9 +1,9 @@
 import 'dart:html';
 
-import 'package:dom_tools/dom_tools.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
+import 'dom_tools_paint.dart';
 
 /// Shows a text dialog.
 ///

@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:typed_data';
 
-import 'package:dom_tools/dom_tools.dart';
 import 'package:markdown/markdown.dart' as mk;
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
 import 'dom_tools_css.dart';
+import 'dom_tools_js.dart';
 
-const CODE_THEME_0 = {
+const codeTheme0 = {
   'comment': TextStyle(color: StyleColor(0xffd4d0ab)),
   'quote': TextStyle(color: StyleColor(0xffd4d0ab)),
   'variable': TextStyle(color: StyleColor(0xffffa07a)),
@@ -43,7 +43,7 @@ const CODE_THEME_0 = {
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
-const CODE_THEME_1 = {
+const codeTheme1 = {
   'root': TextStyle(
       color: StyleColor(0xff000000), backgroundColor: StyleColor(0xffffffff)),
   'subst':
@@ -100,7 +100,7 @@ const CODE_THEME_1 = {
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
-const CODE_THEME_2 = {
+const codeTheme2 = {
   'comment': TextStyle(color: StyleColor(0xff7e7887)),
   'quote': TextStyle(color: StyleColor(0xff7e7887)),
   'variable': TextStyle(color: StyleColor(0xffbe4678)),
@@ -136,8 +136,8 @@ const CODE_THEME_2 = {
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
-final CSSThemeSet CODE_THEME =
-    CSSThemeSet('hljs-', [CODE_THEME_0, CODE_THEME_1, CODE_THEME_2], 2);
+final CSSThemeSet codeTheme =
+    CSSThemeSet('hljs-', [codeTheme0, codeTheme1, codeTheme2], 2);
 
 /// Normalizes a indent, removing the common/global indent of the code.
 ///

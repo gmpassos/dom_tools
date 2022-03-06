@@ -211,7 +211,7 @@ class _LocalSimpleStorage extends _SimpleStorage {
 }
 
 class _DBSimpleStorage extends _SimpleStorage {
-  static final String INDEXED_DB_NAME = 'dom_tools__simple_storage';
+  static const String indexedDbName = 'dom_tools__simple_storage';
 
   static bool get isSupported {
     return IdbFactory.supported;
@@ -226,8 +226,8 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   void _openVersioned() {
-    _open = window.indexedDB!.open(INDEXED_DB_NAME,
-        version: 1, onUpgradeNeeded: _initializeDatabase);
+    _open = window.indexedDB!
+        .open(indexedDbName, version: 1, onUpgradeNeeded: _initializeDatabase);
     _open!.then(_setDB).catchError(_onOpenVersionedError);
   }
 
@@ -258,18 +258,18 @@ class _DBSimpleStorage extends _SimpleStorage {
     return _open;
   }
 
-  static final String OBJ_STORE = 'objs';
+  static const String objStore = 'objs';
 
   void _initializeDatabase(VersionChangeEvent e) {
     Database db = e.target.result;
-    db.createObjectStore(OBJ_STORE, keyPath: 'k', autoIncrement: false);
+    db.createObjectStore(objStore, keyPath: 'k', autoIncrement: false);
   }
 
   @override
   Future<String?> get(String key) async {
     var db = await _getDB()!;
-    var transaction = db.transaction(OBJ_STORE, 'readonly');
-    var objectStore = transaction.objectStore(OBJ_STORE);
+    var transaction = db.transaction(objStore, 'readonly');
+    var objectStore = transaction.objectStore(objStore);
     var obj =
         await (objectStore.getObject(key) as FutureOr<Map<dynamic, dynamic>?>);
     if (obj == null) return null;
@@ -280,8 +280,8 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<List<String>> listKeys(String prefix) async {
     var db = await _getDB()!;
-    var transaction = db.transaction(OBJ_STORE, 'readonly');
-    var objectStore = transaction.objectStore(OBJ_STORE);
+    var transaction = db.transaction(objStore, 'readonly');
+    var objectStore = transaction.objectStore(objStore);
 
     // ignore: omit_local_variable_types
     List<String> keys = [];
@@ -302,8 +302,8 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<bool> remove(String key) async {
     var db = await _getDB()!;
-    var transaction = db.transaction(OBJ_STORE, 'readwrite');
-    var objectStore = transaction.objectStore(OBJ_STORE);
+    var transaction = db.transaction(objStore, 'readwrite');
+    var objectStore = transaction.objectStore(objStore);
     return objectStore.delete(key).then((_) {
       return true;
     });
@@ -312,8 +312,8 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<bool> set(String key, String? value) async {
     var db = await _getDB()!;
-    var transaction = db.transaction(OBJ_STORE, 'readwrite');
-    var objectStore = transaction.objectStore(OBJ_STORE);
+    var transaction = db.transaction(objStore, 'readwrite');
+    var objectStore = transaction.objectStore(objStore);
 
     // ignore: omit_local_variable_types
     Map<String, String?> obj = {'k': key, 'v': value};
@@ -327,10 +327,10 @@ class _DBSimpleStorage extends _SimpleStorage {
 /// Type of [DataStorage].
 enum DataStorageType {
   /// Data is persistent between sessions.
-  PERSISTENT,
+  persistent,
 
   /// Data is available ony in the current browser session.
-  SESSION
+  session
 }
 
 /// Represents a persistent storage in the browser.
@@ -355,12 +355,12 @@ class DataStorage {
 
   late _SimpleStorage _simpleStorage;
 
-  DataStorage(this.id, [this.storageType = DataStorageType.SESSION]) {
+  DataStorage(this.id, [this.storageType = DataStorageType.session]) {
     if (!isValidKeyName(id)) {
       throw ArgumentError('Invalid DataStorage id: $id');
     }
 
-    _simpleStorage = storageType == DataStorageType.PERSISTENT
+    _simpleStorage = storageType == DataStorageType.persistent
         ? _persistentStorage
         : _sessionStorage;
   }
@@ -472,9 +472,9 @@ class StorageValue extends JSONObject {
 
 /// State operation.
 enum StateOperation {
-  LOAD,
-  SET,
-  ALL,
+  load,
+  set,
+  all,
 }
 
 typedef StateEventListener = void Function(
@@ -524,7 +524,7 @@ class State {
   State fireLoadedKeysEvents() {
     for (var key in _properties.keys) {
       var value = _properties[key];
-      _notifyChange(StateOperation.LOAD, key, value);
+      _notifyChange(StateOperation.load, key, value);
     }
     return this;
   }
@@ -565,7 +565,7 @@ class State {
     var prev = _properties[key];
     _properties[key] = value;
 
-    _notifyChange(StateOperation.SET, key, value);
+    _notifyChange(StateOperation.set, key, value);
 
     return prev;
   }
@@ -574,7 +574,7 @@ class State {
   bool setIfAbsent(String key, dynamic value) {
     if (!_properties.containsKey(key)) {
       _properties[key] = value;
-      _notifyChange(StateOperation.SET, key, value);
+      _notifyChange(StateOperation.set, key, value);
       return true;
     } else {
       return false;
@@ -629,7 +629,7 @@ class State {
   dynamic getOrSetDefault(String key, dynamic defaultValue) {
     if (!_properties.containsKey(key)) {
       _properties[key] = defaultValue;
-      _notifyChange(StateOperation.SET, key, defaultValue);
+      _notifyChange(StateOperation.set, key, defaultValue);
       return defaultValue;
     } else {
       return _properties[key];
@@ -637,7 +637,7 @@ class State {
   }
 
   void _notifyChange(StateOperation op, String key, dynamic value) {
-    if (op == StateOperation.SET) {
+    if (op == StateOperation.set) {
       try {
         storage._onStateChange(this, key, value);
       } catch (exception, stackTrace) {
@@ -667,7 +667,7 @@ class State {
   ///
   /// [listener] The listener callback.
   State listenAll(StateEventListener listener) {
-    _registerEventListener(StateOperation.ALL, listener);
+    _registerEventListener(StateOperation.all, listener);
     return this;
   }
 
@@ -697,7 +697,7 @@ class State {
 
   void _fireEvent(StateOperation op, State state, String key, dynamic value) {
     var eventListeners = _eventListeners[op];
-    var eventListenersAll = _eventListeners[StateOperation.ALL];
+    var eventListenersAll = _eventListeners[StateOperation.all];
 
     if (eventListenersAll != null) {
       eventListeners ??= [];

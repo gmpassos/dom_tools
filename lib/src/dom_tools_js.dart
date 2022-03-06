@@ -183,14 +183,14 @@ Map? jsObjectToMap(JsObject? o) {
   }));
 }
 
-String _JS_FUNCTION_BLOCK_SCROLLING = '__JS__BlockScroll__';
+String _jsFunctionBlockScrolling = '__JS__BlockScroll__';
 
 /// Disables scrolling in browser.
 void disableScrolling() {
   var scriptCode = '''
   
-  if ( window.$_JS_FUNCTION_BLOCK_SCROLLING == null ) {
-    $_JS_FUNCTION_BLOCK_SCROLLING = function(event) {
+  if ( window.$_jsFunctionBlockScrolling == null ) {
+    $_jsFunctionBlockScrolling = function(event) {
       window.scrollTo( 0, 0 );
       event.preventDefault();
     }  
@@ -201,15 +201,15 @@ void disableScrolling() {
   addJavaScriptCode(scriptCode);
 
   evalJS('''
-    window.addEventListener('scroll', $_JS_FUNCTION_BLOCK_SCROLLING, { passive: false });
+    window.addEventListener('scroll', $_jsFunctionBlockScrolling, { passive: false });
   ''');
 }
 
 /// Enables scrolling in browser.
 void enableScrolling() {
   evalJS('''
-    if ( window.$_JS_FUNCTION_BLOCK_SCROLLING != null ) {
-      window.removeEventListener('scroll', $_JS_FUNCTION_BLOCK_SCROLLING);  
+    if ( window.$_jsFunctionBlockScrolling != null ) {
+      window.removeEventListener('scroll', $_jsFunctionBlockScrolling);  
     }
   ''');
 }

@@ -3,10 +3,10 @@ import 'dart:convert' as data_convert;
 import 'dart:html';
 import 'dart:typed_data';
 
-import 'package:dom_tools/dom_tools.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
+import 'dom_tools_paint.dart';
 
 /// Reads selected file of [input] as [Uint8List].
 Future<Uint8List?> readFileInputElementAsArrayBuffer(

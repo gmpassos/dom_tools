@@ -339,14 +339,14 @@ LabelElement createLabel([String? html, NodeValidator? validator]) {
 String? getElementTagName(Node node) =>
     node is Element ? node.tagName.toLowerCase() : null;
 
-final RegExp _REGEXP_DEPENDENT_TAG =
+final RegExp _regexpDependentTag =
     RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
 
 /// Creates a HTML [Element]. Returns 1st node form parsed HTML.
 Element createHTML([String? html, NodeValidator? validator]) {
   if (html == null || html.isEmpty) return SpanElement();
 
-  var dependentTagMatch = _REGEXP_DEPENDENT_TAG.firstMatch(html);
+  var dependentTagMatch = _regexpDependentTag.firstMatch(html);
 
   if (dependentTagMatch != null) {
     var dependentTagName = dependentTagMatch.group(1)!.toLowerCase();
@@ -382,7 +382,7 @@ Element createHTML([String? html, NodeValidator? validator]) {
   }
 }
 
-const _HTML_BASIC_ATTRS = [
+const _htmlBasicAttrs = [
   'style',
   'capture',
   'type',
@@ -393,7 +393,7 @@ const _HTML_BASIC_ATTRS = [
   'xmlns'
 ];
 
-const _HTML_CONTROL_ATTRS = [
+const _htmlControlAttrs = [
   'data-toggle',
   'data-target',
   'data-dismiss',
@@ -406,7 +406,7 @@ const _HTML_CONTROL_ATTRS = [
   'role',
 ];
 
-const _HTML_EXTENDED_ATTRS = [
+const _htmlExtendedAttrs = [
   'field',
   'field_value',
   'element_value',
@@ -419,10 +419,10 @@ const _HTML_EXTENDED_ATTRS = [
   'oneventclick'
 ];
 
-const _HTML_ELEMENTS_ALLOWED_ATTRS = [
-  ..._HTML_BASIC_ATTRS,
-  ..._HTML_CONTROL_ATTRS,
-  ..._HTML_EXTENDED_ATTRS
+const _htmlElementsAllowedAttrs = [
+  ..._htmlBasicAttrs,
+  ..._htmlControlAttrs,
+  ..._htmlExtendedAttrs
 ];
 
 AnyUriPolicy _anyUriPolicy = AnyUriPolicy();
@@ -461,20 +461,23 @@ NodeValidatorBuilder createStandardNodeValidator(
   var validator = NodeValidatorBuilder()
     ..allowTextElements()
     ..allowHtml5()
-    ..allowElement('a', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('nav', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('div', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('li', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('ul', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('ol', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('span', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('img', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('textarea', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('input', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('label', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('button', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('iframe', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
-    ..allowElement('svg', attributes: _HTML_ELEMENTS_ALLOWED_ATTRS)
+    ..allowElement('a', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('nav', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('div', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('li', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('ul', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('ol', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('span', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('img', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('textarea', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('input', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('label', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('button', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('iframe', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('svg', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('video',
+        attributes: [..._htmlElementsAllowedAttrs, 'autoplay'])
+    ..allowElement('source', attributes: _htmlElementsAllowedAttrs)
     ..allowImages(_anyUriPolicy)
     ..allowNavigation(_anyUriPolicy)
     ..allowInlineStyles();
@@ -744,10 +747,10 @@ void clearSelections() {
 
 /// Converts [element] to HTML.
 String toHTML(Element element) {
-  return _toHTML_any(element);
+  return _toHTMLAny(element);
 }
 
-String _toHTML_any(Element e) {
+String _toHTMLAny(Element e) {
   var html = '';
 
   html += '<';
@@ -757,7 +760,7 @@ String _toHTML_any(Element e) {
     var val = e.attributes[attr];
     if (val != null) {
       if (val.contains("'")) {
-        html += ' attr=\"$val\"';
+        html += ' attr="$val"';
       } else {
         html += " attr='$val'";
       }
@@ -770,7 +773,7 @@ String _toHTML_any(Element e) {
 
   if (e.innerHtml != null && e.innerHtml!.isNotEmpty) {
     if (e is SelectElement) {
-      html += _toHTML_innerHtml_Select(e);
+      html += _toHTMLInnerHtmlSelect(e);
     } else {
       html += e.innerHtml!;
     }
@@ -781,7 +784,7 @@ String _toHTML_any(Element e) {
   return html;
 }
 
-String _toHTML_innerHtml_Select(SelectElement e) {
+String _toHTMLInnerHtmlSelect(SelectElement e) {
   var html = '';
 
   for (var o in e.options) {
@@ -1033,7 +1036,7 @@ void setTreeElementsDivCentered(Element element, String className,
   }
 }
 
-const _DIV_CENTERED_BOOTSTRAP_CONFLICTING_CLASSES = <String>{
+const _divCenteredBootstrapConflictingClasses = <String>{
   'd-none',
   'd-inline',
   'd-inline-block',
@@ -1056,14 +1059,14 @@ void setDivCentered(DivElement div,
           ? 'inline-table'
           : 'table';
 
-  div.classes.removeAll(_DIV_CENTERED_BOOTSTRAP_CONFLICTING_CLASSES);
+  div.classes.removeAll(_divCenteredBootstrapConflictingClasses);
 
   var subDivs = div.querySelectorAll(':scope > div');
 
   for (var subDiv in subDivs) {
     print(subDiv.outerHtml);
 
-    subDiv.classes.removeAll(_DIV_CENTERED_BOOTSTRAP_CONFLICTING_CLASSES);
+    subDiv.classes.removeAll(_divCenteredBootstrapConflictingClasses);
     subDiv.style.display = 'table-cell';
 
     if (centerHorizontally) {
@@ -1188,7 +1191,7 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
             maxPurgedEntries: maxPurgedEntries);
 
   @override
-  bool isInTree(Node? node) => node != null && root.contains(node);
+  bool isInTree(Node? key) => key != null && root.contains(key);
 
   @override
   Node? getParentOf(Node? key) => key?.parent;

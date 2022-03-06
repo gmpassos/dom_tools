@@ -3,31 +3,36 @@ import 'dart:html';
 import 'dart:math' as math;
 import 'dart:math';
 
-import 'package:dom_tools/dom_tools.dart';
 import 'package:intl/intl.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
+import 'dom_tools_base.dart';
 import 'perspective_filter.dart';
 
 /// Represents a color.
 ///
 /// This class is based into `dart:ui` (Flutter) implementation.
 class Color {
-  static final Color BLACK = Color.fromRGBO(0, 0, 0);
-  static final Color WHITE = Color.fromRGBO(255, 255, 255);
+  static final Color black = Color.fromRGBO(0, 0, 0);
+  static final Color white = Color.fromRGBO(255, 255, 255);
 
-  static final Color GREY = Color.fromRGBO(128, 128, 128);
-  static final Color GREY_LIGHT = Color.fromRGBO(160, 160, 160);
-  static final Color GREY_LIGHTER = Color.fromRGBO(192, 192, 192);
-  static final Color GREY_DARK = Color.fromRGBO(96, 96, 96);
+  static final Color grey = Color.fromRGBO(128, 128, 128);
+  static final Color greyLight = Color.fromRGBO(160, 160, 160);
+  static final Color greyLighter = Color.fromRGBO(192, 192, 192);
+  static final Color greyDark = Color.fromRGBO(96, 96, 96);
 
-  static final Color GREY_DARKER = Color.fromRGBO(64, 64, 64);
+  static final Color greyDarker = Color.fromRGBO(64, 64, 64);
 
+  // ignore: non_constant_identifier_names
   static final Color RED = Color.fromRGBO(255, 0, 0);
+
+  // ignore: non_constant_identifier_names
   static final Color GREEN = Color.fromRGBO(0, 255, 0);
+
+  // ignore: non_constant_identifier_names
   static final Color BLUE = Color.fromRGBO(0, 0, 255);
 
-  static final Color CYAN = Color.fromRGBO(0, 255, 255);
+  static final Color cyan = Color.fromRGBO(0, 255, 255);
 
   /// Construct a color from the lower 32 bits of an [int].
   ///
@@ -896,10 +901,10 @@ typedef ImageFilter = CanvasImageSource Function(
     CanvasImageSource? image, int width, int height);
 
 /// Quality of an image.
-enum Quality { HIGH, MEDIUM, LOW }
+enum Quality { high, medium, low }
 
 /// The type of edition for [CanvasImageViewer].
-enum EditionType { CLIP, POINTS, PERSPECTIVE, RECTANGLES, LABELS }
+enum EditionType { clip, points, perspective, rectangles, labels }
 
 typedef ValueCopier<T> = T? Function(T? value);
 
@@ -969,7 +974,7 @@ class Label<T extends num> extends Rectangle<T> {
 
 /// An image viewer that can render points, rectangles, clip and grid over.
 class CanvasImageViewer {
-  static final DATE_FORMAT_YYYY_MM_DD_HH_MM_SS =
+  static final dateFormatYYYYMMDDHHMMSS =
       DateFormat('yyyy/MM/dd HH:mm:ss', Intl.getCurrentLocale());
 
   late final CanvasElement _canvas;
@@ -1090,7 +1095,7 @@ class CanvasImageViewer {
       _canvas.onMouseMove.listen(_onMouseMove);
     }
 
-    cropPerspective ??= !isEditable || editable != EditionType.PERSPECTIVE;
+    cropPerspective ??= !isEditable || editable != EditionType.perspective;
 
     _cropPerspective = cropPerspective;
   }
@@ -1110,13 +1115,13 @@ class CanvasImageViewer {
       if (w > 0 && h > 0) {
         _renderedImageWidth = _width = w;
         _renderedImageHeight = _height = h;
-        _check_imagePerspectiveFilterCache();
+        _checkImagePerspectiveFilterCache();
         _setCanvasSizeSameOfRenderedImageSize(w, h);
       }
     }
   }
 
-  void _check_imagePerspectiveFilterCache() {
+  void _checkImagePerspectiveFilterCache() {
     if (_imagePerspectiveFilterCache.width != _width ||
         _imagePerspectiveFilterCache.height != _height) {
       _imagePerspectiveFilterCache.clearCaches();
@@ -1269,11 +1274,9 @@ class CanvasImageViewer {
       int? strokeSize]) {
     return ViewerElement<List<Rectangle<num>>>(rectangles, color,
         strokeSize: strokeSize,
-        valueCopier: (value) => value == null
-            ? null
-            : value
-                .map((r) => Rectangle<num>(r.left, r.top, r.width, r.height))
-                .toList());
+        valueCopier: (value) => value
+            ?.map((r) => Rectangle<num>(r.left, r.top, r.width, r.height))
+            .toList());
   }
 
   /// Rectangle elements rendered in the image.
@@ -1324,12 +1327,10 @@ class CanvasImageViewer {
       int? strokeSize]) {
     return ViewerElement<List<Label<num>>>(labels, color,
         strokeSize: strokeSize,
-        valueCopier: (value) => value == null
-            ? null
-            : value
-                .map((l) => Label<num>(
-                    l.label, l.left, l.top, l.width, l.height, l.color))
-                .toList());
+        valueCopier: (value) => value
+            ?.map((l) =>
+                Label<num>(l.label, l.left, l.top, l.width, l.height, l.color))
+            .toList());
   }
 
   /// Labels elements rendered in the image.
@@ -1344,9 +1345,8 @@ class CanvasImageViewer {
       List<Point<num>> points,
       [Color? color]) {
     return ViewerElement<List<Point<num>>>(points, color,
-        valueCopier: (value) => value == null
-            ? null
-            : value.map((p) => Point<num>(p.x, p.y)).toList());
+        valueCopier: (value) =>
+            value?.map((p) => Point<num>(p.x, p.y)).toList());
   }
 
   /// Point elements rendered in the image.
@@ -1391,9 +1391,8 @@ class CanvasImageViewer {
       List<Point<num>>? perspective,
       [Color? color]) {
     return ViewerElement<List<Point<num>>>(perspective, color,
-        valueCopier: (value) => value == null
-            ? null
-            : value.map((p) => Point<num>(p.x, p.y)).toList());
+        valueCopier: (value) =>
+            value?.map((p) => Point<num>(p.x, p.y)).toList());
   }
 
   /// The perspective points to use in the Perspective filter of the image.
@@ -1536,15 +1535,15 @@ class CanvasImageViewer {
     if (!isEditable) return null;
 
     switch (_editionType) {
-      case EditionType.CLIP:
+      case EditionType.clip:
         return adjustClip(mouse, click);
-      case EditionType.POINTS:
+      case EditionType.points:
         return adjustPoints(mouse, click);
-      case EditionType.PERSPECTIVE:
+      case EditionType.perspective:
         return adjustPerspective(mouse, click);
-      case EditionType.RECTANGLES:
+      case EditionType.rectangles:
         return adjustRectangles(mouse, click);
-      case EditionType.LABELS:
+      case EditionType.labels:
         return adjustLabels(mouse, click);
       default:
         return null;
@@ -1555,7 +1554,7 @@ class CanvasImageViewer {
     if (click) return null;
     if (_clip == null) return null;
 
-    print('--- adjustClip ---');
+    //print('--- adjustClip ---');
 
     var point = _getMousePointInCanvas(mouse);
 
@@ -1564,9 +1563,9 @@ class CanvasImageViewer {
 
     var target = nearestPoint(edges, point);
 
-    print(target);
+    //print(target);
 
-    var clip2;
+    Rectangle? clip2;
 
     if (target == edges[0] ||
         target == edges[1] ||
@@ -1604,11 +1603,11 @@ class CanvasImageViewer {
       var clipArea = clip2.width * clip2.height;
       if (clipArea > 1) {
         _clip = clipViewerElement(clip2, _clip?.color);
-        return Quality.HIGH;
+        return Quality.high;
       }
     }
 
-    return Quality.HIGH;
+    return Quality.high;
   }
 
   Point<num> _boundPoint(Point<num> val, Point<num> min, Point<num> max) {
@@ -1679,7 +1678,7 @@ class CanvasImageViewer {
     if (!click) return null;
     if (_rectangles == null) return null;
 
-    print('--- adjustRectangles ---');
+    //print('--- adjustRectangles ---');
 
     var point = _getMousePointInCanvas(mouse);
 
@@ -1697,14 +1696,14 @@ class CanvasImageViewer {
 
     _rectangles!.value = rectangles;
 
-    return Quality.HIGH;
+    return Quality.high;
   }
 
   Quality? adjustLabels(Point mouse, bool click) {
     if (!click) return null;
     if (_labels == null) return null;
 
-    print('--- adjustLabels ---');
+    //print('--- adjustLabels ---');
 
     var point = _getMousePointInCanvas(mouse);
 
@@ -1731,7 +1730,7 @@ class CanvasImageViewer {
 
     _labels!.value = labels;
 
-    return Quality.HIGH;
+    return Quality.high;
   }
 
   Label? _pointerLabel;
@@ -1756,7 +1755,7 @@ class CanvasImageViewer {
       _hideLabel();
     }
 
-    return Quality.HIGH;
+    return Quality.high;
   }
 
   void _hideLabel() {
@@ -1769,7 +1768,7 @@ class CanvasImageViewer {
       if (_selectedLabel == selLabel && _pointerLabel == null) {
         _selectedLabel = null;
         hideHint();
-        _renderImpl(Quality.HIGH, true);
+        _renderImpl(Quality.high, true);
       }
     });
   }
@@ -1795,7 +1794,7 @@ class CanvasImageViewer {
     if (!click) return null;
     if (_points == null) return null;
 
-    print('--- adjustPoints ---');
+    //print('--- adjustPoints ---');
 
     var point = _getMousePointInCanvas(mouse);
 
@@ -1817,14 +1816,14 @@ class CanvasImageViewer {
 
     _points!.value = points;
 
-    return Quality.HIGH;
+    return Quality.high;
   }
 
   Quality? adjustPerspective(Point<num> mouse, bool click) {
     //if (click) return null ;
     if (_perspective == null) return null;
 
-    print('--- adjustPerspective ---');
+    //print('--- adjustPerspective ---');
 
     Point<num> point = _getMousePointInCanvas(mouse, false);
 
@@ -1837,7 +1836,7 @@ class CanvasImageViewer {
     var target = nearestPoint(points, point)!;
     var targetIdx = points.indexOf(target);
 
-    print('target: $target #$targetIdx');
+    //print('target: $target #$targetIdx');
 
     var pointsAdjusted = copyPoints(points);
     pointsAdjusted[targetIdx] = point;
@@ -1881,7 +1880,7 @@ class CanvasImageViewer {
     var scaleX = width / bounds.width;
     var scaleY = height / bounds.height;
 
-    print('scaleX: $scaleX ; scaleY: $scaleY >> $bounds');
+    //print('scaleX: $scaleX ; scaleY: $scaleY >> $bounds');
 
     var pointsScaled =
         translatePoints(pointsAdjusted, -bounds.left, -bounds.top);
@@ -1901,16 +1900,18 @@ class CanvasImageViewer {
           Point(width / 2 - spaceW, height)),
     ];
 
+    /*
     print('points: $points >> ${_getPointsBounds(points)}');
     print(
         'pointsAdjusted: $pointsAdjusted >> ${_getPointsBounds(pointsAdjusted)}');
     print('pointsScaled: $pointsScaled >> ${_getPointsBounds(pointsScaled)}');
     print(
         'pointsInBounds: $pointsInBounds >> ${_getPointsBounds(pointsInBounds)}');
+     */
 
     _perspective!.value = pointsInBounds;
 
-    return Quality.MEDIUM;
+    return Quality.medium;
   }
 
   Rectangle<num> _getPointsBounds(List<Point<num>> points) {
@@ -1935,7 +1936,7 @@ class CanvasImageViewer {
 
   /// Renders this component asynchronously.
   void renderAsync(Duration delay) {
-    _renderAsyncImpl(delay, Quality.HIGH, false);
+    _renderAsyncImpl(delay, Quality.high, false);
   }
 
   void _renderAsyncImpl(Duration? delay, Quality quality, bool forceQuality) {
@@ -1958,14 +1959,14 @@ class CanvasImageViewer {
       return;
     }
 
-    _renderImpl(Quality.HIGH, false);
+    _renderImpl(Quality.high, false);
   }
 
   Point<num>? _renderedTranslation;
 
   void _renderImpl(Quality? quality, bool forceQuality,
       [bool scheduledRender = false]) {
-    quality ??= Quality.HIGH;
+    quality ??= Quality.high;
 
     var context = _canvas.context2D;
 
@@ -1979,7 +1980,7 @@ class CanvasImageViewer {
     var translate = renderImageResult.translate;
 
     _renderGrid(context, translate, _gridSize?.value,
-        _gridSize?.color ?? Color.CYAN.withOpacity(0.70), 2);
+        _gridSize?.color ?? Color.cyan.withOpacity(0.70), 2);
 
     _renderRectangles(
       context,
@@ -2037,14 +2038,14 @@ class CanvasImageViewer {
     context.clearRect(0, 0, width, height);
     context.drawImageScaledFromSource(
         _image!, 0, 0, width, height, 0, 0, width, height);
-    return _RenderImageResult(Quality.HIGH, Point(0, 0));
+    return _RenderImageResult(Quality.high, Point(0, 0));
   }
 
-  DateTime _renderImageWithPerspective_lastTime = DateTime.now();
+  DateTime _renderImageWithPerspectiveLastTime = DateTime.now();
 
-  Quality? _renderImageWithPerspective_lastQuality;
+  Quality? _renderImageWithPerspectiveLastQuality;
 
-  String? _renderImageWithPerspective_renderSign;
+  String? _renderImageWithPerspectiveRenderSign;
 
   String _renderSign(Quality quality) {
     var perspectiveValue = _perspective != null ? _perspective!.value : null;
@@ -2065,33 +2066,33 @@ class CanvasImageViewer {
       bool scheduledRender) {
     if (forceQuality &&
         scheduledRender &&
-        quality == _renderImageWithPerspective_lastQuality) {
+        quality == _renderImageWithPerspectiveLastQuality) {
       return null;
     }
 
     var requestedRenderSign = _renderSign(quality);
 
-    if (_renderImageWithPerspective_renderSign == requestedRenderSign) {
+    if (_renderImageWithPerspectiveRenderSign == requestedRenderSign) {
       return null;
     }
 
     var now = DateTime.now();
 
     var renderInterval = now.millisecondsSinceEpoch -
-        _renderImageWithPerspective_lastTime.millisecondsSinceEpoch;
+        _renderImageWithPerspectiveLastTime.millisecondsSinceEpoch;
     //renderInterval -= renderImageWithPerspective_renderTime ;
     var shortRenderTime = renderInterval < 100;
 
-    var renderQuality = shortRenderTime ? Quality.LOW : quality;
+    var renderQuality = shortRenderTime ? Quality.low : quality;
 
-    if (_forceImageQualityHigh) renderQuality = Quality.HIGH;
+    if (_forceImageQualityHigh) renderQuality = Quality.high;
 
-    if (renderQuality == Quality.LOW &&
-        _isImageWithPerspectiveInCache_QualityMedium) {
-      renderQuality = Quality.MEDIUM;
-    } else if (renderQuality == Quality.MEDIUM &&
-        _isImageWithPerspectiveInCache_QualityHigh) {
-      renderQuality = Quality.HIGH;
+    if (renderQuality == Quality.low &&
+        _isImageWithPerspectiveInCacheQualityMedium) {
+      renderQuality = Quality.medium;
+    } else if (renderQuality == Quality.medium &&
+        _isImageWithPerspectiveInCacheQualityHigh) {
+      renderQuality = Quality.high;
     }
 
     if (forceQuality && quality != renderQuality) {
@@ -2100,27 +2101,29 @@ class CanvasImageViewer {
 
     var renderSign = _renderSign(renderQuality);
 
-    if (_renderImageWithPerspective_renderSign == renderSign) {
+    if (_renderImageWithPerspectiveRenderSign == renderSign) {
       return null;
     }
 
+    /*
     print('-------------------- _renderImageWithPerspective>>>> ');
     print('forceQuality: $forceQuality');
     print('quality: $quality');
     print('renderQuality: $renderQuality');
     print('renderInterval: $renderInterval');
     print('shortRenderTime: $shortRenderTime');
+     */
 
     context.clearRect(0, 0, width, height);
 
     _RenderImageResult? renderImageResult;
 
-    if (renderQuality == Quality.LOW) {
-      renderImageResult = _renderImageWithPerspective_qualityLow(context);
-    } else if (renderQuality == Quality.MEDIUM) {
-      renderImageResult = _renderImageWithPerspective_qualityMedium(context);
+    if (renderQuality == Quality.low) {
+      renderImageResult = _renderImageWithPerspectiveQualityLow(context);
+    } else if (renderQuality == Quality.medium) {
+      renderImageResult = _renderImageWithPerspectiveQualityMedium(context);
     } else {
-      renderImageResult = _renderImageWithPerspective_qualityHigh(context);
+      renderImageResult = _renderImageWithPerspectiveQualityHigh(context);
     }
 
     if (renderImageResult == null) {
@@ -2130,37 +2133,36 @@ class CanvasImageViewer {
 
     var renderedQuality = renderImageResult.quality;
 
-    _renderImageWithPerspective_lastTime = DateTime.now();
-    _renderImageWithPerspective_lastQuality = renderedQuality;
+    _renderImageWithPerspectiveLastTime = DateTime.now();
+    _renderImageWithPerspectiveLastQuality = renderedQuality;
 
-    print('renderedQuality: $renderedQuality');
+    //print('renderedQuality: $renderedQuality');
 
     var renderedSign = _renderSign(renderedQuality);
-    _renderImageWithPerspective_renderSign = renderedSign;
+    _renderImageWithPerspectiveRenderSign = renderedSign;
 
     {
-      var scheduleDelay;
-      var scheduleQuality;
+      Duration? scheduleDelay;
+      Quality? scheduleQuality;
 
-      if (renderedQuality == Quality.LOW && !forceQuality) {
+      if (renderedQuality == Quality.low && !forceQuality) {
         if (isOffsetRenderScaleGoodForHighQuality) {
           scheduleDelay = Duration(milliseconds: 200);
-          scheduleQuality = Quality.MEDIUM;
+          scheduleQuality = Quality.medium;
         } else {
           scheduleDelay = Duration(milliseconds: 500);
-          scheduleQuality = Quality.MEDIUM;
+          scheduleQuality = Quality.medium;
         }
-      } else if (renderedQuality == Quality.MEDIUM) {
+      } else if (renderedQuality == Quality.medium) {
         if (isOffsetRenderScaleGoodForHighQuality) {
           scheduleDelay = Duration(milliseconds: 2000);
-          scheduleQuality = Quality.HIGH;
+          scheduleQuality = Quality.high;
         }
       }
 
       if (scheduleDelay != null && scheduleQuality != null) {
         _renderAsyncImpl(scheduleDelay, scheduleQuality, true);
-        print(
-            'CanvasImageViewer[RENDER SCHEDULED]> scheduleDelay: $scheduleDelay ; scheduleQuality: $scheduleQuality');
+        //print('CanvasImageViewer[RENDER SCHEDULED]> scheduleDelay: $scheduleDelay ; scheduleQuality: $scheduleQuality');
       }
     }
 
@@ -2173,75 +2175,73 @@ class CanvasImageViewer {
   bool get isOffsetRenderScaleGoodForHighQuality =>
       offsetRenderScale > 0.70 || _forceImageQualityHigh;
 
-  double get renderScale_QualityLow => offsetRenderScale * 0.40;
+  double get renderScaleQualityLow => offsetRenderScale * 0.40;
 
-  double get renderScale_QualityMedium => offsetRenderScale * 1.05;
+  double get renderScaleQualityMedium => offsetRenderScale * 1.05;
 
-  double get renderScale_QualityHigh => 1;
+  double get renderScaleQualityHigh => 1;
 
   //bool get _isImageWithPerspectiveInCache_QualityLow => _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(_perspective.value, renderScale_QualityLow) ;
-  bool get _isImageWithPerspectiveInCache_QualityMedium =>
+  bool get _isImageWithPerspectiveInCacheQualityMedium =>
       _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(
-          _perspective!.value, renderScale_QualityMedium);
+          _perspective!.value, renderScaleQualityMedium);
 
-  bool get _isImageWithPerspectiveInCache_QualityHigh =>
+  bool get _isImageWithPerspectiveInCacheQualityHigh =>
       _imagePerspectiveFilterCache.isImageWithPerspectiveInCache(
-          _perspective!.value, renderScale_QualityHigh);
+          _perspective!.value, renderScaleQualityHigh);
 
-  _RenderImageResult? _renderImageWithPerspective_qualityLow(
+  _RenderImageResult? _renderImageWithPerspectiveQualityLow(
       CanvasRenderingContext2D context) {
     var scaleOffset = offsetRenderScale;
-    var scale = renderScale_QualityLow;
+    var scale = renderScaleQualityLow;
 
-    print(
-        '_renderImageWithPerspective_qualityLow> scale: $scale ; scaleOffset: $scaleOffset');
+    //print('_renderImageWithPerspective_qualityLow> scale: $scale ; scaleOffset: $scaleOffset');
 
     if (scaleOffset < 0.30) {
-      return _renderImageWithPerspective_qualityMedium(context);
+      return _renderImageWithPerspectiveQualityMedium(context);
     }
 
     var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(
         _perspective!.value, scale);
 
-    return _renderImageResult(context, Quality.LOW, scale, filterResult);
+    return _renderImageResult(context, Quality.low, scale, filterResult);
   }
 
-  _RenderImageResult? _renderImageWithPerspective_qualityMedium(
+  _RenderImageResult? _renderImageWithPerspectiveQualityMedium(
       CanvasRenderingContext2D context) {
-    var scaleOffset = offsetRenderScale;
-    var scale = renderScale_QualityMedium;
+    //var scaleOffset = offsetRenderScale;
+    var scale = renderScaleQualityMedium;
 
-    print(
-        '_renderImageWithPerspective_qualityMedium> scale: $scale ; scaleOffset: $scaleOffset');
+    //print('_renderImageWithPerspective_qualityMedium> scale: $scale ; scaleOffset: $scaleOffset');
 
     if (scale > 0.80) {
-      return _renderImageWithPerspective_qualityHigh(context);
+      return _renderImageWithPerspectiveQualityHigh(context);
     }
 
     var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(
         _perspective!.value, scale);
 
-    return _renderImageResult(context, Quality.MEDIUM, scale, filterResult);
+    return _renderImageResult(context, Quality.medium, scale, filterResult);
   }
 
   final bool _forceImageQualityHigh = false;
 
-  _RenderImageResult? _renderImageWithPerspective_qualityHigh(
+  _RenderImageResult? _renderImageWithPerspectiveQualityHigh(
       CanvasRenderingContext2D context) {
     var scaleOffset = offsetRenderScale;
-    var scale = renderScale_QualityHigh;
+    var scale = renderScaleQualityHigh;
 
     print(
         '_renderImageWithPerspective_qualityHigh> scale: $scale ; scaleOffset: $scaleOffset');
 
     if (!isOffsetRenderScaleGoodForHighQuality) {
-      return _renderImageWithPerspective_qualityMedium(context);
+      return _renderImageWithPerspectiveQualityMedium(context);
     }
 
     var filterResult = _imagePerspectiveFilterCache.getImageWithPerspective(
         _perspective!.value, scale);
 
-    return _renderImageResult(context, Quality.HIGH, scale, filterResult);
+    return _renderImageResult(context, Quality.high, scale, filterResult);
   }
 
   _RenderImageResult? _renderImageResult(CanvasRenderingContext2D context,
@@ -2434,7 +2434,7 @@ class CanvasImageViewer {
 
     _translate(context, null);
 
-    var timeStr = DATE_FORMAT_YYYY_MM_DD_HH_MM_SS.format(time.toLocal());
+    var timeStr = dateFormatYYYYMMDDHHMMSS.format(time.toLocal());
 
     context.font = '30px Arial';
 
@@ -2460,7 +2460,7 @@ class CanvasImageViewer {
     var hasSel = sel != null;
     var selHasColor = sel != null && sel.color != null;
 
-    print('>> ${labels.runtimeType} > $labels ');
+    //print('>> ${labels.runtimeType} > $labels ');
 
     // Render non selected labels first:
     for (var label in labels) {
@@ -2471,7 +2471,7 @@ class CanvasImageViewer {
 
       var labelColor = label.color ?? color;
       if (selHasColor) {
-        labelColor = Color.GREY_DARK;
+        labelColor = Color.greyDark;
       }
       _strokeRect(context, label, labelColor, lineWidth);
     }
@@ -2535,12 +2535,12 @@ class CanvasImageViewer {
     var l = b * 2;
 
     context.setStrokeColorRgb(
-        Color.BLACK.red, Color.BLACK.green, Color.BLACK.blue);
+        Color.black.red, Color.black.green, Color.black.blue);
     context.lineWidth = lineWidth;
     context.strokeRect(p.x - b - 1, p.y - b + 1, l, l);
 
     context.setStrokeColorRgb(
-        Color.WHITE.red, Color.WHITE.green, Color.WHITE.blue);
+        Color.white.red, Color.white.green, Color.white.blue);
     context.lineWidth = lineWidth;
     context.strokeRect(p.x - b + 1, p.y - b - 1, l, l);
 

@@ -5,10 +5,10 @@ import 'package:swiss_knife/swiss_knife.dart';
 
 /// Status type of touch device detection.
 enum TouchDeviceDetection {
-  UNKNOWN,
-  NONE,
-  MAYBE,
-  DETECTED,
+  unknown,
+  none,
+  maybe,
+  detected,
 }
 
 TouchDeviceDetection? _detectTouchDevice;
@@ -21,7 +21,7 @@ final EventStream<TouchDeviceDetection> onDetectTouchDevice = EventStream();
 /// Starts touch device detection. Returns the current status.
 TouchDeviceDetection? detectTouchDevice() {
   if (_detectTouchDevice == null) {
-    _detectTouchDevice = TouchDeviceDetection.UNKNOWN;
+    _detectTouchDevice = TouchDeviceDetection.unknown;
 
     try {
       // At the 1st, it won't be null:
@@ -34,10 +34,10 @@ TouchDeviceDetection? detectTouchDevice() {
       _detectTouchDeviceListen!
           .add(document.body!.onTouchMove.listen(_onTouchEvent));
 
-      _detectTouchDevice = TouchDeviceDetection.MAYBE;
+      _detectTouchDevice = TouchDeviceDetection.maybe;
     } catch (e) {
-      _detectTouchDevice = TouchDeviceDetection.NONE;
-      onDetectTouchDevice.add(TouchDeviceDetection.NONE);
+      _detectTouchDevice = TouchDeviceDetection.none;
+      onDetectTouchDevice.add(TouchDeviceDetection.none);
     }
   }
 
@@ -56,9 +56,9 @@ void _onTouchEvent(event) {
   _detectTouchDeviceListen = [];
 
   _detectTouchDeviceListen = null;
-  _detectTouchDevice = TouchDeviceDetection.DETECTED;
+  _detectTouchDevice = TouchDeviceDetection.detected;
 
-  onDetectTouchDevice.add(TouchDeviceDetection.DETECTED);
+  onDetectTouchDevice.add(TouchDeviceDetection.detected);
 }
 
 /// Converts a [TouchEvent] [event] to a [MouseEvent].
@@ -115,7 +115,7 @@ MouseEvent? touchEventToMouseEvent(TouchEvent event) {
 }
 
 /// Redirects [element.onTouchStart] to [element.onMouseDown] as [MouseEvent].
-void redirect_onTouchStart_to_MouseEvent(Element element) {
+void redirectOnTouchStartToMouseEvent(Element element) {
   element.onTouchStart.listen((event) {
     var mouseEvent = touchEventToMouseEvent(event);
     if (mouseEvent != null) {
@@ -125,7 +125,7 @@ void redirect_onTouchStart_to_MouseEvent(Element element) {
 }
 
 /// Redirects [element.onTouchMove] to [element.onMouseMove] as [MouseEvent].
-void redirect_onTouchMove_to_MouseEvent(Element element) {
+void redirectOnTouchMoveToMouseEvent(Element element) {
   element.onTouchMove.listen((event) {
     var mouseEvent = touchEventToMouseEvent(event);
     if (mouseEvent != null) {
@@ -135,7 +135,7 @@ void redirect_onTouchMove_to_MouseEvent(Element element) {
 }
 
 /// Redirects [element.onTouchEnd] to [element.onMouseUp] as [MouseEvent].
-void redirect_onTouchEnd_to_MouseEvent(Element element) {
+void redirectOnTouchEndToMouseEvent(Element element) {
   element.onTouchEnd.listen((event) {
     var mouseEvent = touchEventToMouseEvent(event);
     if (mouseEvent != null) {
