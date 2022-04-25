@@ -475,9 +475,13 @@ NodeValidatorBuilder createStandardNodeValidator(
     ..allowElement('button', attributes: _htmlElementsAllowedAttrs)
     ..allowElement('iframe', attributes: _htmlElementsAllowedAttrs)
     ..allowElement('svg', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('video',
-        attributes: [..._htmlElementsAllowedAttrs, 'autoplay'])
-    ..allowElement('source', attributes: _htmlElementsAllowedAttrs)
+    ..allowElement('video', attributes: [
+      ..._htmlElementsAllowedAttrs,
+      'autoplay',
+      'controls',
+      'muted'
+    ])
+    ..allowElement('source', attributes: [..._htmlElementsAllowedAttrs, 'type'])
     ..allowImages(_anyUriPolicy)
     ..allowNavigation(_anyUriPolicy)
     ..allowInlineStyles();
