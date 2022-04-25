@@ -27,8 +27,8 @@ jobs:
         run: dart run dependency_validator
       - name: Run tests (Chrome)
         run: dart test --platform chrome
-      - name: dartdoc
-        run: dartdoc --no-generate-docs
+#      - name: dartdoc
+#        run: dartdoc --no-generate-docs
       - name: dart pub publish --dry-run
         run: dart pub publish --dry-run
 
