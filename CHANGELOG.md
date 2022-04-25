@@ -5,6 +5,8 @@
 - Improve GitHub CI.
 - markdown: ^5.0.0
 - collection: ^1.16.0
+- dependency_validator: ^3.1.0
+- Removed dependency `html_unescape`.
 
 ## 2.1.0
 

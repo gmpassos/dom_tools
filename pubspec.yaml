@@ -10,7 +10,6 @@ dependencies:
   intl: ^0.17.0
   json_object_mapper: ^2.0.1
   swiss_knife: ^3.0.8
-  html_unescape: ^2.0.0
   markdown: ^5.0.0
   enum_to_string: ^2.0.1
   collection: ^1.16.0
@@ -18,6 +17,7 @@ dependencies:
 dev_dependencies:
   lints: ^1.0.1
   test: ^1.16.8
+  dependency_validator: ^3.1.0
 
 #dependency_overrides:
 #  swiss_knife:
