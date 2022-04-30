@@ -1,3 +1,7 @@
+## 2.1.2
+
+- Added `scrollToElement`, `getElementDocumentPosition` and `getVisibleNode`.
+
 ## 2.1.1
 
 - `createStandardNodeValidator`:
