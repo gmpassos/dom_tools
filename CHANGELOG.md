@@ -1,3 +1,8 @@
+## 2.1.3
+
+- Added `blockScrollTraverse`, `blockHorizontalScrollTraverse`, `blockVerticalScrollTraverse`,
+  `blockHorizontalScrollTraverseEvent` and `blockVerticalScrollTraverseEvent`.
+
 ## 2.1.2
 
 - Added `scrollToElement`, `getElementDocumentPosition` and `getVisibleNode`.
