@@ -268,14 +268,14 @@ Map<String, Map<dynamic, bool>> _loadedThemesByPrefix = {};
 /// [cssClassPrefix] Prefix for each class in [css] Map.
 /// [css] Map of CSS classes.
 void loadCSS(String cssClassPrefix, Map<String, CSSValueBase>? css) {
-  var _loadedThemes = _loadedThemesByPrefix[cssClassPrefix];
+  var loadedThemes = _loadedThemesByPrefix[cssClassPrefix];
 
-  if (_loadedThemes == null) {
-    _loadedThemesByPrefix[cssClassPrefix] = _loadedThemes = {};
+  if (loadedThemes == null) {
+    _loadedThemesByPrefix[cssClassPrefix] = loadedThemes = {};
   }
 
-  if (_loadedThemes[css] != null) return;
-  _loadedThemes[css] = true;
+  if (loadedThemes[css] != null) return;
+  loadedThemes[css] = true;
 
   var id = '__dom_tools__dynamic_css__$cssClassPrefix';
 
@@ -985,7 +985,7 @@ List<CssMediaRule> getAllOutOfViewportMediaCssRule(
 
   for (var rule in rules) {
     var conditionText =
-        rule.conditionText!.trim().replaceAll(RegExp(r'(?:^\(|\)$)'), '');
+        rule.conditionText!.trim().replaceAll(RegExp(r'^\(|\)$'), '');
 
     var parts = split(conditionText, ':', 2);
     if (parts.length != 2) continue;
@@ -1030,7 +1030,7 @@ List<CssMediaRule> getAllViewportMediaCssRule(
 
   for (var rule in rules) {
     var conditionText =
-        rule.conditionText!.trim().replaceAll(RegExp(r'(?:^\(|\)$)'), '');
+        rule.conditionText!.trim().replaceAll(RegExp(r'^\(|\)$'), '');
 
     var parts = split(conditionText, ':', 2);
     if (parts.length != 2) continue;

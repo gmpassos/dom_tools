@@ -2,6 +2,8 @@
 
 - Added `blockScrollTraverse`, `blockHorizontalScrollTraverse`, `blockVerticalScrollTraverse`,
   `blockHorizontalScrollTraverseEvent` and `blockVerticalScrollTraverseEvent`.
+- lints: ^2.0.0
+- test: ^1.21.3
 
 ## 2.1.2
 

@@ -93,7 +93,7 @@ class Color {
   factory Color.fromHex(String hexColor) {
     hexColor = hexColor.toUpperCase().replaceAll('#', '');
     while (hexColor.length < 8) {
-      hexColor = 'FF' + hexColor;
+      hexColor = 'FF$hexColor';
     }
     var color = int.parse(hexColor, radix: 16);
     return Color(color);

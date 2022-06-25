@@ -890,7 +890,7 @@ CssStyleDeclaration defineCSS(
     return currentCSS;
   } else {
     return CssStyleDeclaration()
-      ..cssText = currentCSS.cssText! + ' ; ' + appendCSS.cssText!;
+      ..cssText = '${currentCSS.cssText!} ; ${appendCSS.cssText!}';
   }
 }
 
@@ -933,7 +933,7 @@ bool applyCSS(CssStyleDeclaration css, Element element,
 }
 
 bool _applyCSS(CssStyleDeclaration css, Element element) {
-  var newCss = element.style.cssText! + ' ; ' + css.cssText!;
+  var newCss = '${element.style.cssText!} ; ${css.cssText!}';
   element.style.cssText = newCss;
   return true;
 }

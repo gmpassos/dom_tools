@@ -529,7 +529,7 @@ class State {
     return this;
   }
 
-  String get storageRootKey => storage.id + '/' + name + '/';
+  String get storageRootKey => '${storage.id}/$name/';
 
   /// Returns the internal storage key for [key].
   String getStorageKey(String key) {
