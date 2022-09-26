@@ -1,3 +1,9 @@
+# 2.1.4
+
+- test: ^1.21.6
+- dependency_validator: ^3.2.2
+- sdk: '>=2.17.0 <3.0.0'
+
 ## 2.1.3
 
 - Added `blockScrollTraverse`, `blockHorizontalScrollTraverse`, `blockVerticalScrollTraverse`,

@@ -2466,7 +2466,7 @@ class CanvasImageViewer {
     for (var label in labels) {
       var isSelectedLabel = label == sel;
       if (isSelectedLabel) continue;
-      var isSelectedGroup = hasSel && label.label == sel!.label;
+      var isSelectedGroup = hasSel && label.label == sel.label;
       if (isSelectedGroup) continue;
 
       var labelColor = label.color ?? color;
@@ -2480,7 +2480,7 @@ class CanvasImageViewer {
     if (hasSel) {
       for (var label in labels) {
         var isSelectedLabel = label == sel;
-        var isSelectedGroup = hasSel && label.label == sel!.label;
+        var isSelectedGroup = hasSel && label.label == sel.label;
         if (!isSelectedLabel && !isSelectedGroup) continue;
 
         var labelColor = label.color ?? color;
