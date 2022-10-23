@@ -1,3 +1,9 @@
+## 2.1.6
+
+- `DataStorage`:
+  - Fix loading of `Map` value from IndexDB.
+    The returned `Map` is not cast to the same stored `Map<String,Object?>` type.
+
 ## 2.1.5
 
 - `DataStorage`:

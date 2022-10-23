@@ -268,9 +268,14 @@ class _DBSimpleStorage extends _SimpleStorage {
     var transaction = db.transaction(objStore, 'readonly');
     var objectStore = transaction.objectStore(objStore);
 
-    var obj = await (objectStore
-        .getObject(key)
-        .then((value) => value as Map<String, dynamic>?));
+    var obj = await (objectStore.getObject(key).then((value) {
+      if (value is! Map) return null;
+      var map = value is Map<String, Object?>
+          ? value
+          : value.map((key, value) => MapEntry<String, Object?>('$key', value));
+      return map;
+    }));
+
     if (obj == null) return null;
 
     var value = obj['v'];
