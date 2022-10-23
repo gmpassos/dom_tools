@@ -1,4 +1,11 @@
-# 2.1.4
+## 2.1.5
+
+- `DataStorage`:
+  - Added support to store JSON compatible values. 
+  - Improve performance.
+- async_extension: ^1.0.12
+
+## 2.1.4
 
 - test: ^1.21.6
 - dependency_validator: ^3.2.2

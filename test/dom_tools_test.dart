@@ -51,5 +51,55 @@ void main() {
       expect(mouseEvent.altKey, isFalse);
       expect(mouseEvent.metaKey, isFalse);
     });
+
+    test('DataStorage[session]', () async {
+      var dataStorage = DataStorage('t1', DataStorageType.session);
+
+      var state1 = dataStorage.createState("s1");
+
+      expect(state1.isLoaded, isTrue);
+
+      expect(state1.get("a"), isNull);
+      expect(await state1.getAsync("a"), isNull);
+
+      state1.set('a', 123);
+
+      expect(await state1.getAsync("a"), equals(123));
+      expect(state1.get("a"), equals(123));
+
+      print('state1.a: ${state1.get("a")}');
+
+      state1.set('b', {'x': 10, 'y': 'Y'});
+
+      expect(await state1.getAsync("b"), equals({'x': 10, 'y': 'Y'}));
+      expect(state1.get("b"), equals({'x': 10, 'y': 'Y'}));
+    });
+
+    test('DataStorage[persistent]', () async {
+      var dataStorage = DataStorage('t1', DataStorageType.persistent);
+
+      var state1 = dataStorage.createState("s1");
+
+      expect(state1.isLoaded, isFalse);
+
+      await state1.waitLoaded();
+
+      expect(state1.isLoaded, isTrue);
+
+      expect(state1.get("a"), isNull);
+      expect(await state1.getAsync("a"), isNull);
+
+      state1.set('a', 123);
+
+      expect(await state1.getAsync("a"), equals(123));
+      expect(state1.get("a"), equals(123));
+
+      print('state1.a: ${state1.get("a")}');
+
+      state1.set('b', {'x': 10, 'y': 'Y'});
+
+      expect(await state1.getAsync("b"), equals({'x': 10, 'y': 'Y'}));
+      expect(state1.get("b"), equals({'x': 10, 'y': 'Y'}));
+    });
   });
 }

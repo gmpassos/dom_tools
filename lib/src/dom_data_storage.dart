@@ -1,92 +1,96 @@
-import 'dart:async';
+import 'dart:convert';
 import 'dart:html';
 import 'dart:indexed_db';
 
+import 'package:async_extension/async_extension.dart';
 import 'package:json_object_mapper/json_object_mapper.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
+void _consoleLog(Object? error) {
+  window.console.error(error);
+}
+
+void _consoleError(Object? error) {
+  window.console.error(error);
+}
+
 abstract class _SimpleStorage {
-  bool isLoaded();
+  bool get isLoaded;
 
-  Future<List<String>> listKeys(String prefix);
+  FutureOr<List<String>> listKeys(String prefix);
 
-  Future<String?> get(String key);
+  FutureOr<Object?> get(String key);
 
-  Future<bool> set(String key, String? value);
+  FutureOr<bool> set(String key, Object? value);
 
-  Future<bool> remove(String key);
+  FutureOr<bool> remove(String key);
 
-  Future<List<String>> listStorageKeys(String prefix) async {
-    var keys1 = await listKeys(prefix);
-    var keys2 = keys1
-        .where((k) => k.endsWith('/time'))
-        .map((k) => k.substring(0, k.length - 5));
-    // ignore: omit_local_variable_types
-    List<String> list = List.from(keys2).cast();
-    return Future.value(list);
+  FutureOr<List<String>> listStorageKeys(String prefix) =>
+      listKeys(prefix).resolveMapped((allKeys) {
+        var keys = allKeys
+            .where((k) => k.endsWith('/time'))
+            .map((k) => k.substring(0, k.length - 5))
+            .toList();
+        return keys;
+      });
+
+  FutureOr<bool> setStorageValue(String key, StorageValue value) {
+    var r1 = set('$key/time', value.storeTime);
+    var r2 = set('$key/value', value.value);
+    return r1.resolveBoth(r2, (ok1, ok2) => ok1 && ok2);
   }
 
-  Future<bool> setStorageValue(String key, StorageValue value) {
-    set('$key/time', value.storeTime.toString());
-    set('$key/value', value.value);
-    return Future.value(true);
+  FutureOr<StorageValue?> getStorageValue(String key) {
+    var timeValue = get('$key/time');
+    if (timeValue == null) return null;
+
+    var value = get('$key/value');
+
+    return timeValue.resolveBoth(value, (timeValue, value) {
+      if (timeValue == null) return null;
+
+      var time = timeValue is int ? timeValue : int.parse('$timeValue'.trim());
+
+      var storageValue = StorageValue.stored(time, value);
+      return storageValue;
+    });
   }
 
-  Future<StorageValue?> getStorageValue(String key) async {
-    var timeStr = await get('$key/time');
-    if (timeStr == null) return null;
-
-    var value = await get('$key/value');
-
-    var time = int.parse(timeStr);
-
-    var storageValue = StorageValue.stored(time, value);
-    return storageValue;
-  }
-
-  Future<bool> removeStorageValue(String key) {
-    remove('$key/time');
-    remove('$key/value');
-    return Future.value(true);
+  FutureOr<bool> removeStorageValue(String key) {
+    var r1 = remove('$key/time');
+    var r2 = remove('$key/value');
+    return r1.resolveBoth(r2, (ok1, ok2) => ok1 || ok2);
   }
 }
 
 class _SessionSimpleStorage extends _SimpleStorage {
   @override
-  bool isLoaded() {
+  bool get isLoaded => true;
+
+  @override
+  Object? get(String key) {
+    var valueJson = window.sessionStorage[key];
+    var value = valueJson == null ? null : json.decode(valueJson);
+    return value;
+  }
+
+  @override
+  List<String> listKeys(String prefix) {
+    var keys =
+        window.sessionStorage.keys.where((k) => k.startsWith(prefix)).toList();
+    return keys;
+  }
+
+  @override
+  bool remove(String key) {
+    var prev = window.sessionStorage.remove(key);
+    return prev != null;
+  }
+
+  @override
+  bool set(String key, Object? value) {
+    window.sessionStorage[key] = json.encode(value);
     return true;
-  }
-
-  @override
-  Future<String> get(String key) {
-    var value = window.sessionStorage[key];
-    return Future.value(value);
-  }
-
-  @override
-  Future<List<String>> listKeys(String prefix) {
-    // ignore: omit_local_variable_types
-    List<String> keys = [];
-
-    for (var key in window.sessionStorage.keys) {
-      if (key.startsWith(prefix)) {
-        keys.add(key);
-      }
-    }
-
-    return Future.value(keys);
-  }
-
-  @override
-  Future<bool> remove(String key) {
-    window.sessionStorage.remove(key);
-    return Future.value(true);
-  }
-
-  @override
-  Future<bool> set(String key, String? value) {
-    window.sessionStorage[key] = value!;
-    return Future.value(true);
   }
 }
 
@@ -109,13 +113,13 @@ class _PersistentSimpleStorage extends _SimpleStorage {
 
       db.onLoad.listen((ok) {
         if (ok) {
-          print('Loaded _DBSimpleStorage: $db');
+          _consoleLog('-- Loaded _DBSimpleStorage: $db');
           _onLoadStorage(db);
           completer.complete(db);
         } else {
           var localStorage = _LocalSimpleStorage();
-          print(
-              'Error loading _DBSimpleStorage: $db > Using _LocalSimpleStorage: $localStorage');
+          _consoleLog(
+              '[WARN] Error loading _DBSimpleStorage: $db > Using _LocalSimpleStorage: $localStorage');
           _onLoadStorage(localStorage);
           completer.complete(localStorage);
         }
@@ -136,50 +140,43 @@ class _PersistentSimpleStorage extends _SimpleStorage {
     onLoad.add(true);
   }
 
-  Future<_SimpleStorage>? _getStorage() {
-    if (_storage != null) return Future.value(_storage);
-    return _storageLoader;
+  FutureOr<_SimpleStorage> _getStorage() {
+    var storage = _storage;
+    if (storage != null) return storage;
+    return _storageLoader!;
   }
 
   @override
-  bool isLoaded() {
-    return _storage != null && _storage!.isLoaded();
+  bool get isLoaded {
+    var storage = _storage;
+    return storage != null && storage.isLoaded;
   }
 
   @override
-  Future<String?> get(String key) async {
-    var storage = await _getStorage()!;
-    return storage.get(key);
-  }
+  FutureOr<Object?> get(String key) =>
+      _getStorage().resolveMapped((storage) => storage.get(key));
 
   @override
-  Future<List<String>> listKeys(String prefix) async {
-    var storage = await _getStorage()!;
-    return storage.listKeys(prefix);
-  }
+  FutureOr<List<String>> listKeys(String prefix) =>
+      _getStorage().resolveMapped((storage) => storage.listKeys(prefix));
 
   @override
-  Future<bool> remove(String key) async {
-    var storage = await _getStorage()!;
-    return storage.remove(key);
-  }
+  FutureOr<bool> remove(String key) =>
+      _getStorage().resolveMapped((storage) => storage.remove(key));
 
   @override
-  Future<bool> set(String key, String? value) async {
-    var storage = await _getStorage()!;
-    return storage.set(key, value);
-  }
+  FutureOr<bool> set(String key, Object? value) =>
+      _getStorage().resolveMapped((storage) => storage.set(key, value));
 }
 
 class _LocalSimpleStorage extends _SimpleStorage {
   @override
-  bool isLoaded() {
-    return true;
-  }
+  bool get isLoaded => true;
 
   @override
   Future<String> get(String key) {
-    var value = window.localStorage[key];
+    var valueJson = window.localStorage[key];
+    var value = valueJson == null ? null : json.decode(valueJson);
     return Future.value(value);
   }
 
@@ -204,8 +201,8 @@ class _LocalSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  Future<bool> set(String key, String? value) {
-    window.localStorage[key] = value!;
+  Future<bool> set(String key, Object? value) {
+    window.localStorage[key] = json.encode(value);
     return Future.value(true);
   }
 }
@@ -217,7 +214,7 @@ class _DBSimpleStorage extends _SimpleStorage {
     return IdbFactory.supported;
   }
 
-  Future<Database>? _open;
+  late final Future<Database> _open;
 
   Database? _db;
 
@@ -228,7 +225,7 @@ class _DBSimpleStorage extends _SimpleStorage {
   void _openVersioned() {
     _open = window.indexedDB!
         .open(indexedDbName, version: 1, onUpgradeNeeded: _initializeDatabase);
-    _open!.then(_setDB).catchError(_onOpenVersionedError);
+    _open.then(_setDB).catchError(_onOpenVersionedError);
   }
 
   bool _loadError = false;
@@ -238,23 +235,23 @@ class _DBSimpleStorage extends _SimpleStorage {
   final EventStream<bool> onLoad = EventStream();
 
   void _onOpenVersionedError(dynamic error) {
-    print('indexedDB open versioned error: $error > $isSupported');
+    _consoleError(
+        '-- indexedDB open versioned error: $error (isSupported: $isSupported)');
     _loadError = true;
     onLoad.add(false);
   }
 
   @override
-  bool isLoaded() {
-    return _db != null;
-  }
+  bool get isLoaded => _db != null;
 
   void _setDB(Database db) {
     _db = db;
     onLoad.add(true);
   }
 
-  Future<Database>? _getDB() {
-    if (_db != null) return Future.value(_db);
+  FutureOr<Database> _getDB() {
+    var db = _db;
+    if (db != null) return db;
     return _open;
   }
 
@@ -266,61 +263,56 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  Future<String?> get(String key) async {
-    var db = await _getDB()!;
+  FutureOr<Object?> get(String key) async {
+    var db = await _getDB();
     var transaction = db.transaction(objStore, 'readonly');
     var objectStore = transaction.objectStore(objStore);
-    var obj =
-        await (objectStore.getObject(key) as FutureOr<Map<dynamic, dynamic>?>);
+
+    var obj = await (objectStore
+        .getObject(key)
+        .then((value) => value as Map<String, dynamic>?));
     if (obj == null) return null;
-    String? value = obj['v'];
+
+    var value = obj['v'];
     return value;
   }
 
   @override
   Future<List<String>> listKeys(String prefix) async {
-    var db = await _getDB()!;
+    var db = await _getDB();
     var transaction = db.transaction(objStore, 'readonly');
     var objectStore = transaction.objectStore(objStore);
 
-    // ignore: omit_local_variable_types
-    List<String> keys = [];
+    var cursors = objectStore.openCursor(autoAdvance: true);
 
-    var cursors = objectStore.openCursor(autoAdvance: true).asBroadcastStream();
-    cursors.listen((cursor) {
-      var k = cursor.key as String;
-      if (k.startsWith(prefix)) {
-        keys.add(k);
-      }
-    });
+    var keys = await cursors
+        .where((cursor) {
+          var k = cursor.key as String;
+          return k.startsWith(prefix);
+        })
+        .map((cursor) => cursor.key as String)
+        .toList();
 
-    return cursors.length.then((_) {
-      return keys;
-    });
+    return keys;
   }
 
   @override
   Future<bool> remove(String key) async {
-    var db = await _getDB()!;
+    var db = await _getDB();
     var transaction = db.transaction(objStore, 'readwrite');
     var objectStore = transaction.objectStore(objStore);
-    return objectStore.delete(key).then((_) {
-      return true;
-    });
+    return objectStore.delete(key).then((_) => true);
   }
 
   @override
-  Future<bool> set(String key, String? value) async {
-    var db = await _getDB()!;
+  Future<bool> set(String key, Object? value) async {
+    var db = await _getDB();
     var transaction = db.transaction(objStore, 'readwrite');
     var objectStore = transaction.objectStore(objStore);
 
-    // ignore: omit_local_variable_types
-    Map<String, String?> obj = {'k': key, 'v': value};
+    var obj = <String, Object?>{'k': key, 'v': value};
 
-    return objectStore.put(obj).then((dbKey) {
-      return dbKey != null;
-    });
+    return objectStore.put(obj).then((dbKey) => dbKey != null);
   }
 }
 
@@ -407,32 +399,37 @@ class DataStorage {
     return _states[name] != null;
   }
 
-  Future<StorageValue?> _getStorageValue(String fullKey) async {
+  FutureOr<StorageValue?> _getStorageValue(String fullKey) async {
     try {
-      var storageValue = await _simpleStorage.getStorageValue(fullKey);
+      var storageValue = _simpleStorage.getStorageValue(fullKey);
       return storageValue;
     } catch (e, s) {
-      window.console
-          .error('DataStorage[$id]> Error loading key: $fullKey >> $e');
-      window.console.error(s);
+      _consoleError('DataStorage[$id]> Error loading key: $fullKey >> $e');
+      _consoleError(s);
       return null;
     }
   }
 
-  Future<bool> _loadState(State state) async {
+  FutureOr<bool> _loadState(State state) {
     var storageRootKey = state.storageRootKey;
 
-    var keys = await _simpleStorage.listStorageKeys(storageRootKey);
+    return _simpleStorage.listStorageKeys(storageRootKey).resolveMapped((keys) {
+      var keysAndValuesAsync = keys
+          .map((k) => MapEntry(k, _getStorageValue(k)))
+          .toMapFromEntries()
+          .resolveAllValues();
 
-    for (var storageKey in keys) {
-      var storageValue = await _getStorageValue(storageKey);
-      if (storageValue == null) continue;
-
-      var key = storageKey.substring(storageRootKey.length);
-      state._setStorageValue(key, storageValue, false);
-    }
-
-    return true;
+      return keysAndValuesAsync.resolveMapped((keysAndValues) {
+        for (var e in keysAndValues.entries) {
+          var value = e.value;
+          if (value != null) {
+            var key = e.key.substring(storageRootKey.length);
+            state._setStorageValue(key, value, false);
+          }
+        }
+        return true;
+      });
+    });
   }
 
   void _onStateChange(State state, String key, dynamic value) {
@@ -453,7 +450,7 @@ class StorageValue extends JSONObject {
   final int storeTime;
 
   /// The stored value.
-  String? value;
+  Object? value;
 
   @override
   List<String> getObjectFields() {
@@ -505,18 +502,36 @@ class State {
   bool _loaded = false;
 
   /// Returns [true] if this state is already loaded.
+  /// See [onLoad] and [waitLoaded].
   bool get isLoaded => _loaded;
 
+  Future<bool>? _waitingLoad;
+
+  /// Waits for this [State] load.
+  /// See [onLoad] and [isLoaded].
+  FutureOr<bool> waitLoaded() {
+    if (isLoaded) return true;
+
+    var waitingLoad = _waitingLoad ??= onLoad.first.then((ok) {
+      _waitingLoad = null;
+      return ok;
+    });
+
+    return waitingLoad;
+  }
+
+  /// Fired when this [State] is loaded.
+  /// See [waitLoaded] and [isLoaded].
   final EventStream<bool> onLoad = EventStream();
 
   void _load() {
-    storage._loadState(this).then((loaded) {
+    storage._loadState(this).resolveMapped((loaded) {
       _loaded = loaded;
 
       try {
         onLoad.add(loaded);
       } catch (e) {
-        print(e);
+        _consoleError(e);
       }
     });
   }
@@ -529,6 +544,14 @@ class State {
     return this;
   }
 
+  FutureOr<R> _callLoaded<R>(FutureOr<R> Function() call) {
+    if (isLoaded) {
+      return call();
+    } else {
+      return waitLoaded().resolveMapped((val) => call());
+    }
+  }
+
   String get storageRootKey => '${storage.id}/$name/';
 
   /// Returns the internal storage key for [key].
@@ -536,7 +559,7 @@ class State {
     return storageRootKey + key;
   }
 
-  final Map<String, dynamic> _properties = {};
+  final Map<String, Object?> _properties = {};
 
   /// Returns the storage keys in this state.
   List<String> get keys => List.from(_properties.keys);
@@ -561,17 +584,17 @@ class State {
   }
 
   /// Sets [key] to [value].
-  dynamic set(String key, dynamic value) {
+  V? set<V>(String key, V? value) {
     var prev = _properties[key];
     _properties[key] = value;
 
     _notifyChange(StateOperation.set, key, value);
 
-    return prev;
+    return prev as V?;
   }
 
   /// Sets [key] to [value] if not stored yet.
-  bool setIfAbsent(String key, dynamic value) {
+  bool setIfAbsent<V>(String key, V? value) {
     if (!_properties.containsKey(key)) {
       _properties[key] = value;
       _notifyChange(StateOperation.set, key, value);
@@ -582,57 +605,51 @@ class State {
   }
 
   /// Gets the value of [key] in async mode.
-  Future getAsync(String key) async {
-    if (isLoaded) return get(key);
-    return onLoad.listen((_) {
-      get(key);
-    });
+  Future<V?> getAsync<V>(String key) async {
+    if (isLoaded) return get<V>(key);
+    return _callLoaded<V?>(() => get<V>(key));
   }
 
   /// Gets [key] value. If absent returns [defaultValue].
-  Future getOrDefaultAsync(String key, dynamic defaultValue) async {
-    if (isLoaded) return getOrDefault(key, defaultValue);
-    return onLoad.listen((_) {
-      getOrDefault(key, defaultValue);
-    });
+  Future<V?> getOrDefaultAsync<V>(String key, dynamic defaultValue) async {
+    if (isLoaded) return getOrDefault<V>(key, defaultValue);
+    return _callLoaded<V?>(() => getOrDefault<V>(key, defaultValue));
   }
 
   /// Gets [key] value. If absent sets the key to [defaultValue] and returns it.
-  Future getOrSetDefaultAsync(String key, dynamic defaultValue) async {
-    if (isLoaded) return getOrSetDefault(key, defaultValue);
-    return onLoad.listen((_) {
-      getOrSetDefault(key, defaultValue);
-    });
+  Future<V?> getOrSetDefaultAsync<V>(String key, dynamic defaultValue) async {
+    if (isLoaded) return getOrSetDefault<V>(key, defaultValue);
+    return _callLoaded<V?>(() => getOrSetDefault<V>(key, defaultValue));
   }
 
   /// Gets [key] value.
   ///
   /// Note, this [State] should be already loaded [isLoaded].
-  dynamic get(String key) {
-    return _properties[key];
+  V? get<V>(String key) {
+    return _properties[key] as V?;
   }
 
   /// Gets [key] value or returns [defaultValue].
   ///
   /// Note, this [State] should be already loaded [isLoaded].
-  dynamic getOrDefault(String key, dynamic defaultValue) {
+  V? getOrDefault<V>(String key, V? defaultValue) {
     if (!_properties.containsKey(key)) {
       return defaultValue;
     } else {
-      return _properties[key];
+      return _properties[key] as V?;
     }
   }
 
   /// Gets [key] value. If absent sets the key value to [defaultValue] and returns it.
   ///
   /// Note, this [State] should be already loaded [isLoaded].
-  dynamic getOrSetDefault(String key, dynamic defaultValue) {
+  V? getOrSetDefault<V>(String key, V? defaultValue) {
     if (!_properties.containsKey(key)) {
       _properties[key] = defaultValue;
       _notifyChange(StateOperation.set, key, defaultValue);
       return defaultValue;
     } else {
-      return _properties[key];
+      return _properties[key] as V?;
     }
   }
 
@@ -640,17 +657,17 @@ class State {
     if (op == StateOperation.set) {
       try {
         storage._onStateChange(this, key, value);
-      } catch (exception, stackTrace) {
-        print(exception);
-        print(stackTrace);
+      } catch (e, s) {
+        _consoleError(e);
+        _consoleError(s);
       }
     }
 
     try {
       _fireEvent(op, this, key, value);
-    } catch (exception, stackTrace) {
-      print(exception);
-      print(stackTrace);
+    } catch (e, s) {
+      _consoleError(e);
+      _consoleError(s);
     }
   }
 
@@ -708,9 +725,9 @@ class State {
       for (var listener in eventListeners) {
         try {
           listener(op, state, key, value);
-        } catch (exception, stackTrace) {
-          print(exception);
-          print(stackTrace);
+        } catch (e, s) {
+          _consoleError(e);
+          _consoleError(s);
         }
       }
     }
@@ -721,11 +738,16 @@ class State {
       for (var listener in keyListeners) {
         try {
           listener(value);
-        } catch (exception, stackTrace) {
-          print(exception);
-          print(stackTrace);
+        } catch (e, s) {
+          _consoleError(e);
+          _consoleError(s);
         }
       }
     }
   }
+}
+
+extension IterableMapEntryExtension<K, V> on Iterable<MapEntry<K, V>> {
+  /// Converts this [Iterable] of [MapEntry] to a [Map].
+  Map<K, V> toMapFromEntries() => Map<K, V>.fromEntries(this);
 }
