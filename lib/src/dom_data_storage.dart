@@ -747,7 +747,6 @@ class State {
   }
 }
 
-extension IterableMapEntryExtension<K, V> on Iterable<MapEntry<K, V>> {
-  /// Converts this [Iterable] of [MapEntry] to a [Map].
+extension _IterableMapEntryExtension<K, V> on Iterable<MapEntry<K, V>> {
   Map<K, V> toMapFromEntries() => Map<K, V>.fromEntries(this);
 }
