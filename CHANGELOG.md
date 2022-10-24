@@ -1,3 +1,10 @@
+## 2.1.7
+
+- `DataStorage`:
+  - Adjust `_consoleLog`.
+- collection: ^1.17.0
+- lints: ^2.0.1
+
 ## 2.1.6
 
 - `DataStorage`:

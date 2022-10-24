@@ -7,7 +7,7 @@ import 'package:json_object_mapper/json_object_mapper.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 void _consoleLog(Object? error) {
-  window.console.error(error);
+  window.console.log(error);
 }
 
 void _consoleError(Object? error) {

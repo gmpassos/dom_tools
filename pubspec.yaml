@@ -1,6 +1,6 @@
 name: dom_tools
 description: DOM rich elements and tools for CSS, JavaScript, Element Tracking, DOM Manipulation, Storage, Dialog and more.
-version: 2.1.6
+version: 2.1.7
 homepage: https://github.com/gmpassos/dom_tools
 
 environment:
@@ -12,11 +12,11 @@ dependencies:
   swiss_knife: ^3.1.0
   markdown: ^5.0.0
   enum_to_string: ^2.0.1
-  collection: ^1.16.0
+  collection: ^1.17.0
   async_extension: ^1.0.12
 
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^2.0.1
   test: ^1.21.6
   dependency_validator: ^3.2.2
 
