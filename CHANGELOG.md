@@ -1,3 +1,19 @@
+## 2.1.8
+
+- Added `DomElementExtension`:
+  - `querySelectorAllTyped`, `querySelectorTyped`.
+  - `selectAnchorElements`, `selectAnchorLinks`, `selectAnchorLinksTargets`.
+  - `selectDivElement`, `selectSpanElement`, `selectImageElement`, `selectButtonElements`.
+  - `selectInputElement`:
+    - `selectCheckboxInputElement`, `selectRadioButtonInputElement`.
+    - `selectEmailInputElement`, `selectNumberInputElement`, `selectPasswordInputElement`.
+    - `selectFileUploadInputElement`, `selectLocalDateTimeInputElement`, `selectButtonInputElement`.
+  - `selectTextAreaElement`. `selectSelectElement`.
+  - `selectTableElement`, `selectTableRowElement`, `selectTableCellElement`.
+- Added `IterableDomElementExtension`:.
+  - `addClass`, `removeClass`, `whithClass`, `whithClasses`, `withID`.
+- swiss_knife: ^3.1.2
+
 ## 2.1.7
 
 - `DataStorage`:

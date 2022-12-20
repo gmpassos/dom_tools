@@ -7,6 +7,7 @@ export 'src/dom_tools_base.dart';
 export 'src/dom_tools_css.dart';
 export 'src/dom_tools_dialog.dart';
 export 'src/dom_tools_document.dart';
+export 'src/dom_tools_extension.dart';
 export 'src/dom_tools_file.dart';
 export 'src/dom_tools_js.dart';
 export 'src/dom_tools_paint.dart';
