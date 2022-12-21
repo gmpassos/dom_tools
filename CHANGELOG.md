@@ -1,3 +1,9 @@
+## 2.1.9
+
+- intl: ^0.18.0
+- swiss_knife: ^3.1.3
+- test: ^1.22.1
+
 ## 2.1.8
 
 - Added `DomElementExtension`:
