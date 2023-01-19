@@ -103,6 +103,12 @@ extension DomElementExtension on Element {
   /// Selects the [TableCellElement] elements.
   List<TableCellElement> selectTableCellElement() =>
       querySelectorAllTyped<TableCellElement>('td');
+
+  bool get isDisplayNone => style.display == 'none';
+
+  bool get isVisibilityHidden => style.visibility == 'hidden';
+
+  bool get isInvisible => isDisplayNone || isVisibilityHidden || hidden;
 }
 
 extension IterableDomElementExtension<E extends Element> on Iterable<E> {

@@ -1,3 +1,9 @@
+## 2.1.10
+
+- `DomElementExtension`:
+  - Added `isDisplayNone`, `isVisibilityHidden` and `isInvisible`.
+- test: ^1.22.2
+
 ## 2.1.9
 
 - intl: ^0.18.0
