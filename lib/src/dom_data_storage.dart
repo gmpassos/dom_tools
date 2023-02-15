@@ -585,7 +585,7 @@ class State {
 
   /// Remove [key].
   dynamic remove(String key) {
-    return set(key, null);
+    return set<dynamic>(key, null);
   }
 
   /// Sets [key] to [value].
