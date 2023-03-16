@@ -17,6 +17,10 @@ void _consoleError(Object? error) {
 abstract class _SimpleStorage {
   bool get isLoaded;
 
+  FutureOr<bool> get isEmpty;
+
+  FutureOr<bool> get isNotEmpty;
+
   FutureOr<List<String>> listKeys(String prefix);
 
   FutureOr<Object?> get(String key);
@@ -66,6 +70,12 @@ abstract class _SimpleStorage {
 class _SessionSimpleStorage extends _SimpleStorage {
   @override
   bool get isLoaded => true;
+
+  @override
+  bool get isEmpty => window.sessionStorage.isEmpty;
+
+  @override
+  bool get isNotEmpty => !isEmpty;
 
   @override
   Object? get(String key) {
@@ -153,6 +163,14 @@ class _PersistentSimpleStorage extends _SimpleStorage {
   }
 
   @override
+  FutureOr<bool> get isEmpty =>
+      _getStorage().resolveMapped((storage) => storage.isEmpty);
+
+  @override
+  FutureOr<bool> get isNotEmpty =>
+      _getStorage().resolveMapped((storage) => storage.isNotEmpty);
+
+  @override
   FutureOr<Object?> get(String key) =>
       _getStorage().resolveMapped((storage) => storage.get(key));
 
@@ -174,16 +192,21 @@ class _LocalSimpleStorage extends _SimpleStorage {
   bool get isLoaded => true;
 
   @override
-  Future<String> get(String key) {
+  bool get isEmpty => window.localStorage.isEmpty;
+
+  @override
+  bool get isNotEmpty => !isEmpty;
+
+  @override
+  Object? get(String key) {
     var valueJson = window.localStorage[key];
     var value = valueJson == null ? null : json.decode(valueJson);
-    return Future.value(value);
+    return value;
   }
 
   @override
-  Future<List<String>> listKeys(String prefix) {
-    // ignore: omit_local_variable_types
-    List<String> keys = [];
+  List<String> listKeys(String prefix) {
+    var keys = <String>[];
 
     for (var key in window.localStorage.keys) {
       if (key.startsWith(prefix)) {
@@ -191,19 +214,19 @@ class _LocalSimpleStorage extends _SimpleStorage {
       }
     }
 
-    return Future.value(keys);
+    return keys;
   }
 
   @override
-  Future<bool> remove(String key) {
-    window.localStorage.remove(key);
-    return Future.value(true);
+  bool remove(String key) {
+    var prev = window.localStorage.remove(key);
+    return prev != null;
   }
 
   @override
-  Future<bool> set(String key, Object? value) {
+  bool set(String key, Object? value) {
     window.localStorage[key] = json.encode(value);
-    return Future.value(true);
+    return true;
   }
 }
 
@@ -223,10 +246,17 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   void _openVersioned() {
-    _open = window.indexedDB!
-        .open(indexedDbName, version: 1, onUpgradeNeeded: _initializeDatabase);
-    _open.then(_setDB).catchError(_onOpenVersionedError);
+    _indexedDBOpen()
+        .timeout(Duration(milliseconds: 500), onTimeout: () {
+          _consoleError('`window.indexedDB.open`> Timeout: retrying...');
+          return _indexedDBOpen();
+        })
+        .then(_setDB)
+        .catchError(_onOpenVersionedError);
   }
+
+  Future<Database> _indexedDBOpen() => _open = window.indexedDB!
+      .open(indexedDbName, version: 1, onUpgradeNeeded: _initializeDatabase);
 
   bool _loadError = false;
 
@@ -245,6 +275,7 @@ class _DBSimpleStorage extends _SimpleStorage {
   bool get isLoaded => _db != null;
 
   void _setDB(Database db) {
+    _consoleLog('`window.indexedDB.open`> OK');
     _db = db;
     onLoad.add(true);
   }
@@ -261,6 +292,28 @@ class _DBSimpleStorage extends _SimpleStorage {
     Database db = e.target.result;
     db.createObjectStore(objStore, keyPath: 'k', autoIncrement: false);
   }
+
+  @override
+  Future<bool> get isEmpty async {
+    var db = await _getDB();
+    var transaction = db.transaction(objStore, 'readonly');
+    var objectStore = transaction.objectStore(objStore);
+
+    var cursors = objectStore.openCursor(autoAdvance: true);
+
+    var empty = await cursors
+        .where((cursor) {
+          var k = cursor.key as String;
+          return k.isNotEmpty;
+        })
+        .map((cursor) => cursor.key as String)
+        .isEmpty;
+
+    return empty;
+  }
+
+  @override
+  FutureOr<bool> get isNotEmpty => isEmpty.resolveMapped((empty) => !empty);
 
   @override
   FutureOr<Object?> get(String key) async {

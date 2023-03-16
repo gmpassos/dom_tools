@@ -1,3 +1,13 @@
+## 2.1.12
+
+- `_SimpleStorage`:
+  - Added `isEmpty` and `isNotEmpty`.
+- `LocalSimpleStorage`:
+  - Fix `get` when not returning a `String`.
+- `DBSimpleStorage`:
+  - Add a timeout to `_indexedDBOpen` and then retry it. 
+- test: ^1.23.1
+
 ## 2.1.11
 
 - `State`:
