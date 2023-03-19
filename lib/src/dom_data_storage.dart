@@ -246,16 +246,44 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   void _openVersioned() {
-    _indexedDBOpen()
-        .timeout(Duration(milliseconds: 500), onTimeout: () {
-          _consoleError('`window.indexedDB.open`> Timeout: retrying...');
-          return _indexedDBOpen();
-        })
-        .then(_setDB)
-        .catchError(_onOpenVersionedError);
+    var completer = Completer<Database>();
+    _open = completer.future;
+
+    completer.future.then(_setDB, onError: _onOpenVersionedError);
+
+    _indexedDBOpen().then((db) {
+      if (db != null && !completer.isCompleted) {
+        completer.complete(db);
+      }
+      return db;
+    }, onError: (e, s) {
+      if (!completer.isCompleted) completer.completeError(e, s);
+      return null;
+    });
+
+    Future.delayed(Duration(milliseconds: 600), () {
+      if (!completer.isCompleted) {
+        _indexedDBOpen().then((db) {
+          if (db != null && !completer.isCompleted) {
+            completer.complete(db);
+          }
+          return db;
+        }, onError: (e, s) {
+          return null;
+        });
+      }
+    });
+
+    Future.delayed(Duration(seconds: 3), () {
+      if (!completer.isCompleted) {
+        var error = StateError(
+            "indexedDB open timeout (3s) error! (isSupported: $isSupported)");
+        completer.completeError(error);
+      }
+    });
   }
 
-  Future<Database> _indexedDBOpen() => _open = window.indexedDB!
+  Future<Database?> _indexedDBOpen() => window.indexedDB!
       .open(indexedDbName, version: 1, onUpgradeNeeded: _initializeDatabase);
 
   bool _loadError = false;

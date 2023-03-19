@@ -1,3 +1,7 @@
+## 2.1.13
+
+- `DBSimpleStorage._openVersioned`: improve error handling.
+
 ## 2.1.12
 
 - `_SimpleStorage`:
