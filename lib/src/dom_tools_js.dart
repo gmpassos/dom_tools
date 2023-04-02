@@ -214,8 +214,13 @@ void enableScrolling() {
   ''');
 }
 
-/// Disables zooming in browser.
+bool _disableZooming = false;
+
+/// Disables browser zooming.
 void disableZooming() {
+  if (_disableZooming) return;
+  _disableZooming = true;
+
   var scriptCode = '''
   
   if ( window.UIConsole == null ) {
@@ -256,4 +261,18 @@ void disableZooming() {
   ''';
 
   addJavaScriptCode(scriptCode);
+}
+
+bool _disableDoubleTapZoom = false;
+
+/// Disables browser double clicks/tap.
+/// - This calls [Event.preventDefault] for every double click/tap event.
+///   - This is useful to prevent double tap zooming.
+void disableDoubleClicks() {
+  if (_disableDoubleTapZoom) return;
+  _disableDoubleTapZoom = true;
+
+  document.addEventListener('dblclick', (event) {
+    event.preventDefault();
+  }, true);
 }

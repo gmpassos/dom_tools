@@ -1,3 +1,8 @@
+## 2.1.14
+
+- Added `disableDoubleClicks`.
+- swiss_knife: ^3.1.4
+
 ## 2.1.13
 
 - `DBSimpleStorage._openVersioned`: improve error handling.
