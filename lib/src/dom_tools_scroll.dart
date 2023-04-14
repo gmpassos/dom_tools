@@ -4,38 +4,87 @@ import 'dart:math';
 
 import 'dom_tools_base.dart';
 
-/// Scrolls viewport to the top with a delay.
-///
-/// [delayMs] Delay in milliseconds.
-void scrollToTopDelayed(int delayMs) {
+bool? _safariIOS;
+
+bool isSafariIOS() {
+  var safariIOS = _safariIOS;
+  if (safariIOS != null) return safariIOS;
+
+  var userAgent = window.navigator.userAgent.toLowerCase();
+
+  safariIOS = userAgent.contains('safari') &&
+      RegExp(r'ip(?:ad|od|hone)').hasMatch(userAgent);
+
+  _safariIOS = safariIOS;
+
+  return safariIOS;
+}
+
+void _callAsync(int delayMs, void Function() f) {
   if (delayMs < 1) {
-    scrollToTop();
+    f();
   } else {
-    Future.delayed(Duration(milliseconds: delayMs), scrollToTop);
+    Future.delayed(Duration(milliseconds: delayMs), f);
   }
 }
 
+/// Scrolls viewport to [x],[y].
+/// - If [smooth] is `true` will animate the scroll.
+/// - If [delayMs] >= 1 it will scroll after a [Future.delayed]. (value in milliseconds)
+void scrollTo(int x, int y, {bool smooth = true, int? delayMs}) {
+  if (delayMs != null && delayMs > 0) {
+    _callAsync(delayMs, () => scrollTo(x, y, smooth: smooth));
+    return;
+  }
+
+  if (smooth) {
+    window.scrollTo({'left': x, 'top': y, 'behavior': 'smooth'});
+  } else {
+    window.scrollTo(x, y);
+  }
+}
+
+/// Use [scrollToTop] instead.
+@Deprecated("Use `scrollToTop` with parameter `delayMs`.")
+void scrollToTopDelayed(int delayMs) {
+  scrollToTop(delayMs: delayMs);
+}
+
 /// Scrolls viewport to the top.
-void scrollToTop() {
-  window.scrollTo(window.scrollX, 0, {'behavior': 'smooth'});
+///
+/// - If [fixSafariIOS] is `true` it will detect Safari on iOS ([isSafariIOS])
+///   and will use [y] as `1` (not `0`) to avoid a bug with direct scroll to `0`,
+///   where `smooth` is ignored and the viewport position is vertically shifted
+///   even at `scrollX == 0`. Bug still present on iOS 16.4 (latest version on current date).
+/// - See [scrollTo].
+void scrollToTop(
+    {bool smooth = true, int y = 0, bool fixSafariIOS = false, int? delayMs}) {
+  if (fixSafariIOS && y == 0 && isSafariIOS()) {
+    y = 1;
+  }
+
+  scrollTo(window.scrollX, y, smooth: smooth, delayMs: delayMs);
 }
 
 /// Scrolls viewport to the bottom.
-void scrollToBottom() {
-  window.scrollTo(
-      window.scrollX, document.body!.scrollHeight, {'behavior': 'smooth'});
-}
+///
+/// - See [scrollTo].
+void scrollToBottom({bool smooth = true, int? delayMs}) =>
+    scrollTo(window.scrollX, document.body!.scrollHeight,
+        smooth: smooth, delayMs: delayMs);
 
 /// Scrolls viewport to the left border.
-void scrollToLeft() {
-  window.scrollTo(0, window.scrollY, {'behavior': 'smooth'});
-}
+///
+/// - See [scrollTo].
+void scrollToLeft({bool smooth = true, int? delayMs}) =>
+    scrollTo(0, window.scrollY, smooth: smooth, delayMs: delayMs);
 
 /// Scrolls viewport to the right border.
-void scrollToRight() {
-  window.scrollTo(
-      document.body!.scrollWidth, window.scrollY, {'behavior': 'smooth'});
-}
+///
+/// - See [scrollTo].
+void scrollToRight({bool smooth = true, int? delayMs}) =>
+    scrollTo(document.body!.scrollWidth, window.scrollY,
+        smooth: smooth, delayMs: delayMs);
 
 /// Scrolls the viewport to the [element].
 ///

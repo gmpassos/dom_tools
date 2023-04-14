@@ -1,3 +1,12 @@
+## 2.1.15
+
+- Added `isSafariIOS`.
+- Added `scrollTo` with `smooth` and `delayMs` parameters.
+- `scrollToTop`, `scrollToBottom`, `scrollToLeft`, `scrollToRight`:
+  - Added `smooth` and `delayMs` parameters.
+- Deprecated `scrollToTopDelayed` due new `delayMs` parameter in `scrollToTop`. 
+- swiss_knife: ^3.1.5
+
 ## 2.1.14
 
 - Added `disableDoubleClicks`.
