@@ -1,3 +1,13 @@
+## 2.1.16
+
+- `scrollToElement`:
+  - Added parameters `translateX` and `translateY`.
+- `isInViewport`:
+  - Added parameter `fully`.
+- Added `measureText`.
+- intl: ^0.18.1
+- test: ^1.24.1
+
 ## 2.1.15
 
 - Added `isSafariIOS`.

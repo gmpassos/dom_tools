@@ -799,7 +799,7 @@ String _toHTMLInnerHtmlSelect(SelectElement e) {
 typedef FunctionTest = bool Function();
 
 /// Returns [true] if [element] is visible in viewport.
-bool isInViewport(Element element) {
+bool isInViewport(Element element, {bool fully = false}) {
   var rect = element.getBoundingClientRect();
 
   var windowWidth =
@@ -807,10 +807,17 @@ bool isInViewport(Element element) {
   var windowHeight =
       min(window.innerHeight!, document.documentElement!.clientHeight);
 
-  return rect.bottom > 0 &&
-      rect.right > 0 &&
-      rect.left < windowWidth &&
-      rect.top < windowHeight;
+  if (fully) {
+    return rect.left >= 0 &&
+        rect.top >= 0 &&
+        (rect.left + rect.width) < windowWidth &&
+        (rect.right + rect.height) < windowWidth;
+  } else {
+    return rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.left < windowWidth &&
+        rect.top < windowHeight;
+  }
 }
 
 /// Returns [true] if device orientation is in Portrait mode.
@@ -1258,3 +1265,38 @@ bool get isLargeDeviceOrHigher {
 }
 
 bool get isExtraLargeDevice => deviceWidth! >= 1200;
+
+CanvasElement? _measureTextCanvas;
+
+Dimension? measureText(String text,
+    {required String fontFamily, required Object fontSize, bool bold = false}) {
+  final canvas = _measureTextCanvas ??= CanvasElement(width: 10, height: 10);
+  final ctx = canvas.context2D;
+
+  var fontSizeStr = fontSize is num ? '${fontSize}px' : fontSize.toString();
+
+  var font = '${bold ? 'bold ' : ''}$fontSizeStr $fontFamily';
+  ctx.font = font;
+
+  final m = ctx.measureText(text);
+
+  var actualBoundingBoxAscent =
+      m.actualBoundingBoxAscent ?? m.fontBoundingBoxAscent ?? 1;
+  var actualBoundingBoxDescent =
+      m.actualBoundingBoxDescent ?? m.fontBoundingBoxDescent ?? 1;
+
+  var fontBoundingBoxDescent =
+      m.fontBoundingBoxDescent ?? m.actualBoundingBoxDescent ?? 1;
+
+  var width = m.width ?? 1;
+
+  var height = m.emHeightAscent;
+  if (height != null) {
+    height += fontBoundingBoxDescent;
+  } else {
+    height = actualBoundingBoxAscent + actualBoundingBoxDescent;
+  }
+
+  var d = Dimension(width.round(), height.round());
+  return d;
+}

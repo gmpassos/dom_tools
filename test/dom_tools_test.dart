@@ -247,6 +247,17 @@ void main() {
         expect(sel[0].src, endsWith('foo.png'));
       }
     });
+
+    test('measureText', () {
+      var text = 'Hello World';
+
+      var m1 = measureText(text, fontFamily: 'Arial', fontSize: 16)!;
+
+      var m2 = measureText(text, fontFamily: 'Arial', fontSize: 12)!;
+
+      expect(m1.width > m2.width, isTrue);
+      expect(m1.height > m2.height, isTrue);
+    });
   });
 }
 
