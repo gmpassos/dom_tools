@@ -2,6 +2,7 @@
 
 - `isInViewport`:
   - Fix `fully` coordinates calculation. 
+- markdown: ^6.0.1
 
 ## 2.1.16
 
