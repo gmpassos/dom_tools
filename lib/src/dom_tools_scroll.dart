@@ -96,11 +96,21 @@ void scrollToElement(Element element,
     {bool centered = true,
     bool vertical = true,
     bool horizontal = true,
-    bool smooth = true}) {
+    bool smooth = true,
+    int? translateX,
+    int? translateY}) {
   var pos = getElementDocumentPosition(element);
 
   var x = pos.a;
   var y = pos.b;
+
+  if (translateX != null) {
+    x += translateX;
+  }
+
+  if (translateY != null) {
+    y += translateY;
+  }
 
   if (centered) {
     var w = window.innerWidth ?? 0;
