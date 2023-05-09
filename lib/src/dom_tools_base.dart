@@ -810,8 +810,8 @@ bool isInViewport(Element element, {bool fully = false}) {
   if (fully) {
     return rect.left >= 0 &&
         rect.top >= 0 &&
-        (rect.left + rect.width) < windowWidth &&
-        (rect.right + rect.height) < windowWidth;
+        rect.right < windowWidth &&
+        rect.bottom < windowHeight;
   } else {
     return rect.bottom > 0 &&
         rect.right > 0 &&

@@ -1,3 +1,8 @@
+## 2.1.17
+
+- `isInViewport`:
+  - Fix `fully` coordinates calculation. 
+
 ## 2.1.16
 
 - `scrollToElement`:
