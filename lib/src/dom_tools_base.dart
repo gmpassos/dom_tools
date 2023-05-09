@@ -1185,6 +1185,31 @@ bool replaceElement(Node n1, Node n2) {
   return false;
 }
 
+/// Returns the parent of [element] applying [validator] and [maxLevels].
+Element? getParentElement(Element element,
+    {bool Function(Element parent)? validator, int maxLevels = 1000}) {
+  if (maxLevels < 1) return null;
+
+  for (var level = 1; level <= maxLevels; ++level) {
+    var parent = element.parent;
+    if (parent != null) {
+      if (validator != null) {
+        if (validator(parent)) {
+          return parent;
+        }
+      } else {
+        return parent;
+      }
+
+      element = parent;
+    } else {
+      break;
+    }
+  }
+
+  return null;
+}
+
 /// A [TreeReferenceMap] for DOM Nodes.
 class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
   DOMTreeReferenceMap(Node root,

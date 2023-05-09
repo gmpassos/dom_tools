@@ -4,7 +4,7 @@
   - Added parameters `translateX` and `translateY`.
 - `isInViewport`:
   - Added parameter `fully`.
-- Added `measureText`.
+- Added `measureText` and `getParentElement`.
 - intl: ^0.18.1
 - test: ^1.24.1
 
