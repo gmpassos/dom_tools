@@ -1,4 +1,4 @@
-## 2.1.18
+## 2.2.0
 
 - `scrollToElement`:
   - Added optional parameter `scrollable`.
