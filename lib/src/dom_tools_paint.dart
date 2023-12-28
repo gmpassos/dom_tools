@@ -2048,12 +2048,12 @@ class CanvasImageViewer {
   String? _renderImageWithPerspectiveRenderSign;
 
   String _renderSign(Quality quality) {
-    var perspectiveValue = _perspective != null ? _perspective!.value : null;
-    var rectanglesValue = _rectangles != null ? _rectangles!.value : null;
-    var pointsValue = _points != null ? _points!.value : null;
-    var labelsValue = _labels != null ? _labels!.value : null;
-    var gridSizeValue = _gridSize != null ? _gridSize!.value : null;
-    var clipSizeValue = _clip != null ? _clip!.value : null;
+    var perspectiveValue = _perspective?.value;
+    var rectanglesValue = _rectangles?.value;
+    var pointsValue = _points?.value;
+    var labelsValue = _labels?.value;
+    var gridSizeValue = _gridSize?.value;
+    var clipSizeValue = _clip?.value;
     var selectedLabel = _selectedLabel;
 
     return '$quality > $perspectiveValue > $rectanglesValue > $pointsValue > $labelsValue > $clipSizeValue > $gridSizeValue > $selectedLabel';

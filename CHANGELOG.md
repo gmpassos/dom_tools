@@ -1,3 +1,16 @@
+## 2.1.18
+
+- `scrollToElement`:
+  - Added optional parameter `scrollable`.
+
+- sdk: '>=3.0.0 <4.0.0'
+- async_extension: ^1.2.5
+- collection: ^1.17.1
+- lints: ^3.0.0
+  - fix lints. 
+- test: ^1.24.9
+- dependency_validator: ^3.2.3
+
 ## 2.1.17
 
 - `isInViewport`:

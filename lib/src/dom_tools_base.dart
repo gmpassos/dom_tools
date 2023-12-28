@@ -1212,16 +1212,11 @@ Element? getParentElement(Element element,
 
 /// A [TreeReferenceMap] for DOM Nodes.
 class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
-  DOMTreeReferenceMap(Node root,
-      {bool autoPurge = false,
-      bool keepPurgedKeys = false,
-      Duration? purgedEntriesTimeout,
-      int? maxPurgedEntries})
-      : super(root,
-            autoPurge: autoPurge,
-            keepPurgedKeys: keepPurgedKeys,
-            purgedEntriesTimeout: purgedEntriesTimeout,
-            maxPurgedEntries: maxPurgedEntries);
+  DOMTreeReferenceMap(super.root,
+      {super.autoPurge,
+      super.keepPurgedKeys,
+      super.purgedEntriesTimeout,
+      super.maxPurgedEntries});
 
   @override
   bool isInTree(Node? key) => key != null && root.contains(key);

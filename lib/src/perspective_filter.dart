@@ -355,16 +355,15 @@ FilterResult? applyPerspective(
 class ImagePerspectiveFilterCache extends ImageScaledCache {
   final int _maxPerspectiveCacheEntries;
 
-  ImagePerspectiveFilterCache(CanvasImageSource image,
-      [int? width,
-      int? height,
-      int? maxScaleCacheEntries,
+  ImagePerspectiveFilterCache(super.image,
+      [super.width,
+      super.height,
+      super.maxScaleCacheEntries,
       int? maxPerspectiveCacheEntries])
       : _maxPerspectiveCacheEntries =
             maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0
                 ? maxPerspectiveCacheEntries
-                : 2,
-        super(image, width, height, maxScaleCacheEntries);
+                : 2;
 
   int? get maxPerspectiveCacheEntries => _maxPerspectiveCacheEntries;
 

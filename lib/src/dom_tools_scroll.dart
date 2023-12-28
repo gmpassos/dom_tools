@@ -91,14 +91,19 @@ void scrollToRight({bool smooth = true, int? delayMs}) =>
 /// - If `centered` is true, tries to center the element in the viewport.
 /// - If `vertical` is true only does a vertical scroll.
 /// - If `horizontal` is true only does a horizontal scroll.
-/// - If `smooth` is true does a smooth scroll animation .
-void scrollToElement(Element element,
-    {bool centered = true,
-    bool vertical = true,
-    bool horizontal = true,
-    bool smooth = true,
-    int? translateX,
-    int? translateY}) {
+/// - If `smooth` is true does a smooth scroll animation.
+/// - [scrollable] is the element to scroll. If `null` it will be the [window] or the [body],
+///   identifying which one is scrolled.
+void scrollToElement(
+  Element element, {
+  bool centered = true,
+  bool vertical = true,
+  bool horizontal = true,
+  bool smooth = true,
+  int? translateX,
+  int? translateY,
+  Object? scrollable,
+}) {
   var pos = getElementDocumentPosition(element);
 
   var x = pos.a;
@@ -120,11 +125,36 @@ void scrollToElement(Element element,
     y = max(0, y - (h ~/ 2));
   }
 
-  window.scrollTo({
-    if (horizontal) 'left': x,
-    if (vertical) 'top': y,
-    if (smooth) 'behavior': 'smooth',
-  });
+  if (scrollable is! Window && scrollable is! Element) {
+    scrollable = null;
+  }
+
+  if (scrollable == null) {
+    final body = document.body!;
+
+    final windowScrolled = window.scrollY != 0 || window.scrollX != 0;
+    final bodyScrolled = body.scrollTop != 0 || body.scrollLeft != 0;
+
+    if (bodyScrolled && !windowScrolled) {
+      scrollable = body;
+    } else {
+      scrollable = window;
+    }
+  }
+
+  if (scrollable is Window) {
+    scrollable.scrollTo({
+      if (horizontal) 'left': x,
+      if (vertical) 'top': y,
+      if (smooth) 'behavior': 'smooth',
+    });
+  } else if (scrollable is Element) {
+    scrollable.scrollTo({
+      if (horizontal) 'left': x,
+      if (vertical) 'top': y,
+      if (smooth) 'behavior': 'smooth',
+    });
+  }
 }
 
 /// Blocks a scroll event in the vertical direction that traverses the [element].
