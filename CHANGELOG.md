@@ -1,3 +1,8 @@
+## 2.2.1
+
+- Improve `scrollTo` and `scrollToElement`.
+- swiss_knife: ^3.1.6
+
 ## 2.2.0
 
 - `scrollToElement`:

@@ -31,17 +31,52 @@ void _callAsync(int delayMs, void Function() f) {
 /// Scrolls viewport to [x],[y].
 /// - If [smooth] is `true` will animate the scroll.
 /// - If [delayMs] >= 1 it will scroll after a [Future.delayed]. (value in milliseconds)
-void scrollTo(int x, int y, {bool smooth = true, int? delayMs}) {
+/// - [scrollable] is the element to scroll. If `null` it will be the [window] or the [body],
+///   identifying which one is scrolled.
+void scrollTo(num? x, num? y,
+    {bool smooth = true, int? delayMs, Object? scrollable}) {
   if (delayMs != null && delayMs > 0) {
-    _callAsync(delayMs, () => scrollTo(x, y, smooth: smooth));
+    _callAsync(
+        delayMs, () => scrollTo(x, y, smooth: smooth, scrollable: scrollable));
     return;
   }
 
-  if (smooth) {
-    window.scrollTo({'left': x, 'top': y, 'behavior': 'smooth'});
+  scrollable = _resolveScrollable(scrollable);
+
+  final params = {
+    if (x != null) 'left': x.toInt(),
+    if (y != null) 'top': y.toInt(),
+    if (smooth) 'behavior': 'smooth',
+  };
+
+  if (scrollable is Window) {
+    scrollable.scrollTo(params);
+  } else if (scrollable is Element) {
+    scrollable.scrollTo(params);
   } else {
-    window.scrollTo(x, y);
+    window.scrollTo(params);
   }
+}
+
+Object? _resolveScrollable(Object? scrollable) {
+  if (scrollable is! Window && scrollable is! Element) {
+    scrollable = null;
+  }
+
+  if (scrollable == null) {
+    final body = document.body!;
+
+    final windowScrolled = window.scrollY != 0 || window.scrollX != 0;
+    final bodyScrolled = body.scrollTop != 0 || body.scrollLeft != 0;
+
+    if (bodyScrolled && !windowScrolled) {
+      scrollable = body;
+    } else {
+      scrollable = window;
+    }
+  }
+
+  return scrollable;
 }
 
 /// Use [scrollToTop] instead.
@@ -125,36 +160,12 @@ void scrollToElement(
     y = max(0, y - (h ~/ 2));
   }
 
-  if (scrollable is! Window && scrollable is! Element) {
-    scrollable = null;
-  }
-
-  if (scrollable == null) {
-    final body = document.body!;
-
-    final windowScrolled = window.scrollY != 0 || window.scrollX != 0;
-    final bodyScrolled = body.scrollTop != 0 || body.scrollLeft != 0;
-
-    if (bodyScrolled && !windowScrolled) {
-      scrollable = body;
-    } else {
-      scrollable = window;
-    }
-  }
-
-  if (scrollable is Window) {
-    scrollable.scrollTo({
-      if (horizontal) 'left': x,
-      if (vertical) 'top': y,
-      if (smooth) 'behavior': 'smooth',
-    });
-  } else if (scrollable is Element) {
-    scrollable.scrollTo({
-      if (horizontal) 'left': x,
-      if (vertical) 'top': y,
-      if (smooth) 'behavior': 'smooth',
-    });
-  }
+  scrollTo(
+    horizontal ? x : null,
+    vertical ? y : null,
+    smooth: smooth,
+    scrollable: scrollable,
+  );
 }
 
 /// Blocks a scroll event in the vertical direction that traverses the [element].
