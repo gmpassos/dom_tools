@@ -267,7 +267,7 @@ class Color {
       (opacity.clamp(0.0, 1.0) * 255).round();
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other.runtimeType != runtimeType) return false;
     return other is Color && other.value == value;
@@ -1052,7 +1052,7 @@ class CanvasImageViewer {
         imgH = wh.height;
       }
 
-      image = _imageFilter!(image, imgW, imgH);
+      image = _imageFilter(image, imgW, imgH);
     }
 
     _image = image;
@@ -1072,7 +1072,7 @@ class CanvasImageViewer {
     h ??= 100;
 
     if (_image is ImageElement) {
-      var img = _image as ImageElement;
+      var img = _image;
       img.onLoad.listen((_) => _onLoadImage());
     }
 
@@ -1091,7 +1091,7 @@ class CanvasImageViewer {
       _canvas.onClick.listen(_onMouseClick);
       _canvas.onMouseLeave.listen(_onMouseLeave);
       _canvas.onMouseMove.listen(_onMouseMove);
-    } else if (_labels != null && _labels!.isNotEmpty) {
+    } else if (_labels != null && _labels.isNotEmpty) {
       _canvas.onMouseMove.listen(_onMouseMove);
     }
 
@@ -1682,7 +1682,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var rectangles = _rectangles?.value ?? [];
+    var rectangles = _rectangles.value ?? [];
 
     var target = nearestRectangle(rectangles, point);
 
@@ -1694,7 +1694,7 @@ class CanvasImageViewer {
       }
     }
 
-    _rectangles!.value = rectangles;
+    _rectangles.value = rectangles;
 
     return Quality.high;
   }
@@ -1707,7 +1707,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var labels = _labels?.value ?? [];
+    var labels = _labels.value ?? [];
 
     var target = nearestRectangle(labels, point) as Label?;
 
@@ -1728,7 +1728,7 @@ class CanvasImageViewer {
       }
     }
 
-    _labels!.value = labels;
+    _labels.value = labels;
 
     return Quality.high;
   }
@@ -1742,7 +1742,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var labels = _labels?.value ?? [];
+    var labels = _labels.value ?? [];
 
     var target = nearestRectangle(labels, point) as Label?;
 
@@ -1798,7 +1798,7 @@ class CanvasImageViewer {
 
     var point = _getMousePointInCanvas(mouse);
 
-    var points = _points?.value ?? [];
+    var points = _points.value ?? [];
 
     var target = nearestPoint(points, point);
 
@@ -1814,7 +1814,7 @@ class CanvasImageViewer {
       }
     }
 
-    _points!.value = points;
+    _points.value = points;
 
     return Quality.high;
   }
@@ -1827,7 +1827,7 @@ class CanvasImageViewer {
 
     Point<num> point = _getMousePointInCanvas(mouse, false);
 
-    var points = _perspective?.value ?? _defaultPerspective();
+    var points = _perspective.value ?? _defaultPerspective();
 
     if (points.length != 4) points = _defaultPerspective();
 
@@ -1909,7 +1909,7 @@ class CanvasImageViewer {
         'pointsInBounds: $pointsInBounds >> ${_getPointsBounds(pointsInBounds)}');
      */
 
-    _perspective!.value = pointsInBounds;
+    _perspective.value = pointsInBounds;
 
     return Quality.medium;
   }
@@ -2026,7 +2026,7 @@ class CanvasImageViewer {
       return null;
     }
 
-    if (_perspective != null && !_perspective!.isNull) {
+    if (_perspective != null && !_perspective.isNull) {
       return _renderImageWithPerspective(
           context, quality, forceQuality, scheduledRender);
     } else {
