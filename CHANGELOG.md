@@ -1,3 +1,13 @@
+## 2.3.0
+
+- sdk: '>=3.3.0 <4.0.0'
+
+- intl: ^0.19.0
+- swiss_knife: ^3.2.0
+- collection: ^1.18.0
+
+- test: ^1.25.2
+
 ## 2.2.1
 
 - Improve `scrollTo` and `scrollToElement`.
