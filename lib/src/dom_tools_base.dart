@@ -707,11 +707,9 @@ String? getElementAttribute(Element element, Object? key) {
 
 /// Returns [element] attribute with [RegExp] [key].
 String? getElementAttributeRegExp(Element element, RegExp key) {
-  var attrs = element.attributes;
-
-  for (var k in attrs.keys) {
+  for (var k in element.getAttributeNames()) {
     if (key.hasMatch(k)) {
-      return attrs[k];
+      return element.getAttribute(k);
     }
   }
 
@@ -723,14 +721,11 @@ String? getElementAttributeStr(Element element, String key) {
   var val = element.getAttribute(key);
   if (val != null) return val;
 
-  key = key.trim();
-  key = key.toLowerCase();
+  key = key.trim().toLowerCase();
 
-  var attrs = element.attributes;
-
-  for (var k in attrs.keys) {
+  for (var k in element.getAttributeNames()) {
     if (k.toLowerCase() == key) {
-      return attrs[k];
+      return element.getAttribute(k);
     }
   }
 
@@ -757,8 +752,8 @@ String _toHTMLAny(Element e) {
   html += '<';
   html += e.tagName;
 
-  for (var attr in e.attributes.keys) {
-    var val = e.attributes[attr];
+  for (var attr in e.getAttributeNames()) {
+    var val = e.getAttribute(attr);
     if (val != null) {
       if (val.contains("'")) {
         html += ' attr="$val"';

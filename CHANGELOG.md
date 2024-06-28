@@ -1,3 +1,10 @@
+## 2.3.1
+
+- Optimize: avoid use of `Element.attributes` to find a matching attribute (`RegExp` or case-insensitive).
+
+- async_extension: ^1.2.12
+- test: ^1.25.7
+
 ## 2.3.0
 
 - sdk: '>=3.3.0 <4.0.0'

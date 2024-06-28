@@ -1,7 +1,5 @@
 import 'dart:html';
 
-import 'package:collection/collection.dart';
-
 extension DomElementExtension on Element {
   /// Alias to [querySelector] casting to [T].
   T? querySelectorTyped<T extends Element>(String selectors) {
@@ -23,9 +21,9 @@ extension DomElementExtension on Element {
 
   /// Selects the [AnchorElement] links.
   List<String> selectAnchorLinks() =>
-      selectAnchorElements().map((e) => e.href).whereNotNull().toList();
+      selectAnchorElements().map((e) => e.href).nonNulls.toList();
 
-  /// Selects the [AnchorElement] links targets/fragmets.
+  /// Selects the [AnchorElement] links targets/fragments.
   List<String> selectAnchorLinksTargets() => selectAnchorLinks()
       .where((e) => e.contains('#'))
       .map((e) => e.split('#').last)
