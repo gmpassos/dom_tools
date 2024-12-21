@@ -1,3 +1,14 @@
+## 2.3.2
+
+- sdk: '>=3.4.0 <4.0.0'
+
+- async_extension: ^1.2.14
+- swiss_knife: ^3.2.3
+
+- lints: ^4.0.0
+- test: ^1.25.14
+- dependency_validator: ^4.1.2
+
 ## 2.3.1
 
 - Optimize: avoid use of `Element.attributes` to find a matching attribute (`RegExp` or case-insensitive).
