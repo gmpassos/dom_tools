@@ -1,5 +1,8 @@
 ## 2.3.2
 
+- `isInTree`:
+  - Optimize using `Node.isConnected`, avoiding `Node.contains` when possible.
+
 - sdk: '>=3.4.0 <4.0.0'
 
 - async_extension: ^1.2.14

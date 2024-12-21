@@ -1,4 +1,6 @@
 @TestOn('browser')
+library;
+
 import 'dart:html';
 
 import 'package:dom_tools/dom_tools.dart';

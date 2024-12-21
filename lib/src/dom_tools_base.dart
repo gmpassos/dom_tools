@@ -1214,7 +1214,18 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
       super.maxPurgedEntries});
 
   @override
-  bool isInTree(Node? key) => key != null && root.contains(key);
+  bool isInTree(Node? key) {
+    if (key == null) return false;
+    var rootConn = root.isConnected;
+    var keyConn = key.isConnected;
+    // Optimization: If `rootConn` and `keyConn` differ,
+    // `root` and `key` cannot be in the same DOM tree:
+    if (rootConn != keyConn) {
+      return false;
+    } else {
+      return root.contains(key);
+    }
+  }
 
   @override
   Node? getParentOf(Node? key) => key?.parent;
@@ -1225,6 +1236,11 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
   @override
   bool isChildOf(Node? parent, Node? child, bool deep) {
     if (parent == null || child == null) return false;
+
+    var parentConn = parent.isConnected;
+    var childConn = child.isConnected;
+
+    if (parentConn != childConn) return false;
 
     if (deep) {
       return !identical(parent, child) && parent.contains(child);

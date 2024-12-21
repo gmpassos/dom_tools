@@ -87,7 +87,9 @@ class TrackElementValue {
       {bool periodicTracking = false}) {
     if (element == null ||
         elementValueGetter == null ||
-        onTrackValueEvent == null) return null;
+        onTrackValueEvent == null) {
+      return null;
+    }
 
     if (_elements.containsKey(element)) return null;
 
