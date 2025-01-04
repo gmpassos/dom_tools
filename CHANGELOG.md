@@ -1,3 +1,8 @@
+## 3.0.0-beta.2
+
+- web_utils: ^1.0.2
+- js_interop_utils: ^1.0.2
+
 ## 3.0.0-beta.1
 
 - Change from `dart:html` to `package:web/web.dart`.
@@ -9,8 +14,8 @@
 
 - sdk: '>=3.6.0 <4.0.0'
 
-- web_utils: ^1.0.1
-- js_interop_utils: ^1.0.1
+- web_utils: ^1.0.2
+- js_interop_utils: ^1.0.2
 - collection: ^1.19.0
 - web: ^1.1.0
 - http: ^1.2.2
