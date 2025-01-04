@@ -1,7 +1,10 @@
-import 'dart:html';
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:math' as math;
 import 'dart:math';
 import 'dart:typed_data';
+
+import 'package:web/web.dart' hide Float32List;
 
 import 'dom_tools_paint.dart';
 
@@ -20,7 +23,7 @@ class _Rect {
 class FilterResult {
   final CanvasImageSource? imageSource;
 
-  final CanvasElement imageResult;
+  final HTMLCanvasElement imageResult;
 
   final Rectangle<num> crop;
 
@@ -36,16 +39,16 @@ class FilterResult {
   Point<num> translationScaled(double scale) =>
       Point(crop.left * scale, crop.top * scale);
 
-  CanvasElement? _imageResultCropped;
+  HTMLCanvasElement? _imageResultCropped;
 
-  CanvasElement? get imageResultCropped {
+  HTMLCanvasElement? get imageResultCropped {
     _imageResultCropped ??= cropImageByRectangle(imageResult, crop);
     return _imageResultCropped;
   }
 
-  int get resultWidth => imageResult.width!;
+  int get resultWidth => imageResult.width;
 
-  int get resultHeight => imageResult.height!;
+  int get resultHeight => imageResult.height;
 }
 
 /// A filter that applies a perspective to an image.
@@ -234,7 +237,9 @@ class ImagePerspectiveFilter {
 
   Uint8ClampedList? _getImagePixels() {
     if (width == 0 || height == 0) return null;
-    var selectedImgCanvas = CanvasElement(width: width, height: height);
+    var selectedImgCanvas = HTMLCanvasElement()
+      ..width = width
+      ..height = height;
 
     var context =
         selectedImgCanvas.getContext('2d') as CanvasRenderingContext2D;
@@ -244,11 +249,11 @@ class ImagePerspectiveFilter {
 
     var imageData = context.getImageData(0, 0, width, height);
 
-    return imageData.data;
+    return imageData.data.toDart;
   }
 
   /// Filters the image into [resultCanvas].
-  FilterResult? filter([CanvasElement? resultCanvas]) {
+  FilterResult? filter([HTMLCanvasElement? resultCanvas]) {
     // ignore: omit_local_variable_types
     Uint8ClampedList? inPixels = _getImagePixels();
     if (inPixels == null) return null;
@@ -301,12 +306,14 @@ class ImagePerspectiveFilter {
     var canvasW = max(srcWidth, outWidth);
     var canvasH = max(srcHeight, outHeight);
 
-    resultCanvas ??= CanvasElement(width: canvasW, height: canvasH);
+    resultCanvas ??= HTMLCanvasElement()
+      ..width = canvasW
+      ..height = canvasH;
 
     var context = resultCanvas.getContext('2d') as CanvasRenderingContext2D;
 
-    var imgData = context.createImageData(outWidth, outHeight);
-    imgData.data.setAll(0, outPixels);
+    var imgData = context.createImageData(outWidth.toJS, outHeight);
+    imgData.data.callMethod('set'.toJS, outPixels.toJS, 0.toJS);
 
     context.putImageData(imgData, 0, 0, 0, 0, outWidth, outHeight);
 

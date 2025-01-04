@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:html';
-import 'dart:js';
-import 'dart:js_util';
+import 'dart:js_interop_unsafe';
 
-import 'package:dom_tools/dom_tools.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
+import 'dom_tools_extension.dart';
 
 class _ElementTrack<T> {
   final TrackElementValue _trackElementValue;
@@ -228,7 +226,12 @@ class TrackElementResize {
   TrackElementValue? get _trackElementValue {
     if (_trackElementValueInstance == null) {
       _trackElementValueInstance = TrackElementValue();
-      window.onResize.listen((e) => _onResizeWindow());
+
+      window.addEventListener(
+          'onresize',
+          (Event e) {
+            _onResizeWindow();
+          }.toJS);
     }
 
     return _trackElementValueInstance;
@@ -243,7 +246,11 @@ class TrackElementResize {
 
     if (_resizeObserverInstance == null) {
       try {
-        var observer = ResizeObserver(_onResizeObserver);
+        ResizeObserver? observer;
+        observer = ResizeObserver((JSArray? ar) {
+          var l = ar?.toList() ?? [];
+          _onResizeObserver(l, observer!);
+        }.toJS);
         _resizeObserverInstance = observer;
       } catch (e, s) {
         _resizeObserverInstanceError = true;
@@ -332,12 +339,9 @@ class TrackElementResize {
     for (var entry in entries) {
       if (entry is ResizeObserverEntry) {
         var target = entry.target;
-        if (target is Element) {
-          targets.add(target);
-        }
-      } else {
-        var o = JsObject.fromBrowserObject(entry);
-        var target = getProperty(o, 'target');
+        targets.add(target);
+      } else if (entry is JSObject) {
+        var target = entry['target'];
         if (target is Element) {
           targets.add(target);
         }
@@ -349,7 +353,10 @@ class TrackElementResize {
 
   void _trackResizeFallbackByElementValue(TrackElementValue trackElementValue,
       Element element, OnElementEvent onResize) {
-    trackElementValue.track<Object>(element, (e) => e.offset, (e, v) {
+    trackElementValue.track<Object>(element, (e) {
+      var element = e.asHTMLElement;
+      return (element?.offsetWidth, element?.offsetHeight);
+    }, (e, v) {
       onResize(e);
       return true;
     }, periodicTracking: true);

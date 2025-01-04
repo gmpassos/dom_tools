@@ -11,6 +11,11 @@
 
 DOM rich elements and tools for CSS, JavaScript, Element Tracking, DOM Manipulation, Storage, Dialog and more. 
 
+### Package `web`
+
+Starting with version `3.0.0`, the `dom_tools` package relies on the [web](https://pub.dev/packages/web) package,
+replacing the deprecated `dart:html` library (deprecated as of Dart `3.7.0+`).
+
 ## Usage
 
 A simple usage example:

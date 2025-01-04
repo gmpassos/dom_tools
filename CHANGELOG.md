@@ -1,3 +1,20 @@
+## 3.0.0-beta.1
+
+- Change from `dart:html` to `package:web/web.dart`.
+- Change to `dart:js_interop`.
+
+- export 'package:js_interop_utils/js_interop_utils.dart'.
+
+- CI: test with `dart2js` and `dart2wasm` (on Chrome).
+
+- sdk: '>=3.6.0 <4.0.0'
+
+- web_utils: ^1.0.1
+- js_interop_utils: ^1.0.1
+- collection: ^1.19.0
+- web: ^1.1.0
+- http: ^1.2.2
+
 ## 2.3.2
 
 - `isInTree`:

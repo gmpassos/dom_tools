@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:html';
 
 import 'package:swiss_knife/swiss_knife.dart';
+
+import 'dom_tools_extension.dart';
 
 /// Status type of touch device detection.
 enum TouchDeviceDetection {
@@ -67,9 +68,9 @@ void _onTouchEvent(event) {
 /// simplifying UI support for touch events and mouse events.
 MouseEvent? touchEventToMouseEvent(TouchEvent event) {
   var touches = event.touches;
-  if (touches == null || touches.isEmpty) return null;
+  if (touches.isEmpty) return null;
 
-  var first = touches[0];
+  var first = touches.item(0)!;
   var type = '';
 
   switch (event.type.toLowerCase()) {
@@ -95,21 +96,25 @@ MouseEvent? touchEventToMouseEvent(TouchEvent event) {
   // ignore: empty_catches
   catch (ignore) {}
 
-  var simulatedEvent = MouseEvent(type,
-      canBubble: event.bubbles!,
-      cancelable: event.cancelable!,
+  var simulatedEvent = MouseEvent(
+    type,
+    MouseEventInit(
+      bubbles: event.bubbles,
+      cancelable: event.cancelable,
       view: window,
       detail: 1,
-      screenX: first.screen.x as int,
-      screenY: first.screen.y as int,
-      clientX: first.client.x as int,
-      clientY: first.client.y as int,
-      ctrlKey: event.ctrlKey!,
-      altKey: event.altKey!,
-      shiftKey: event.shiftKey!,
-      metaKey: event.metaKey!,
+      screenX: first.screenX.toInt(),
+      screenY: first.screenY.toInt(),
+      clientX: first.clientX.toInt(),
+      clientY: first.clientY.toInt(),
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      shiftKey: event.shiftKey,
+      metaKey: event.metaKey,
       button: 0,
-      relatedTarget: target);
+      relatedTarget: target,
+    ),
+  );
 
   return simulatedEvent;
 }

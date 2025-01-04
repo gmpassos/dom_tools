@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:html';
 import 'dart:math';
-import 'dart:svg' as dart_svg;
 
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:dom_tools/src/dom_tools_css.dart';
 import 'package:swiss_knife/swiss_knife.dart';
+
+import 'dom_tools_css.dart';
+import 'dom_tools_extension.dart';
 
 /// Gets the [element] value depending of identified type.
 ///
@@ -14,20 +14,10 @@ import 'package:swiss_knife/swiss_knife.dart';
 String? getElementValue(Element element, [String? def]) {
   String? value;
 
-  if (element is InputElement) {
-    value = element.value;
-  } else if (element is CanvasImageSource) {
-    value = getElementSRC(element);
-  } else if (element is CheckboxInputElement) {
-    value = element.checked! ? 'true' : 'false';
-  } else if (element is TextAreaElement) {
-    value = element.value;
-  } else if (isElementWithSRC(element)) {
-    value = getElementSRC(element);
-  } else if (isElementWithHREF(element)) {
-    value = getElementHREF(element);
+  if (element.isA<HTMLInputElement>()) {
+    value = (element as HTMLInputElement).value;
   } else {
-    value = element.text;
+    value = getElementSRC(element);
   }
 
   return def != null && isEmptyObject(value) ? def : value;
@@ -37,24 +27,11 @@ String? getElementValue(Element element, [String? def]) {
 bool setElementValue(Element? element, String value) {
   if (element == null) return false;
 
-  if (element is InputElement) {
-    element.value = value;
+  if (element.isA<HTMLInputElement>()) {
+    (element as HTMLInputElement).value = value;
     return true;
-  } else if (element is CanvasImageSource) {
-    return setElementSRC(element, value);
-  } else if (element is CheckboxInputElement) {
-    element.checked = parseBool(value);
-    return true;
-  } else if (element is TextAreaElement) {
-    element.value = value;
-    return true;
-  } else if (isElementWithSRC(element)) {
-    return setElementSRC(element, value);
-  } else if (isElementWithHREF(element)) {
-    return setElementHREF(element, value);
   } else {
-    element.text = value;
-    return true;
+    return setElementSRC(element, value);
   }
 }
 
@@ -74,7 +51,7 @@ Element? getElementByValues<V>(
   if (getter2 != null) {
     if (values2 == null || values2.isEmpty) return null;
 
-    var fond = allLinks.firstWhereOrNull((l) {
+    var fond = allLinks.whereElement().firstWhereOrNull((l) {
       var elemValue = getter(l);
       var ok = values.contains(elemValue);
       if (!ok) return false;
@@ -84,7 +61,7 @@ Element? getElementByValues<V>(
     });
     return fond;
   } else {
-    var fond = allLinks.firstWhereOrNull((l) {
+    var fond = allLinks.whereElement().firstWhereOrNull((l) {
       var elemValue = getter(l);
       return values.contains(elemValue);
     });
@@ -95,28 +72,30 @@ Element? getElementByValues<V>(
 
 /// Returns `href` value for different [Element] types.
 String? getElementHREF(Element element) {
-  if (element is LinkElement) return element.href;
-  if (element is AnchorElement) return element.href;
-  if (element is BaseElement) return element.href;
-  if (element is AreaElement) return element.href;
+  if (element.isA<HTMLLinkElement>()) return (element as HTMLLinkElement).href;
+  if (element.isA<HTMLAnchorElement>()) {
+    return (element as HTMLAnchorElement).href;
+  }
+  if (element.isA<HTMLBaseElement>()) return (element as HTMLBaseElement).href;
+  if (element.isA<HTMLAreaElement>()) return (element as HTMLAreaElement).href;
 
   return null;
 }
 
 /// Sets [element] [href] depending of the identified type.
 bool setElementHREF(Element element, String href) {
-  if (element is LinkElement) {
-    element.href = href;
+  if (element.isA<HTMLLinkElement>()) {
+    (element as HTMLLinkElement).href = href;
     return true;
-  } else if (element is AnchorElement) {
+  } else if (element.isA<HTMLAnchorElement>()) {
     // ignore: unsafe_html
-    element.href = href;
+    (element as HTMLAnchorElement).href = href;
     return true;
-  } else if (element is BaseElement) {
-    element.href = href;
+  } else if (element.isA<HTMLBaseElement>()) {
+    (element as HTMLBaseElement).href = href;
     return true;
-  } else if (element is AreaElement) {
-    element.href = href;
+  } else if (element.isA<HTMLAreaElement>()) {
+    (element as HTMLAreaElement).href = href;
     return true;
   }
 
@@ -125,64 +104,61 @@ bool setElementHREF(Element element, String href) {
 
 /// Returns [true] if [element] type can have `href` attribute.
 bool isElementWithHREF(Element element) {
-  if (element is LinkElement) return true;
-  if (element is AnchorElement) return true;
-  if (element is BaseElement) return true;
-  if (element is AreaElement) return true;
+  if (element.isA<HTMLLinkElement>()) return true;
+  if (element.isA<HTMLAnchorElement>()) return true;
+  if (element.isA<HTMLBaseElement>()) return true;
+  if (element.isA<HTMLAreaElement>()) return true;
 
   return false;
 }
 
 /// Returns `src` value for different [Element] types.
 String? getElementSRC(Element element) {
-  if (element is ImageElement) return element.src;
-  if (element is ScriptElement) return element.src;
-  if (element is InputElement) return element.src;
+  if (element.isA<HTMLImageElement>()) return (element as HTMLImageElement).src;
+  if (element.isA<HTMLScriptElement>()) {
+    return (element as HTMLScriptElement).src;
+  }
+  if (element.isA<HTMLInputElement>()) return (element as HTMLInputElement).src;
 
-  if (element is MediaElement) return element.src;
-  if (element is EmbedElement) return element.src;
+  if (element.isA<HTMLMediaElement>()) return (element as HTMLMediaElement).src;
+  if (element.isA<HTMLEmbedElement>()) return (element as HTMLEmbedElement).src;
 
-  if (element is IFrameElement) return element.src;
-  if (element is SourceElement) return element.src;
-  if (element is TrackElement) return element.src;
-
-  if (element is ImageButtonInputElement) return element.src;
+  if (element.isA<HTMLIFrameElement>()) {
+    return (element as HTMLIFrameElement).src;
+  }
+  if (element.isA<HTMLSourceElement>()) {
+    return (element as HTMLSourceElement).src;
+  }
+  if (element.isA<HTMLTrackElement>()) return (element as HTMLTrackElement).src;
 
   return null;
 }
 
 /// Sets the [element] [src] depending of the identified type.
 bool setElementSRC(Element element, String src) {
-  if (element is ImageElement) {
-    // ignore: unsafe_html
-    element.src = src;
+  if (element.isA<HTMLImageElement>()) {
+    (element as HTMLImageElement).src = src;
     return true;
-  } else if (element is ScriptElement) {
-    // ignore: unsafe_html
-    element.src = src;
+  } else if (element.isA<HTMLScriptElement>()) {
+    (element as HTMLScriptElement).src = src;
     return true;
-  } else if (element is InputElement) {
-    element.src = src;
+  } else if (element.isA<HTMLInputElement>()) {
+    (element as HTMLInputElement).src = src;
     return true;
-  } else if (element is MediaElement) {
-    element.src = src;
+  } else if (element.isA<HTMLMediaElement>()) {
+    (element as HTMLMediaElement).src = src;
     return true;
-  } else if (element is EmbedElement) {
-    // ignore: unsafe_html
-    element.src = src;
+  } else if (element.isA<HTMLEmbedElement>()) {
+    (element as HTMLEmbedElement).src = src;
     return true;
-  } else if (element is IFrameElement) {
-    // ignore: unsafe_html
-    element.src = src;
+  } else if (element.isA<HTMLIFrameElement>()) {
+    (element as HTMLIFrameElement).src = src;
     return true;
-  } else if (element is SourceElement) {
-    element.src = src;
+  } else if (element.isA<HTMLSourceElement>()) {
+    (element as HTMLSourceElement).src = src;
     return true;
-  } else if (element is TrackElement) {
-    element.src = src;
-    return true;
-  } else if (element is ImageButtonInputElement) {
-    element.src = src;
+  } else if (element.isA<HTMLTrackElement>()) {
+    (element as HTMLTrackElement).src = src;
     return true;
   } else {
     return false;
@@ -191,18 +167,16 @@ bool setElementSRC(Element element, String src) {
 
 /// Returns [true] if [element] type can have `src` attribute.
 bool isElementWithSRC(Element element) {
-  if (element is ImageElement) return true;
-  if (element is ScriptElement) return true;
-  if (element is InputElement) return true;
+  if (element.isA<HTMLImageElement>()) return true;
+  if (element.isA<HTMLScriptElement>()) return true;
+  if (element.isA<HTMLInputElement>()) return true;
 
-  if (element is MediaElement) return true;
-  if (element is EmbedElement) return true;
+  if (element.isA<HTMLMediaElement>()) return true;
+  if (element.isA<HTMLEmbedElement>()) return true;
 
-  if (element is IFrameElement) return true;
-  if (element is SourceElement) return true;
-  if (element is TrackElement) return true;
-
-  if (element is ImageButtonInputElement) return true;
+  if (element.isA<HTMLIFrameElement>()) return true;
+  if (element.isA<HTMLSourceElement>()) return true;
+  if (element.isA<HTMLTrackElement>()) return true;
 
   return false;
 }
@@ -229,32 +203,32 @@ Element? getElementBySRC(String tag, String src) {
 }
 
 /// Selects an [AnchorElement] in DOM with [href].
-AnchorElement? getAnchorElementByHREF(String href) {
-  return getElementByHREF('a', href) as AnchorElement?;
+HTMLAnchorElement? getAnchorElementByHREF(String href) {
+  return getElementByHREF('a', href) as HTMLAnchorElement?;
 }
 
 /// Selects an [LinkElement] in DOM with [href].
-LinkElement? getLinkElementByHREF(String href, [String? rel]) {
+HTMLLinkElement? getLinkElementByHREF(String href, [String? rel]) {
   if (href.isEmpty) return null;
 
   if (isNotEmptyString(rel)) {
     var resolvedURL = resolveUri(href).toString();
     return getElementByValues('link', getElementHREF, [href, resolvedURL],
-        (e) => e.getAttribute('rel'), [rel]) as LinkElement?;
+        (e) => e.getAttribute('rel'), [rel]) as HTMLLinkElement?;
   } else {
-    return getElementByHREF('link', href) as LinkElement?;
+    return getElementByHREF('link', href) as HTMLLinkElement?;
   }
 }
 
 /// Selects an [ScriptElement] in DOM with [src].
-ScriptElement? getScriptElementBySRC(String src) {
-  return getElementBySRC('script', src) as ScriptElement?;
+HTMLScriptElement? getScriptElementBySRC(String src) {
+  return getElementBySRC('script', src) as HTMLScriptElement?;
 }
 
 /// Returns [element] width. Tries to use 'offsetWidth' or 'style.width' values.
 ///
 /// [def] default value if width is `null` or `0`.
-int? getElementWidth(Element element, [int? def]) {
+int? getElementWidth(HTMLElement element, [int? def]) {
   var w = element.offsetWidth;
   if (w <= 0) {
     w = parseCSSLength(element.style.width, unit: 'px', def: def ?? 0) as int;
@@ -265,7 +239,7 @@ int? getElementWidth(Element element, [int? def]) {
 /// Returns [element] height. Tries to use 'offsetHeight' or 'style.height' values.
 ///
 /// [def] default value if width is `null` or `0`.
-int? getElementHeight(Element element, [int? def]) {
+int? getElementHeight(HTMLElement element, [int? def]) {
   var h = element.offsetHeight;
   if (h <= 0) {
     h = parseCSSLength(element.style.height, unit: 'px', def: def ?? 0) as int;
@@ -274,7 +248,7 @@ int? getElementHeight(Element element, [int? def]) {
 }
 
 /// Returns a [Future<bool>] for when [img] loads.
-Future<bool> elementOnLoad(ImageElement img) {
+Future<bool> elementOnLoad(HTMLImageElement img) {
   var completer = Completer<bool>();
   img.onLoad.listen((e) => completer.complete(true),
       onError: (e) => completer.complete(false));
@@ -282,20 +256,24 @@ Future<bool> elementOnLoad(ImageElement img) {
 }
 
 /// Creates a `div` with `display: inline-block`.
-DivElement createDivInlineBlock() =>
-    DivElement()..style.display = 'inline-block';
+HTMLDivElement createDivInlineBlock() =>
+    HTMLDivElement()..style.display = 'inline-block';
 
 /// Creates a `div`.
 /// [inline] If [true] sets `display: inline-block`.
 /// [html] The HTML to parse as content.
-DivElement createDiv(
-    [bool inline = false, String? html, NodeValidator? validator]) {
-  var div = DivElement();
+HTMLDivElement createDiv(
+    {bool inline = false,
+    String? html,
+    @Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator,
+    bool unsafe = false}) {
+  var div = HTMLDivElement();
 
   if (inline) div.style.display = 'inline-block';
 
   if (html != null) {
-    setElementInnerHTML(div, html, validator: validator);
+    setElementInnerHTML(div, html, unsafe: unsafe);
   }
 
   return div;
@@ -304,18 +282,22 @@ DivElement createDiv(
 /// Creates a `div` with `display: inline-block`.
 ///
 /// [html] The HTML to parse as content.
-DivElement createDivInline([String? html]) {
-  return createDiv(true, html);
+HTMLDivElement createDivInline({String? html, bool unsafe = false}) {
+  return createDiv(inline: true, html: html, unsafe: unsafe);
 }
 
 /// Creates a `span` element.
 ///
 /// [html] The HTML to parse as content.
-SpanElement createSpan([String? html, NodeValidator? validator]) {
-  var span = SpanElement();
+HTMLSpanElement createSpan(
+    {String? html,
+    @Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator,
+    bool unsafe = false}) {
+  var span = HTMLSpanElement();
 
   if (html != null) {
-    setElementInnerHTML(span, html, validator: validator);
+    setElementInnerHTML(span, html, unsafe: unsafe);
   }
 
   return span;
@@ -324,11 +306,15 @@ SpanElement createSpan([String? html, NodeValidator? validator]) {
 /// Creates a `label` element.
 ///
 /// [html] The HTML to parse as content.
-LabelElement createLabel([String? html, NodeValidator? validator]) {
-  var label = LabelElement();
+HTMLLabelElement createLabel(
+    {String? html,
+    @Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator,
+    bool unsafe = false}) {
+  var label = HTMLLabelElement();
 
   if (html != null) {
-    setElementInnerHTML(label, html, validator: validator);
+    setElementInnerHTML(label, html, unsafe: unsafe);
   }
 
   return label;
@@ -343,185 +329,90 @@ final RegExp _regexpDependentTag =
     RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
 
 /// Creates a HTML [Element]. Returns 1st node form parsed HTML.
-Element createHTML([String? html, NodeValidator? validator]) {
-  if (html == null || html.isEmpty) return SpanElement();
+HTMLElement createHTML(
+    {String? html,
+    @Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator,
+    bool unsafe = false}) {
+  if (html == null || html.isEmpty) return HTMLSpanElement();
 
   var dependentTagMatch = _regexpDependentTag.firstMatch(html);
 
   if (dependentTagMatch != null) {
     var dependentTagName = dependentTagMatch.group(1)!.toLowerCase();
 
-    DivElement div;
+    HTMLDivElement div;
     if (dependentTagName == 'td' || dependentTagName == 'th') {
-      div = createDiv(true, '<table><tbody><tr>\n$html\n</tr></tbody></table>');
+      div = createDiv(
+          inline: true,
+          html: '<table><tbody><tr>\n$html\n</tr></tbody></table>',
+          unsafe: unsafe);
     } else if (dependentTagName == 'tr') {
-      div = createDiv(true, '<table><tbody>\n$html\n</tbody></table>');
+      div = createDiv(
+          inline: true,
+          html: '<table><tbody>\n$html\n</tbody></table>',
+          unsafe: unsafe);
     } else if (dependentTagName == 'tbody' ||
         dependentTagName == 'thead' ||
         dependentTagName == 'tfoot') {
-      div = createDiv(true, '<table>\n$html\n</table>');
+      div = createDiv(
+          inline: true, html: '<table>\n$html\n</table>', unsafe: unsafe);
     } else {
       throw StateError("Can't handle dependent tag: $dependentTagName");
     }
 
     var childNode = div.querySelector(dependentTagName);
-    return childNode!;
+    return childNode?.asHTMLElement ??
+        (throw StateError("Can't create HTML:\n$html"));
   } else {
-    var div = createDiv(true, html, validator);
-    if (div.nodes.isEmpty) return div;
+    var div = createDiv(inline: true, html: html, unsafe: unsafe);
 
-    var childNode = div.nodes.firstWhereOrNull((e) => e is Element);
+    var childNodes = div.childNodes;
+    if (childNodes.isEmpty) return div;
 
-    if (childNode is Element) {
+    var childNode = childNodes.whereElement().firstOrNull;
+
+    if (childNode is HTMLElement) {
       return childNode;
     }
 
-    var span = SpanElement();
-    span.nodes.addAll(div.nodes);
+    var span = HTMLSpanElement();
+    span.appendNodes(div.childNodes.toIterable());
     return span;
   }
 }
 
-const _htmlBasicAttrs = [
-  'style',
-  'capture',
-  'type',
-  'src',
-  'href',
-  'target',
-  'contenteditable',
-  'xmlns'
-];
-
-const _htmlControlAttrs = [
-  'data-toggle',
-  'data-target',
-  'data-dismiss',
-  'data-source',
-  'aria-controls',
-  'aria-expanded',
-  'aria-label',
-  'aria-current',
-  'aria-hidden',
-  'role',
-];
-
-const _htmlExtendedAttrs = [
-  'field',
-  'field_value',
-  'element_value',
-  'src-original',
-  'href-original',
-  'navigate',
-  'action',
-  'uilayout',
-  'oneventkeypress',
-  'oneventclick'
-];
-
-const _htmlElementsAllowedAttrs = [
-  ..._htmlBasicAttrs,
-  ..._htmlControlAttrs,
-  ..._htmlExtendedAttrs
-];
-
-AnyUriPolicy _anyUriPolicy = AnyUriPolicy();
-
-/// Allows anu [Uri] policy.
-class AnyUriPolicy implements UriPolicy {
-  @override
-  bool allowsUri(String uri) {
-    return true;
-  }
-}
-
-class _FullSvgNodeValidator implements NodeValidator {
-  @override
-  bool allowsElement(Element element) {
-    if (element is dart_svg.ScriptElement) {
-      return false;
-    }
-    if (element is dart_svg.SvgElement) {
-      return true;
-    }
-    return false;
-  }
-
-  @override
-  bool allowsAttribute(Element element, String attributeName, String value) {
-    if (attributeName == 'is' || attributeName.startsWith('on')) {
-      return false;
-    }
-    return allowsElement(element);
-  }
-}
-
-NodeValidatorBuilder createStandardNodeValidator(
-    {bool svg = true, bool allowSvgForeignObject = false}) {
-  var validator = NodeValidatorBuilder()
-    ..allowTextElements()
-    ..allowHtml5()
-    ..allowElement('a', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('nav', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('div', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('li', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('ul', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('ol', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('span', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('img', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('textarea', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('input', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('label', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('button', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('iframe', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('svg', attributes: _htmlElementsAllowedAttrs)
-    ..allowElement('video', attributes: [
-      ..._htmlElementsAllowedAttrs,
-      'autoplay',
-      'controls',
-      'muted'
-    ])
-    ..allowElement('source', attributes: [..._htmlElementsAllowedAttrs, 'type'])
-    ..allowImages(_anyUriPolicy)
-    ..allowNavigation(_anyUriPolicy)
-    ..allowInlineStyles();
-
-  if (svg) {
-    if (allowSvgForeignObject) {
-      validator.add(_FullSvgNodeValidator());
-    } else {
-      validator.allowSvg();
-    }
-  }
-
-  return validator;
-}
-
-NodeValidatorBuilder _defaultNodeValidator = createStandardNodeValidator();
-
 /// Sets the inner HTML of [element] with parsed result of [html].
-void setElementInnerHTML(Element element, String html,
-    {NodeValidator? validator}) {
-  validator ??= _defaultNodeValidator;
-  // ignore: unsafe_html
-  element.setInnerHtml(html, validator: validator);
+void setElementInnerHTML(HTMLElement element, String html,
+    {@Deprecated(
+        "`NodeValidator` not implemented on package `web`. See parameter `unsafe`.")
+    Object? validator,
+    bool unsafe = false}) {
+  if (unsafe) {
+    element.setHTMLUnsafe(html.toJS);
+  } else {
+    element.innerHTML = html.toJS;
+  }
 }
 
 /// Appends to the inner HTML of [element] with parsed result of [html].
-void appendElementInnerHTML(Element element, String html,
-    {NodeValidator? validator}) {
-  validator ??= _defaultNodeValidator;
-  element.appendHtml(html, validator: validator);
+void appendElementInnerHTML(HTMLElement element, String html,
+    {@Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator,
+    bool unsafe = false}) {
+  element.insertAdjacentHTML("beforeend", html.toJS);
 }
 
 /// Transform [html] to plain text.
-String? htmlToText(String html, [NodeValidator? validator]) {
-  var elem = createHTML('<div>$html</div>', validator);
-  return elem.text;
+String? htmlToText(String html,
+    [@Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator]) {
+  var elem = createHTML(html: '<div>$html</div>');
+  return elem.textContent;
 }
 
 /// Returns the X and Y position of [Element] int the [Document].
-Pair<num> getElementDocumentPosition(Element element) {
+Pair<num> getElementDocumentPosition(HTMLElement element) {
   var obj = getVisibleNode(element);
 
   num top = obj!.offsetTop;
@@ -531,18 +422,19 @@ Pair<num> getElementDocumentPosition(Element element) {
     do {
       top += obj!.offsetTop;
       left += obj.offsetLeft;
-    } while ((obj = obj.offsetParent) != null);
+    } while ((obj = obj.offsetParent?.asHTMLElement) != null);
   }
 
   return Pair<num>(left, top);
 }
 
 /// Get the first visible element in the hierarchy.
-Element? getVisibleNode(Element? element) {
-  while (element!.hidden || element.style.display == 'none') {
-    var parent = element.parent;
-    if (parent != null) {
-      element = parent;
+HTMLElement? getVisibleNode(HTMLElement? element) {
+  while (element != null &&
+      (element.hidden?.dartify() == true || element.style.display == 'none')) {
+    var parent = element.parentElement;
+    if (parent != null && parent.isA<HTMLElement>()) {
+      element = parent as HTMLElement;
     } else {
       break;
     }
@@ -695,7 +587,7 @@ String buildMetaContent(Map<String, String?> map) {
 /// Returns [element] attribute with [key].
 ///
 /// [key] Can be a [RegExp] or a [String].
-String? getElementAttribute(Element element, Object? key) {
+String? getElementAttribute(HTMLElement element, Object? key) {
   if (key == null) return null;
 
   if (key is RegExp) {
@@ -706,8 +598,8 @@ String? getElementAttribute(Element element, Object? key) {
 }
 
 /// Returns [element] attribute with [RegExp] [key].
-String? getElementAttributeRegExp(Element element, RegExp key) {
-  for (var k in element.getAttributeNames()) {
+String? getElementAttributeRegExp(HTMLElement element, RegExp key) {
+  for (var k in element.getAttributeNames().toList()) {
     if (key.hasMatch(k)) {
       return element.getAttribute(k);
     }
@@ -723,7 +615,7 @@ String? getElementAttributeStr(Element element, String key) {
 
   key = key.trim().toLowerCase();
 
-  for (var k in element.getAttributeNames()) {
+  for (var k in element.getAttributeNames().toList()) {
     if (k.toLowerCase() == key) {
       return element.getAttribute(k);
     }
@@ -742,17 +634,17 @@ void clearSelections() {
 }
 
 /// Converts [element] to HTML.
-String toHTML(Element element) {
+String toHTML(HTMLElement element) {
   return _toHTMLAny(element);
 }
 
-String _toHTMLAny(Element e) {
+String _toHTMLAny(HTMLElement e) {
   var html = '';
 
   html += '<';
   html += e.tagName;
 
-  for (var attr in e.getAttributeNames()) {
+  for (var attr in e.getAttributeNames().toList()) {
     var val = e.getAttribute(attr);
     if (val != null) {
       if (val.contains("'")) {
@@ -767,11 +659,13 @@ String _toHTMLAny(Element e) {
 
   html += '>';
 
-  if (e.innerHtml != null && e.innerHtml!.isNotEmpty) {
-    if (e is SelectElement) {
+  var innerHTML = e.innerHTML.dartify()?.toString();
+
+  if (innerHTML != null && innerHTML.isNotEmpty) {
+    if (e is HTMLSelectElement) {
       html += _toHTMLInnerHtmlSelect(e);
     } else {
-      html += e.innerHtml!;
+      html += innerHTML;
     }
   }
 
@@ -780,10 +674,10 @@ String _toHTMLAny(Element e) {
   return html;
 }
 
-String _toHTMLInnerHtmlSelect(SelectElement e) {
+String _toHTMLInnerHtmlSelect(HTMLSelectElement e) {
   var html = '';
 
-  for (var o in e.options) {
+  for (var o in e.options.toIterable()) {
     html +=
         "<option value='${o.value}' ${o.selected ? ' selected' : ''}>${o.label}</option>";
   }
@@ -798,9 +692,9 @@ bool isInViewport(Element element, {bool fully = false}) {
   var rect = element.getBoundingClientRect();
 
   var windowWidth =
-      min(window.innerWidth!, document.documentElement!.clientWidth);
+      min(window.innerWidth, document.documentElement!.clientWidth);
   var windowHeight =
-      min(window.innerHeight!, document.documentElement!.clientHeight);
+      min(window.innerHeight, document.documentElement!.clientHeight);
 
   if (fully) {
     return rect.left >= 0 &&
@@ -823,7 +717,6 @@ bool isOrientationInPortraitMode() {
 /// Returns [true] if device orientation is in Landscape mode.
 bool isOrientationInLandscapeMode() {
   var orientation = window.orientation;
-  if (orientation == null) return false;
 
   if (orientation == 90 || orientation == -90) {
     return true;
@@ -880,45 +773,54 @@ bool nodeTreeContainsAny(Node rootNode, Iterable<Node> list) {
       null;
 }
 
-/// Defines a new [CssStyleDeclaration] merging [currentCSS] and [appendCSS].
+/// Defines a new [CSSStyleDeclaration] merging [currentCSS] and [appendCSS].
 ///
 /// [defaultCSS] if [currentCSS] and [appendCSS] are [null].
-CssStyleDeclaration defineCSS(
-    CssStyleDeclaration? currentCSS, CssStyleDeclaration? appendCSS,
+CSSStyleDeclaration defineCSS(
+    CSSStyleDeclaration? currentCSS, CSSStyleDeclaration? appendCSS,
     [dynamic defaultCSS]) {
   if (currentCSS == null) {
     return appendCSS ?? asCssStyleDeclaration(defaultCSS);
   } else if (appendCSS == null) {
     return currentCSS;
   } else {
-    return CssStyleDeclaration()
-      ..cssText = '${currentCSS.cssText!} ; ${appendCSS.cssText!}';
+    var css = HTMLTemplateElement().style;
+    css.cssText = '${currentCSS.cssText} ; ${appendCSS.cssText}';
+    return css;
   }
 }
 
-/// Parses dynamic [css] as [CssStyleDeclaration].
-CssStyleDeclaration asCssStyleDeclaration(dynamic css) {
-  if (css == null) return CssStyleDeclaration();
-  if (css is CssStyleDeclaration) return css;
-  if (css is String) return CssStyleDeclaration()..cssText = css;
+CSSStyleDeclaration newCSSStyleDeclaration({String? cssText}) {
+  var style = HTMLTemplateElement().style;
+  if (cssText != null && cssText.isNotEmpty) {
+    style.cssText = cssText;
+  }
+  return style;
+}
+
+/// Parses dynamic [css] as [CSSStyleDeclaration].
+CSSStyleDeclaration asCssStyleDeclaration(dynamic css) {
+  if (css == null) return newCSSStyleDeclaration();
+  if (css is CSSStyleDeclaration) return css;
+  if (css is String) return newCSSStyleDeclaration(cssText: css);
   if (css is Function) return asCssStyleDeclaration(css());
 
   throw StateError("Can't convert to CSS: $css");
 }
 
-/// Returns [true] if [CssStyleDeclaration] is empty.
-bool isCssEmpty(CssStyleDeclaration css) {
+/// Returns [true] if [CSSStyleDeclaration] is empty.
+bool isCssEmpty(CSSStyleDeclaration css) {
   var cssText = css.cssText;
-  return cssText == null || cssText.trim().isEmpty;
+  return cssText.trim().isEmpty;
 }
 
-/// Returns [true] if [CssStyleDeclaration] is not empty.
-bool isCssNotEmpty(CssStyleDeclaration css) {
+/// Returns [true] if [CSSStyleDeclaration] is not empty.
+bool isCssNotEmpty(CSSStyleDeclaration css) {
   return !isCssEmpty(css);
 }
 
 /// Applies [css] to [element] and [extraElements] list if present.
-bool applyCSS(CssStyleDeclaration css, Element element,
+bool applyCSS(CSSStyleDeclaration css, Element element,
     [List<Element>? extraElements]) {
   if (!isCssNotEmpty(css)) return false;
 
@@ -934,9 +836,9 @@ bool applyCSS(CssStyleDeclaration css, Element element,
   return apply;
 }
 
-bool _applyCSS(CssStyleDeclaration css, Element element) {
-  var newCss = '${element.style.cssText!} ; ${css.cssText!}';
-  element.style.cssText = newCss;
+bool _applyCSS(CSSStyleDeclaration css, Element element) {
+  var newCss = '${element.style?.cssText ?? ''} ; ${css.cssText}';
+  element.style?.cssText = newCss;
   return true;
 }
 
@@ -1024,14 +926,14 @@ bool copyElementToClipboard(Element element) {
 }
 
 /// Set all [element] sub div with [className] to centered content.
-void setTreeElementsDivCentered(Element element, String className,
+void setTreeElementsDivCentered(HTMLElement element, String className,
     {bool centerVertically = true, bool centerHorizontally = true}) {
   if (isEmptyString(className, trim: true)) return;
 
-  var elements = element.querySelectorAll('div.$className');
+  var elements = element.querySelectorAll('div.$className').toIterable();
 
   for (var e in elements) {
-    if (e is DivElement) {
+    if (e is HTMLDivElement) {
       setDivCentered(e,
           centerVertically: centerVertically,
           centerHorizontally: centerHorizontally);
@@ -1053,7 +955,7 @@ const _divCenteredBootstrapConflictingClasses = <String>{
 
 /// Sets [div] as centered content, using `display` property as `table` and sub
 /// div elements `display` property as `table-cell`.
-void setDivCentered(DivElement div,
+void setDivCentered(HTMLDivElement div,
     {bool centerVertically = true,
     bool centerHorizontally = true,
     bool checkBootstrapClasses = true}) {
@@ -1062,14 +964,14 @@ void setDivCentered(DivElement div,
           ? 'inline-table'
           : 'table';
 
-  div.classes.removeAll(_divCenteredBootstrapConflictingClasses);
+  div.classList.removeAll(_divCenteredBootstrapConflictingClasses);
 
-  var subDivs = div.querySelectorAll(':scope > div');
+  var subDivs = div.querySelectorAll(':scope > div').whereHTMLElement();
 
   for (var subDiv in subDivs) {
-    print(subDiv.outerHtml);
+    print(subDiv.outerHTML);
 
-    subDiv.classes.removeAll(_divCenteredBootstrapConflictingClasses);
+    subDiv.classList.removeAll(_divCenteredBootstrapConflictingClasses);
     subDiv.style.display = 'table-cell';
 
     if (centerHorizontally) {
@@ -1080,10 +982,11 @@ void setDivCentered(DivElement div,
       subDiv.style.verticalAlign = 'middle';
     }
 
-    var contentDivs = subDiv.querySelectorAll(':scope > div');
+    var contentDivs =
+        subDiv.querySelectorAll(':scope > div').whereHTMLElement();
 
     for (var contentDiv in contentDivs) {
-      if (!isInlineElement(contentDiv as DivElement,
+      if (!isInlineElement(contentDiv as HTMLDivElement,
           checkBootstrapClasses: checkBootstrapClasses)) {
         contentDiv.style.display = 'inline-block';
       }
@@ -1092,13 +995,16 @@ void setDivCentered(DivElement div,
 }
 
 /// Returns [true] if [element] `display` property is inline.
-bool isInlineElement(DivElement element, {bool checkBootstrapClasses = true}) {
+bool isInlineElement(HTMLDivElement element,
+    {bool checkBootstrapClasses = true}) {
   if (element.style.display.toLowerCase().contains('inline')) return true;
 
   if (checkBootstrapClasses) {
-    return element.classes.contains('d-inline') ||
-        element.classes.contains('d-inline-block') ||
-        element.classes.contains('d-inline-flex');
+    final classList = element.classList;
+
+    return classList.contains('d-inline') ||
+        classList.contains('d-inline-block') ||
+        classList.contains('d-inline-flex');
   }
 
   return false;
@@ -1135,9 +1041,9 @@ Future<bool> prefetchHref(String href,
     return true;
   }
 
-  var head = querySelector('head') as HeadElement?;
+  var head = document.querySelector('head') as HTMLHeadElement?;
 
-  var script = LinkElement()
+  var script = HTMLLinkElement()
     ..rel = rel
     ..href = href;
 
@@ -1151,9 +1057,10 @@ Future<bool> prefetchHref(String href,
 
   if (insertIndex != null) {
     insertIndex = Math.min(insertIndex, head!.children.length);
-    head.children.insert(insertIndex, script);
+
+    head.insertChild(insertIndex, script);
   } else {
-    head!.children.add(script);
+    head!.appendChild(script);
   }
 
   var call = completer.future;
@@ -1166,13 +1073,13 @@ Future<bool> prefetchHref(String href,
 ///
 /// Returns [true] if replace was performed.
 bool replaceElement(Node n1, Node n2) {
-  var parent = n1.parent;
+  var parent = n1.parentElement;
 
   if (parent != null) {
-    var idx = parent.nodes.indexOf(n1);
+    var idx = parent.childNodes.indexOf(n1);
     if (idx >= 0) {
-      parent.nodes.removeAt(idx);
-      parent.nodes.insert(idx, n2);
+      parent.insertBefore(n1, n2);
+      parent.removeChild(n1);
       return true;
     }
   }
@@ -1186,7 +1093,7 @@ Element? getParentElement(Element element,
   if (maxLevels < 1) return null;
 
   for (var level = 1; level <= maxLevels; ++level) {
-    var parent = element.parent;
+    var parent = element.parentElement;
     if (parent != null) {
       if (validator != null) {
         if (validator(parent)) {
@@ -1228,10 +1135,10 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
   }
 
   @override
-  Node? getParentOf(Node? key) => key?.parent;
+  Node? getParentOf(Node? key) => key?.parentNode;
 
   @override
-  Iterable<Node> getChildrenOf(Node? key) => key?.nodes ?? [];
+  Iterable<Node> getChildrenOf(Node? key) => key?.childNodes.toIterable() ?? [];
 
   @override
   bool isChildOf(Node? parent, Node? child, bool deep) {
@@ -1245,7 +1152,7 @@ class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
     if (deep) {
       return !identical(parent, child) && parent.contains(child);
     } else {
-      return parent.nodes.contains(child);
+      return parent.contains(child);
     }
   }
 }
@@ -1297,11 +1204,14 @@ bool get isLargeDeviceOrHigher {
 
 bool get isExtraLargeDevice => deviceWidth! >= 1200;
 
-CanvasElement? _measureTextCanvas;
+HTMLCanvasElement? _measureTextCanvas;
 
 Dimension? measureText(String text,
     {required String fontFamily, required Object fontSize, bool bold = false}) {
-  final canvas = _measureTextCanvas ??= CanvasElement(width: 10, height: 10);
+  final canvas = _measureTextCanvas ??= HTMLCanvasElement()
+    ..width = 10
+    ..height = 10;
+
   final ctx = canvas.context2D;
 
   var fontSizeStr = fontSize is num ? '${fontSize}px' : fontSize.toString();
@@ -1312,16 +1222,16 @@ Dimension? measureText(String text,
   final m = ctx.measureText(text);
 
   var actualBoundingBoxAscent =
-      m.actualBoundingBoxAscent ?? m.fontBoundingBoxAscent ?? 1;
+      m.tryActualBoundingBoxAscent ?? m.tryFontBoundingBoxAscent ?? 1;
   var actualBoundingBoxDescent =
-      m.actualBoundingBoxDescent ?? m.fontBoundingBoxDescent ?? 1;
+      m.tryActualBoundingBoxDescent ?? m.tryFontBoundingBoxDescent ?? 1;
 
   var fontBoundingBoxDescent =
-      m.fontBoundingBoxDescent ?? m.actualBoundingBoxDescent ?? 1;
+      m.tryFontBoundingBoxDescent ?? m.tryActualBoundingBoxDescent ?? 1;
 
-  var width = m.width ?? 1;
+  var width = m.width;
 
-  var height = m.emHeightAscent;
+  var height = m.tryEmHeightAscent;
   if (height != null) {
     height += fontBoundingBoxDescent;
   } else {

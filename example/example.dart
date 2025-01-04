@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:dom_tools/dom_tools.dart';
 
 void main() {
@@ -9,14 +7,14 @@ void main() {
   // Example of an image that only loads when visualized in viewport:
 
   var tracker = TrackElementInViewport();
-  var imageElement = ImageElement();
+  var imageElement = HTMLImageElement();
 
   tracker.track(imageElement, onEnterViewport: (elem) {
     // ignore: unsafe_html
     imageElement.src = imgSrc;
   });
 
-  document.body!.children.add(imageElement);
+  document.body!.appendChild(imageElement);
 
   Future.delayed(Duration(seconds: 10), () {
     var img = getElementBySRC('img', imgSrc);

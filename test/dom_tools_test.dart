@@ -1,8 +1,6 @@
 @TestOn('browser')
 library;
 
-import 'dart:html';
-
 import 'package:dom_tools/dom_tools.dart';
 import 'package:test/test.dart';
 
@@ -16,19 +14,19 @@ void main() {
     });
 
     test('touchEventToMouseEvent', () {
-      var div = DivElement();
+      var div = HTMLDivElement();
 
       Touch? touch;
 
       try {
-        touch = Touch({
-          'identifier': 123,
-          'target': div,
-          'screenX': 200,
-          'screenY': 100,
-          'clientX': 100,
-          'clientY': 50,
-        });
+        touch = Touch(TouchInit(
+          identifier: 123,
+          target: div,
+          screenX: 200,
+          screenY: 100,
+          clientX: 100,
+          clientY: 50,
+        ));
       } catch (e) {
         print(e);
       }
@@ -38,13 +36,15 @@ void main() {
         return;
       }
 
-      var touchEvent = TouchEvent('touchstart', {
-        'touches': [touch],
-        'ctrlKey': false,
-        'shiftKey': true,
-        'altKey': false,
-        'metaKey': false,
-      });
+      var touchEvent = TouchEvent(
+          'touchstart',
+          TouchEventInit(
+            touches: [touch].toJS,
+            ctrlKey: false,
+            shiftKey: true,
+            altKey: false,
+            metaKey: false,
+          ));
 
       var mouseEvent = touchEventToMouseEvent(touchEvent)!;
       expect(mouseEvent, isNotNull);
@@ -105,7 +105,8 @@ void main() {
     });
 
     test('extensions', () {
-      var div = DivElement()..setInnerHtml('''
+      var div = HTMLDivElement()
+        ..innerHTML = '''
       
         <a id="lnk1" href="link1.html">link 1</a>
         <a id="lnk2" href="link2.html#h2" class="hash hash2">link 2</a>
@@ -119,9 +120,10 @@ void main() {
         
         <img id="img1" src='foo.png'>
         
-      ''');
+      '''
+            .toJS;
 
-      var innerElements = _elementsToTag(div.children);
+      var innerElements = _elementsToTag(div.children.toList());
 
       expect(
           innerElements,
@@ -138,30 +140,31 @@ void main() {
 
       {
         expect(
-            _elementsToTag(div.children.whithClass('hash')),
+            _elementsToTag(div.children.toIterable().withClass('hash')),
             equals([
               '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
               '<a id=lnk3 href=link3.html#h3 class=hash>',
             ]));
 
-        expect(_elementsToTag(div.children.whithClass('hash2')),
+        expect(_elementsToTag(div.children.toIterable().withClass('hash2')),
             equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']));
 
-        expect(_elementsToTag(div.children.whithClass('chkb')),
+        expect(_elementsToTag(div.children.toIterable().withClass('chkb')),
             equals(['<input id=chk2 type=checkbox value=b class=chkb>']));
 
         expect(
-            _elementsToTag(div.children.whithClasses(['hash', 'hash2'])),
+            _elementsToTag(
+                div.children.toIterable().withClasses(['hash', 'hash2'])),
             equals([
               '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
             ]));
       }
 
       {
-        expect(_elementsToTag(div.children.withID('lnk2')),
+        expect(_elementsToTag(div.children.toIterable().withID('lnk2')),
             equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']));
 
-        expect(_elementsToTag(div.children.withID('img1')),
+        expect(_elementsToTag(div.children.toIterable().withID('img1')),
             equals(['<img id=img1 src=foo.png>']));
       }
 
@@ -210,7 +213,7 @@ void main() {
 
         expect(sel[1].id, equals('chk2'));
         expect(sel[1].value, equals('b'));
-        expect(sel[1].checked ?? false, isFalse);
+        expect(sel[1].checked, isFalse);
       }
 
       {
@@ -233,7 +236,7 @@ void main() {
 
         expect(sel[1].id, equals('rad2'));
         expect(sel[1].value, equals('d'));
-        expect(sel[1].checked ?? false, isFalse);
+        expect(sel[1].checked, isFalse);
       }
 
       {
@@ -258,15 +261,17 @@ void main() {
       var m2 = measureText(text, fontFamily: 'Arial', fontSize: 12)!;
 
       expect(m1.width > m2.width, isTrue);
-      expect(m1.height > m2.height, isTrue);
+      expect(m1.height > m2.height, isTrue,
+          reason: "m1.height: ${m1.height} ; m2.height: ${m2.height}");
     });
   });
 }
 
 List<String> _elementsToTag(Iterable<Element> children) {
   return children
-      .map((e) => '<${e.tagName.toLowerCase()} ${e.attributes.entries.map((e) {
-            var key = e.key;
+      .map((e) =>
+          '<${e.tagName.toLowerCase()} ${e.attributes.toIterable().map((e) {
+            var key = e.name;
             var value = e.value.replaceAll(' ', '+');
             return value.isNotEmpty ? '$key=$value' : key;
           }).join(' ')}>')

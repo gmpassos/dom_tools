@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:html';
 
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:dom_tools/dom_tools.dart';
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:swiss_knife/swiss_knife.dart';
+
+import 'dom_tools_base.dart';
+import 'dom_tools_extension.dart';
 
 final RegExp _patternCssLengthUnit =
     RegExp(r'(px|%|vw|vh|vmin|vmax|em|ex|ch|rem|cm|mm|in|pc|pt)$');
@@ -52,10 +53,10 @@ Future<bool> addCSSCode(String cssCode) async {
   Future<bool> future;
 
   try {
-    var head = querySelector('head') as HeadElement;
+    var head = document.querySelector('head') as HTMLHeadElement;
 
-    var styleElement = StyleElement();
-    styleElement.innerHtml = cssCode;
+    var styleElement = HTMLStyleElement();
+    styleElement.innerHTML = cssCode.toJS;
 
     head.append(styleElement);
 
@@ -97,9 +98,9 @@ Future<bool> addCssSource(String cssSource, {int? insertIndex}) async {
 
   print('ADDING <LINK>: $cssSource');
 
-  var head = querySelector('head') as HeadElement?;
+  var head = document.querySelector('head') as HTMLHeadElement?;
 
-  var script = LinkElement()
+  var script = HTMLLinkElement()
     ..rel = 'stylesheet'
     ..href = cssSource;
 
@@ -113,7 +114,7 @@ Future<bool> addCssSource(String cssSource, {int? insertIndex}) async {
 
   if (insertIndex != null) {
     insertIndex = Math.min(insertIndex, head!.children.length);
-    head.children.insert(insertIndex, script);
+    head.insertChild(insertIndex, script);
   } else {
     head!.children.add(script);
   }
@@ -124,27 +125,27 @@ Future<bool> addCssSource(String cssSource, {int? insertIndex}) async {
   return call;
 }
 
-/// Returns a [CssStyleDeclaration] from an element.
-CssStyleDeclaration getComputedStyle(
+/// Returns a [CSSStyleDeclaration] from an element.
+CSSStyleDeclaration getComputedStyle(
     {Element? parent,
-    Element? element,
+    HTMLElement? element,
     String? classes,
     String? style,
     bool? hidden}) {
   parent ??= document.body;
   hidden ??= true;
 
-  element ??= DivElement();
+  element ??= HTMLDivElement();
 
   var prevHidden = element.hidden;
 
-  element.hidden = hidden;
+  element.hidden = hidden.toJS;
 
   if (classes != null && classes.isNotEmpty) {
     var allClasses =
         classes.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
     for (var c in allClasses) {
-      element.classes.add(c);
+      element.classList.add(c);
     }
   }
 
@@ -154,10 +155,10 @@ CssStyleDeclaration getComputedStyle(
 
   parent!.children.add(element);
 
-  var computedStyle = element.getComputedStyle();
+  var computedStyle = window.getComputedStyle(element);
   var cssText = computedStyle.cssText;
 
-  var computedStyle2 = CssStyleDeclaration();
+  var computedStyle2 = newCSSStyleDeclaration();
   computedStyle2.cssText = cssText;
 
   element.remove();
@@ -279,7 +280,7 @@ void loadCSS(String cssClassPrefix, Map<String, CSSValueBase>? css) {
 
   var id = '__dom_tools__dynamic_css__$cssClassPrefix';
 
-  var styleElement = StyleElement()..id = id;
+  var styleElement = HTMLStyleElement()..id = id;
 
   var prev = document.head!.querySelector('#$id');
   if (prev != null) {
@@ -288,7 +289,7 @@ void loadCSS(String cssClassPrefix, Map<String, CSSValueBase>? css) {
 
   document.head!.append(styleElement);
 
-  var sheet = styleElement.sheet as CssStyleSheet?;
+  var sheet = styleElement.sheet;
 
   for (var key in css!.keys) {
     var val = css[key]!;
@@ -507,8 +508,8 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
   }
 
   Future<void> _animate(AnimationCallback? callback) {
-    var prevTransitions =
-        Map.fromEntries(_elements.map((e) => MapEntry(e, e.style.transition)));
+    var prevTransitions = Map.fromEntries(
+        _elements.map((e) => MapEntry(e, e.style?.transition ?? '')));
 
     var prevValues = <Element, Map<String, String>>{};
 
@@ -516,11 +517,11 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
       var key = entry.key;
 
       for (var element in _elements) {
-        var prevVal = element.style.getPropertyValue(key);
+        var prevVal = element.style?.getPropertyValue(key);
 
         if (_rollbackProperties.contains(key)) {
-          prevValues[element] ??= {};
-          prevValues[element]![key] = prevVal;
+          var prev = prevValues[element] ??= {};
+          prev[key] = prevVal ?? '';
         }
       }
     }
@@ -530,7 +531,7 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
         var key = entry.key;
 
         for (var element in _elements) {
-          element.style.setProperty(key, entry.value);
+          element.style?.setProperty(key, entry.value);
         }
       }
 
@@ -549,7 +550,7 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
     var durationMs = duration.inMilliseconds;
 
     for (var e in _elements) {
-      e.style.transition = 'all ${durationMs}ms $timingFunction';
+      e.style?.transition = 'all ${durationMs}ms $timingFunction';
     }
 
     var setValues = <Element, Map<String, String>>{};
@@ -558,11 +559,11 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
       var key = entry.key;
 
       for (var element in _elements) {
-        element.style.setProperty(key, entry.value);
+        element.style?.setProperty(key, entry.value);
 
         if (_rollbackProperties.contains(key)) {
-          setValues[element] ??= {};
-          setValues[element]![key] = element.style.getPropertyValue(key);
+          var values = setValues[element] ??= {};
+          values[key] = element.style?.getPropertyValue(key) ?? '';
         }
       }
     }
@@ -576,7 +577,7 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
       for (var entry in _preFinalProperties.entries) {
         var key = entry.key;
         for (var element in _elements) {
-          element.style.setProperty(key, entry.value);
+          element.style?.setProperty(key, entry.value);
         }
       }
 
@@ -587,23 +588,23 @@ class CSSAnimationConfigElements extends CSSAnimationConfig {
 
     for (var key in _rollbackProperties) {
       for (var element in _elements) {
-        var setVal = element.style.getPropertyValue(key);
+        var setVal = element.style?.getPropertyValue(key);
         if (setVal == setValues[element]![key]) {
-          var prevValue = prevValues[element]![key];
-          element.style.setProperty(key, prevValue);
+          var prevValue = prevValues[element]![key] ?? '';
+          element.style?.setProperty(key, prevValue);
         }
       }
     }
 
     for (var element in _elements) {
       for (var entry in _finalProperties.entries) {
-        element.style.setProperty(entry.key, entry.value);
+        element.style?.setProperty(entry.key, entry.value);
       }
 
       addElementsClasses(_elements, _finalClasses);
 
       var prevTransition = prevTransitions[element]!;
-      element.style.transition = prevTransition;
+      element.style?.transition = prevTransition;
     }
 
     if (callback != null) {
@@ -718,9 +719,9 @@ bool addElementsClasses(Iterable<Element> elements, Iterable<String> classes) {
     for (var element in elements) {
       bool changed;
       if (remove) {
-        changed = element.classes.remove(className);
+        changed = element.classList.removeAndDetectChange(className);
       } else {
-        changed = element.classes.add(className);
+        changed = element.classList.addAndDetectChange(className);
       }
 
       if (changed) changedAny = true;
@@ -746,8 +747,8 @@ String? setElementScrollColors(
 
   removeElementScrollColors(element);
 
-  element.style.setProperty('scrollbar-width', '${scrollWidth}px');
-  element.style.setProperty(
+  element.style?.setProperty('scrollbar-width', '${scrollWidth}px');
+  element.style?.setProperty(
       'scrollbar-color', '$scrollButtonColor $scrollBgColor'.trim());
 
   var regExpNonWord = RegExp(r'\W+');
@@ -778,8 +779,8 @@ String? setElementScrollColors(
 
   addCSSCode(webkitScrollColorsCSS);
 
-  if (!element.classes.contains(scrollColorClassID)) {
-    element.classes.add(scrollColorClassID);
+  if (!element.classList.contains(scrollColorClassID)) {
+    element.classList.add(scrollColorClassID);
   }
 
   return scrollColorClassID;
@@ -787,14 +788,16 @@ String? setElementScrollColors(
 
 /// Removes [element] scroll colors CSS properties set by [setElementScrollColors].
 List<String>? removeElementScrollColors(Element element) {
-  element.style.removeProperty('scrollbar-width');
-  element.style.removeProperty('scrollbar-color');
+  element.style?.removeProperty('scrollbar-width');
+  element.style?.removeProperty('scrollbar-color');
 
-  var scrollClassIDs =
-      element.classes.where((c) => c.startsWith('__scroll_color__')).toList();
+  var scrollClassIDs = element.classList
+      .toIterable()
+      .where((c) => c.startsWith('__scroll_color__'))
+      .toList();
 
   if (isNotEmptyObject(scrollClassIDs)) {
-    element.classes.removeAll(scrollClassIDs);
+    element.classList.removeAll(scrollClassIDs);
     return scrollClassIDs;
   } else {
     return null;
@@ -808,23 +811,24 @@ void setTreeElementsBackgroundBlur(Element element, String className) {
 
   var levels = [1, 2, 3, 4];
 
-  if (element.classes.contains(className)) {
+  if (element.classList.contains(className)) {
     setElementBackgroundBlur(element, 3);
   } else {
     for (var level in levels) {
-      if (element.classes.contains('$className-$level')) {
+      if (element.classList.contains('$className-$level')) {
         setElementBackgroundBlur(element, level * 3);
       }
     }
   }
 
   var elements = element.querySelectorAll('.$className');
-  for (var e in elements) {
+  for (var e in elements.toElements()) {
     setElementBackgroundBlur(e, 3);
   }
 
   for (var level in levels) {
-    var elements = element.querySelectorAll('.$className-$level');
+    var elements =
+        element.querySelectorAll('.$className-$level').whereElement();
     for (var e in elements) {
       setElementBackgroundBlur(e, level * 3);
     }
@@ -836,14 +840,14 @@ void setTreeElementsBackgroundBlur(Element element, String className) {
 void setElementBackgroundBlur(Element element, [int? blurSize]) {
   blurSize ??= 3;
   var filter = blurSize > 0 ? 'blur(${blurSize}px)' : 'none';
-  element.style.setProperty('backdrop-filter', filter);
+  element.style?.setProperty('backdrop-filter', filter);
 }
 
 /// Removes [element] background blur effect, set by [setElementBackgroundBlur].
 void removeElementBackgroundBlur(Element element, [int? blurSize]) {
-  var val = element.style.getPropertyValue('backdrop-filter');
-  if (val.contains('blur')) {
-    element.style.removeProperty('backdrop-filter');
+  var val = element.style?.getPropertyValue('backdrop-filter');
+  if (val != null && val.contains('blur')) {
+    element.style?.removeProperty('backdrop-filter');
   }
 }
 
@@ -852,20 +856,20 @@ const int cssMaxZIndex = 2147483647;
 /// Returns the [element] `z-index` or [element.parent] `z-index` recursively.
 String? getElementZIndex(Element? element, [String? def]) {
   while (element != null) {
-    var zIndex = element.style.zIndex;
+    var zIndex = element.style?.zIndex;
     if (isNotEmptyObject(zIndex) && isInt(zIndex)) {
       return zIndex;
     }
-    element = element.parent;
+    element = element.parentElement;
   }
   return def;
 }
 
-/// Returns a [CssStyleDeclaration] of the pre-computed CSS properties of [element].
-CssStyleDeclaration getElementPreComputedStyle(Element element) {
+/// Returns a [CSSStyleDeclaration] of the pre-computed CSS properties of [element].
+CSSStyleDeclaration getElementPreComputedStyle(Element element) {
   var list = getElementAllCssProperties(element);
   var allCss = list.join('; ');
-  return CssStyleDeclaration.css(allCss);
+  return newCSSStyleDeclaration(cssText: allCss);
 }
 
 /// Returns a list of CSS properties associated with [element]
@@ -873,12 +877,12 @@ List<String> getElementAllCssProperties(Element element) {
   var rules = getElementAllCssRule(element);
 
   var cssTexts = rules
-      .map((r) => r.cssText ?? '')
+      .map((r) => r.cssText)
       .map(parseCssRuleTextProperties)
       .where((p) => p.isNotEmpty)
       .toList();
 
-  var elemCssText = element.style.cssText;
+  var elemCssText = element.style?.cssText;
   if (elemCssText != null && elemCssText.isNotEmpty) {
     cssTexts.add(elemCssText);
   }
@@ -887,10 +891,10 @@ List<String> getElementAllCssProperties(Element element) {
 }
 
 /// Returns a list of [CssRule] associated with [element].
-List<CssRule> getElementAllCssRule(Element element) {
+List<CSSRule> getElementAllCssRule(Element element) {
   var tag = element.tagName.toLowerCase();
 
-  var patterns = [tag, ...element.classes.map((c) => r'\.' + c)];
+  var patterns = [tag, ...element.classList.toIterable().map((c) => r'\.' + c)];
 
   var regExp = RegExp(r'^(?:' + patterns.join('|') + r')$',
       multiLine: false, caseSensitive: false);
@@ -908,10 +912,9 @@ List<String> getAllViewportMediaCssRuleAsClassRule(
   var rulesFixed = <String, List<String>>{};
 
   for (var mediaRule in rules) {
-    var cssRules = mediaRule.cssRules;
-    if (cssRules == null) continue;
-    for (var rule in cssRules.whereType<CssStyleRule>()) {
-      var block = rule.style.cssText;
+    var cssRules = mediaRule.cssRules.toIterable();
+    for (var rule in cssRules.whereType<CSSStyleRule>()) {
+      var block = rule.style.as<CSSStyleDeclaration>();
       if (block == null || block.isEmpty) continue;
 
       var selectors = parseCssRuleSelectors(rule);
@@ -919,7 +922,7 @@ List<String> getAllViewportMediaCssRuleAsClassRule(
       var selectors2 = selectorsFixed.join(' , ');
 
       var blocks = rulesFixed.putIfAbsent(selectors2, () => <String>[]);
-      blocks.add(block);
+      blocks.add(block.cssText);
     }
   }
 
@@ -927,8 +930,8 @@ List<String> getAllViewportMediaCssRuleAsClassRule(
       .map((sel, blocks) {
         var css = blocks.join(' ; ');
         if (blocks.length > 1) {
-          var css2 = CssStyleDeclaration.css(css).cssText;
-          if (css2 != null) {
+          var css2 = newCSSStyleDeclaration(cssText: css).cssText;
+          if (css2.trim().isNotEmpty) {
             css = css2;
           }
         }
@@ -948,11 +951,12 @@ List<String> getAllOutOfViewportMediaCssRuleAsClassRule(
   var rulesFixed = <String, List<String>>{};
 
   for (var mediaRule in rules) {
-    for (var rule in mediaRule.cssRules!.whereType<CssStyleRule>()) {
+    for (var rule
+        in mediaRule.cssRules.toIterable().whereType<CSSStyleRule>()) {
       var selectors = parseCssRuleSelectors(rule);
       var selectorsFixed = selectors.map((s) => '.$targetClass $s');
 
-      var block = rule.style.cssText!;
+      var block = rule.style.as<CSSStyleDeclaration>()?.cssText ?? '';
       var blockUnset =
           block.replaceAll(RegExp(r':.*?;'), ': initial !important;');
 
@@ -966,7 +970,7 @@ List<String> getAllOutOfViewportMediaCssRuleAsClassRule(
       .map((key, value) {
         String? css = value.join(' ; ');
         if (value.length > 1) {
-          css = CssStyleDeclaration.css(css).cssText;
+          css = newCSSStyleDeclaration(cssText: css).cssText;
         }
         return MapEntry(key, '$key { $css }');
       })
@@ -977,15 +981,15 @@ List<String> getAllOutOfViewportMediaCssRuleAsClassRule(
 }
 
 /// Returns all [CssMediaRule] not applied for [viewportWidth] and [viewportHeight].
-List<CssMediaRule> getAllOutOfViewportMediaCssRule(
+List<CSSMediaRule> getAllOutOfViewportMediaCssRule(
     int viewportWidth, viewportHeight) {
   var rules = getAllMediaCssRule(r'(?:min|max)-(?:width|height):\s*.*?');
 
-  var viewportRules = <CssMediaRule>[];
+  var viewportRules = <CSSMediaRule>[];
 
   for (var rule in rules) {
     var conditionText =
-        rule.conditionText!.trim().replaceAll(RegExp(r'^\(|\)$'), '');
+        rule.conditionText.trim().replaceAll(RegExp(r'^\(|\)$'), '');
 
     var parts = split(conditionText, ':', 2);
     if (parts.length != 2) continue;
@@ -1022,15 +1026,15 @@ List<CssMediaRule> getAllOutOfViewportMediaCssRule(
 }
 
 /// Returns all [CssMediaRule] applied for [viewportWidth] [viewportHeight].
-List<CssMediaRule> getAllViewportMediaCssRule(
+List<CSSMediaRule> getAllViewportMediaCssRule(
     int viewportWidth, viewportHeight) {
   var rules = getAllMediaCssRule(r'(?:min|max)-(?:width|height):\s*.*?');
 
-  var viewportRules = <CssMediaRule>[];
+  var viewportRules = <CSSMediaRule>[];
 
   for (var rule in rules) {
     var conditionText =
-        rule.conditionText!.trim().replaceAll(RegExp(r'^\(|\)$'), '');
+        rule.conditionText.trim().replaceAll(RegExp(r'^\(|\)$'), '');
 
     var parts = split(conditionText, ':', 2);
     if (parts.length != 2) continue;
@@ -1066,7 +1070,7 @@ List<CssMediaRule> getAllViewportMediaCssRule(
 }
 
 /// Returns a list of @media [CssRule] with [mediaCondition].
-List<CssMediaRule> getAllMediaCssRule(String mediaCondition) {
+List<CSSMediaRule> getAllMediaCssRule(String mediaCondition) {
   mediaCondition = mediaCondition.trim();
 
   RegExp regExp;
@@ -1080,13 +1084,13 @@ List<CssMediaRule> getAllMediaCssRule(String mediaCondition) {
   }
 
   var rules =
-      selectCssRuleWithSelector(regExp).whereType<CssMediaRule>().toList();
+      selectCssRuleWithSelector(regExp).whereType<CSSMediaRule>().toList();
 
   return rules;
 }
 
 /// Returns a list of [CssRule] with [targetSelector] patterns.
-List<CssRule> selectCssRuleWithSelector(Pattern targetSelector) {
+List<CSSRule> selectCssRuleWithSelector(Pattern targetSelector) {
   var sheets = getAllCssStyleSheet();
 
   var rules = sheets
@@ -1098,21 +1102,21 @@ List<CssRule> selectCssRuleWithSelector(Pattern targetSelector) {
 }
 
 /// Returns all current [CssStyleSheet].
-List<CssStyleSheet> getAllCssStyleSheet() {
-  var styles = querySelectorAll('style').cast<StyleElement>();
-  var links = querySelectorAll('link').cast<LinkElement>();
+List<CSSStyleSheet> getAllCssStyleSheet() {
+  var styles = document.querySelectorAll('style').whereType<HTMLStyleElement>();
+  var links = document.querySelectorAll('link').whereType<HTMLLinkElement>();
 
   var sheets = [
-    ...styles.map((s) => s.sheet).whereType<CssStyleSheet>(),
-    ...links.map((s) => s.sheet).whereType<CssStyleSheet>(),
+    ...styles.map((s) => s.sheet).whereType<CSSStyleSheet>(),
+    ...links.map((s) => s.sheet).whereType<CSSStyleSheet>(),
   ];
 
   return sheets;
 }
 
 /// Returns a [List<CssRule>] for [targetSelector].
-List<CssRule> getAllCssRuleBySelector(
-    Pattern targetSelector, CssStyleSheet? sheet) {
+List<CSSRule> getAllCssRuleBySelector(
+    Pattern targetSelector, CSSStyleSheet? sheet) {
   if (sheet == null) return [];
 
   if (targetSelector is String) {
@@ -1126,11 +1130,11 @@ List<CssRule> getAllCssRuleBySelector(
   }
 }
 
-List<CssRule> _getAllCssRuleBySelectorString(
-    String targetSelector, CssStyleSheet sheet) {
-  var rules = <CssRule>[];
+List<CSSRule> _getAllCssRuleBySelectorString(
+    String targetSelector, CSSStyleSheet sheet) {
+  var rules = <CSSRule>[];
 
-  for (var rule in sheet.rules!) {
+  for (var rule in sheet.rules.toIterable()) {
     var selectors = parseCssRuleSelectors(rule).map((s) => s.toLowerCase());
 
     var firstMatch = selectors.firstWhereOrNull((s) => s == targetSelector);
@@ -1143,11 +1147,11 @@ List<CssRule> _getAllCssRuleBySelectorString(
   return rules;
 }
 
-List<CssRule> _getAllCssRuleBySelectorRegExp(
-    RegExp targetSelector, CssStyleSheet sheet) {
-  var rules = <CssRule>[];
+List<CSSRule> _getAllCssRuleBySelectorRegExp(
+    RegExp targetSelector, CSSStyleSheet sheet) {
+  var rules = <CSSRule>[];
 
-  for (var rule in sheet.rules!) {
+  for (var rule in sheet.rules.toIterable()) {
     var selectors = parseCssRuleSelectors(rule).map((s) => s.toLowerCase());
 
     var firstMatch =
@@ -1162,9 +1166,9 @@ List<CssRule> _getAllCssRuleBySelectorRegExp(
 }
 
 /// Parses the selectors of [cssRule].
-List<String> parseCssRuleSelectors(CssRule cssRule) {
-  if (cssRule is CssStyleRule) {
-    var selectorText = cssRule.selectorText.trim();
+List<String> parseCssRuleSelectors(CSSRule cssRule) {
+  if (cssRule.isA<CSSStyleRule>()) {
+    var selectorText = (cssRule as CSSStyleRule).selectorText.trim();
     var list = parseStringFromInlineList(selectorText, RegExp(r'\s*,\s*'));
     return list ?? <String>[];
   } else {
