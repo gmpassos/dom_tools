@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:html';
-import 'dart:js';
-import 'dart:js_util';
+import 'dart:js_interop_unsafe';
+
+import 'package:js_interop_utils/js_interop_utils.dart';
+import 'package:web/web.dart';
 
 import 'dom_tools_base.dart';
 
@@ -15,13 +16,13 @@ Future<bool> addJavaScriptCode(String scriptCode) async {
   Future<bool> future;
 
   try {
-    var head = querySelector('head')!;
+    var head = document.querySelector('head')!;
 
-    var script = ScriptElement()
+    var script = HTMLScriptElement()
       ..type = 'text/javascript'
       ..text = scriptCode;
 
-    head.children.add(script);
+    head.appendChild(script);
 
     future = Future.value(true);
   } catch (e, s) {
@@ -65,12 +66,12 @@ Future<bool> addJavaScriptSource(String scriptSource,
 
   Element parent;
   if (addToBody) {
-    parent = querySelector('body')!;
+    parent = document.querySelector('body')!;
   } else {
-    parent = querySelector('head')!;
+    parent = document.querySelector('head')!;
   }
 
-  var script = ScriptElement()
+  var script = HTMLScriptElement()
     ..type = 'text/javascript'
     // ignore: unsafe_html
     ..src = scriptSource;
@@ -87,7 +88,7 @@ Future<bool> addJavaScriptSource(String scriptSource,
     completer.complete(false);
   });
 
-  parent.children.add(script);
+  parent.appendChild(script);
 
   var call = completer.future;
   _addedJavaScriptsSources[scriptSource] = call;
@@ -110,10 +111,8 @@ Future<bool> addJSFunction(String name, List<String> parameters, String body) {
 }
 
 /// Call `eval()` with the content of [scriptCode] and returns the result.
-dynamic evalJS(String scriptCode) {
-  var res = context.callMethod('eval', [scriptCode]);
-  return res;
-}
+dynamic evalJS(String scriptCode) =>
+    globalContext.callMethod('eval'.toJS, scriptCode.toJS).dartify();
 
 typedef MappedFunction = dynamic Function(dynamic o);
 
@@ -122,65 +121,50 @@ typedef MappedFunction = dynamic Function(dynamic o);
 /// [jsFunctionName] Name of the function.
 /// [f] Dart function to map.
 void mapJSFunction(String jsFunctionName, MappedFunction f) {
-  context[jsFunctionName] = f;
+  globalContext[jsFunctionName] = (JSAny a) {
+    Object? r = f(a.dartify());
+    return r.jsify();
+  }.toJS;
 }
 
 /// Calls JavaScript a [method] in object [o] with [args].
-dynamic callJSObjectMethod(Object o, String method, [List? args]) {
-  return callMethod(o, method, args ?? []);
+dynamic callJSObjectMethod(JSObject o, String method, [List<Object?>? args]) {
+  var argsList = args?.map((e) => e.jsify()).toList() ?? [];
+  return o.callMethodVarArgs(method.toJS, argsList).dartify();
 }
 
 /// Calls JavaScript a function [method] with [args].
-dynamic callJSFunction(String method, [List? args]) {
-  return context.callMethod(method, args);
+dynamic callJSFunction(String method, [List<Object?>? args]) {
+  var argsList = args?.map((e) => e.jsify()).toList();
+  return globalContext.callMethodVarArgs(method.toJS, argsList).dartify();
 }
 
-/// Returns the keys of [JsObject] [o].
-List<String> jsObjectKeys(JsObject o) {
-  var keys = context['Object'].callMethod('keys', [o]);
-  return jsArrayToList(keys)!.map((e) => '$e').toList();
+/// Returns the keys of [JSObject] [o].
+@Deprecated("Use `js_interop_utils` extension `keys`")
+List<String> jsObjectKeys(JSObject o) {
+  return o.keys.toList();
 }
 
 /// Converts [o] to Dart primitives or collections.
 ///
-/// [o] Can be any primitive value, a [JsArray] or a [JsObject]).
+/// [o] Can be any primitive value, a [JsArray] or a [JSObject]).
+@Deprecated("Use `js_interop_utils` extension method `objectDartify`")
 Object? jsToDart(Object? o) {
-  if (o == null) return null;
-
-  if (o is String) return o;
-  if (o is num) return o;
-  if (o is bool) return o;
-
-  if (o is JsArray) return jsArrayToList(o);
-  if (o is JsObject) return jsObjectToMap(o);
-
-  if (o is List) return o.map(jsToDart).toList();
-  if (o is Map) {
-    return o.map((key, value) => MapEntry(jsToDart(key), jsToDart(value)));
-  }
-
-  return o;
+  return o?.objectDartify();
 }
 
-/// Converts a [JsArray] [a] to a [List].
+/// Converts a [JSArray] [a] to a [List].
 /// Also converts values using [jsToDart].
-List? jsArrayToList(JsArray? a) {
-  if (a == null) return null;
-  return a.map(jsToDart).toList();
+@Deprecated("Use `js_interop_utils` extension method `toList`")
+List? jsArrayToList(JSArray? a) {
+  return a?.toList();
 }
 
-/// Converts a [JsObject] [o] to a [Map].
+/// Converts a [JSObject] [o] to a [Map].
 /// Also converts keys and values using [jsToDart].
-Map? jsObjectToMap(JsObject? o) {
-  if (o == null) return null;
-
-  var keys = jsObjectKeys(o);
-  if (keys.isEmpty) return {};
-
-  return Map.fromEntries(keys.map((k) {
-    var v = o[k];
-    return MapEntry(k, jsToDart(v));
-  }));
+@Deprecated("Use `js_interop_utils` extension method `toMap`")
+Map? jsObjectToMap(JSObject? o) {
+  return o?.toMap();
 }
 
 String _jsFunctionBlockScrolling = '__JS__BlockScroll__';
@@ -272,7 +256,11 @@ void disableDoubleClicks() {
   if (_disableDoubleTapZoom) return;
   _disableDoubleTapZoom = true;
 
-  document.addEventListener('dblclick', (event) {
-    event.preventDefault();
-  }, true);
+  document.addEventListener(
+    'dblclick',
+    (Event event) {
+      event.preventDefault();
+    }.toJS,
+    true.toJS,
+  );
 }

@@ -1,6 +1,6 @@
 library dom_tools;
 
-export 'package:json_object_mapper/json_object_mapper.dart';
+export 'package:js_interop_utils/js_interop_utils.dart';
 
 export 'src/dom_data_storage.dart';
 export 'src/dom_tools_base.dart';

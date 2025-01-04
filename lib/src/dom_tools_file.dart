@@ -1,20 +1,22 @@
 import 'dart:async';
 import 'dart:convert' as data_convert;
-import 'dart:html';
 import 'dart:typed_data';
 
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
+import 'dom_tools_extension.dart';
 import 'dom_tools_paint.dart';
 
 /// Reads selected file of [input] as [Uint8List].
-Future<Uint8List?> readFileInputElementAsArrayBuffer(
-    FileUploadInputElement? input,
+Future<Uint8List?> readFileInputElementAsArrayBuffer(HTMLInputElement? input,
     [bool removeExifFromImage = false]) async {
-  if (input == null || input.files == null || input.files!.isEmpty) return null;
+  if (input == null) return null;
 
-  var file = input.files!.first;
+  final files = input.files;
+  if (files == null || files.isEmpty) return null;
+
+  var file = files.item(0)!;
 
   Uint8List? data;
   if (removeExifFromImage) {
@@ -29,11 +31,14 @@ Future<Uint8List?> readFileInputElementAsArrayBuffer(
 }
 
 /// Reads selected file of [input] as [String].
-Future<String?> readFileInputElementAsString(FileUploadInputElement? input,
+Future<String?> readFileInputElementAsString(HTMLInputElement? input,
     [bool removeExifFromImage = false]) async {
-  if (input == null || input.files == null || input.files!.isEmpty) return null;
+  if (input == null) return null;
 
-  var file = input.files!.first;
+  final files = input.files;
+  if (files == null || files.isEmpty) return null;
+
+  var file = files.item(0)!;
 
   String? data;
   if (removeExifFromImage) {
@@ -48,11 +53,14 @@ Future<String?> readFileInputElementAsString(FileUploadInputElement? input,
 }
 
 /// Reads selected file of [input] as Base64.
-Future<String?> readFileInputElementAsBase64(FileUploadInputElement? input,
+Future<String?> readFileInputElementAsBase64(HTMLInputElement? input,
     [bool removeExifFromImage = false]) async {
-  if (input == null || input.files == null || input.files!.isEmpty) return null;
+  if (input == null) return null;
 
-  var file = input.files!.first;
+  final files = input.files;
+  if (files == null || files.isEmpty) return null;
+
+  var file = files.item(0)!;
 
   String? data;
   if (removeExifFromImage) {
@@ -67,12 +75,14 @@ Future<String?> readFileInputElementAsBase64(FileUploadInputElement? input,
 }
 
 /// Reads selected file of [input] as DATA URL Base64.
-Future<String?> readFileInputElementAsDataURLBase64(
-    FileUploadInputElement? input,
+Future<String?> readFileInputElementAsDataURLBase64(HTMLInputElement? input,
     [bool removeExifFromImage = false]) async {
-  if (input == null || input.files == null || input.files!.isEmpty) return null;
+  if (input == null) return null;
 
-  var file = input.files!.first;
+  final files = input.files;
+  if (files == null || files.isEmpty) return null;
+
+  var file = files.item(0)!;
 
   String? data;
   if (removeExifFromImage) {
@@ -94,7 +104,8 @@ Future<String?> removeExifFromImageFile(File file) async {
     var fileDataURL = await readFileDataAsDataURLBase64(file);
 
     if (fileDataURL != null) {
-      var img = ImageElement(src: fileDataURL);
+      var img = HTMLImageElement()..src = fileDataURL;
+
       await elementOnLoad(img);
 
       var canvas = toCanvasElement(img, img.naturalWidth, img.naturalHeight);
@@ -157,20 +168,30 @@ Future<String?> readFileDataAsBase64(File file) async {
 Future<Uint8List?> readFileDataAsArrayBuffer(File file) async {
   final reader = FileReader();
   reader.readAsArrayBuffer(file);
-  await Future.any(
-      [reader.onLoad.first, reader.onError.first, reader.onAbort.first]);
-  var fileData = reader.result as Uint8List?;
-  return fileData;
+
+  await reader.onLoadEnd.first;
+
+  if (reader.error != null) {
+    return null;
+  }
+
+  var fileData = reader.result as JSUint8Array?;
+  return fileData?.toDart;
 }
 
 /// Reads [file] as text.
 Future<String?> readFileDataAsText(File file) async {
   final reader = FileReader();
   reader.readAsText(file);
-  await Future.any(
-      [reader.onLoad.first, reader.onError.first, reader.onAbort.first]);
-  var fileData = reader.result as String?;
-  return fileData;
+
+  await reader.onLoadEnd.first;
+
+  if (reader.error != null) {
+    return null;
+  }
+
+  var fileData = reader.result as JSString?;
+  return fileData?.toDart;
 }
 
 /// Builds a DATA URL string.

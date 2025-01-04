@@ -1,8 +1,7 @@
-import 'dart:html';
-
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
+import 'dom_tools_extension.dart';
 import 'dom_tools_paint.dart';
 
 /// Shows a text dialog.
@@ -10,11 +9,11 @@ import 'dom_tools_paint.dart';
 /// [text] The text to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement? showDialogText(String? text,
+HTMLDivElement? showDialogText(String? text,
     {double? transparency, String? padding}) {
   if (text == null || text.isEmpty) return null;
 
-  var element = SpanElement();
+  var element = HTMLSpanElement();
 
   element.text = text;
 
@@ -27,14 +26,17 @@ DivElement? showDialogText(String? text,
 /// [html] The HTML to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-/// [validator] The [NodeValidator] for HTML generation.
-DivElement? showDialogHTML(String? html,
-    {double? transparency, String? padding, NodeValidator? validator}) {
+HTMLDivElement? showDialogHTML(String? html,
+    {double? transparency,
+    String? padding,
+    @Deprecated("`NodeValidator` not implemented on package `web`")
+    Object? validator,
+    bool unsafe = false}) {
   if (html == null || html.isEmpty) return null;
 
-  var element = SpanElement();
+  var element = HTMLSpanElement();
 
-  setElementInnerHTML(element, html, validator: validator);
+  setElementInnerHTML(element, html, unsafe: unsafe);
 
   return showDialogElement(element,
       transparency: transparency, padding: padding);
@@ -44,8 +46,7 @@ DivElement? showDialogHTML(String? html,
 ///
 /// [src] The image source.
 void showDialogImage(String src) {
-  var img = ImageElement()
-    // ignore: unsafe_html
+  var img = HTMLImageElement()
     ..src = src
     ..style.width = '95%'
     ..style.height = 'auto'
@@ -59,13 +60,13 @@ void showDialogImage(String src) {
 /// [content] The element to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-DivElement showDialogElement(Element content,
+HTMLDivElement showDialogElement(HTMLElement content,
     {double? transparency, String? padding}) {
   if (transparency == null || transparency <= 0) transparency = 0.90;
 
   padding ??= '2vh 0 0 0';
 
-  var dialog = DivElement()
+  var dialog = HTMLDivElement()
     ..style.position = 'fixed'
     ..style.left = '0px'
     ..style.top = '0px'
@@ -78,8 +79,8 @@ DivElement showDialogElement(Element content,
     ..style.textAlign = 'center'
     ..style.setProperty('backdrop-filter', 'blur(6px)');
 
-  var close = SpanElement()
-    ..innerHtml = '&times;'
+  var close = HTMLSpanElement()
+    ..innerHTML = '&times;'.toJS
     ..style.float = 'right'
     ..style.fontSize = '28px'
     ..style.fontWeight = 'bold'
@@ -92,22 +93,22 @@ DivElement showDialogElement(Element content,
     dialog.remove();
   });
 
-  dialog.children.add(close);
+  dialog.appendChild(close);
 
   String? src;
   String? title;
   var isImage = false;
 
-  if (content is ImageElement) {
+  if (content is HTMLImageElement) {
     src = content.src;
     title = content.title;
     isImage = true;
-  } else if (content is VideoElement) {
+  } else if (content is HTMLVideoElement) {
     src = content.src;
     title = content.title;
   }
 
-  AnchorElement? download;
+  HTMLAnchorElement? download;
 
   if (src != null) {
     String? file;
@@ -126,9 +127,10 @@ DivElement showDialogElement(Element content,
 
     if (file == null || file.isEmpty) file = 'file.download';
 
-    download = AnchorElement(href: src)
+    download = HTMLAnchorElement()
+      ..href = src
       ..download = file
-      ..innerHtml = '&#8675;'
+      ..innerHTML = '&#8675;'.toJS
       ..style.float = 'right'
       ..style.textDecoration = 'none'
       ..style.fontSize = '24px'
@@ -142,8 +144,8 @@ DivElement showDialogElement(Element content,
   }
 
   if (isImage) {
-    var rotate = SpanElement()
-      ..innerHtml = '&#10549;'
+    var rotate = HTMLSpanElement()
+      ..innerHTML = '&#10549;'.toJS
       ..style.float = 'right'
       ..style.textDecoration = 'none'
       ..style.fontSize = '19px'
@@ -155,14 +157,15 @@ DivElement showDialogElement(Element content,
 
     rotate.onClick.listen((e) {
       var img = dialog.children
-          .where((e) => e is ImageElement || e is CanvasImageSource)
+          .whereType<HTMLElement>()
+          .where((e) => e.isA<HTMLImageElement>() || e.isA<CanvasImageSource>())
           .first;
 
-      late CanvasElement canvasRotated;
+      late HTMLCanvasElement canvasRotated;
 
-      if (img is CanvasElement) {
-        canvasRotated = rotateCanvasImageSource(img, img.width!, img.height!);
-      } else if (img is ImageElement) {
+      if (img is HTMLCanvasElement) {
+        canvasRotated = rotateCanvasImageSource(img, img.width, img.height);
+      } else if (img is HTMLImageElement) {
         canvasRotated =
             rotateCanvasImageSource(img, img.naturalWidth, img.naturalHeight);
       }
@@ -178,10 +181,10 @@ DivElement showDialogElement(Element content,
       var idx = dialog.children.indexOf(img);
       assert(idx >= 0);
       img.remove();
-      dialog.children.insert(idx, imgRotated);
+      dialog.insertChild(idx, imgRotated);
     });
 
-    dialog.children.add(rotate);
+    dialog.appendChild(rotate);
   }
 
   content

@@ -1,6 +1,9 @@
 import 'dart:async';
-import 'dart:html';
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:math';
+
+import 'package:web/web.dart';
 
 import 'dom_tools_base.dart';
 
@@ -43,11 +46,10 @@ void scrollTo(num? x, num? y,
 
   scrollable = _resolveScrollable(scrollable);
 
-  final params = {
-    if (x != null) 'left': x.toInt(),
-    if (y != null) 'top': y.toInt(),
-    if (smooth) 'behavior': 'smooth',
-  };
+  var params = JSObject();
+  if (x != null) params.setProperty('left'.toJS, x.toInt().toJS);
+  if (y != null) params.setProperty('top'.toJS, y.toInt().toJS);
+  if (smooth) params.setProperty('behavior'.toJS, 'smooth'.toJS);
 
   if (scrollable is Window) {
     scrollable.scrollTo(params);
@@ -130,7 +132,7 @@ void scrollToRight({bool smooth = true, int? delayMs}) =>
 /// - [scrollable] is the element to scroll. If `null` it will be the [window] or the [body],
 ///   identifying which one is scrolled.
 void scrollToElement(
-  Element element, {
+  HTMLElement element, {
   bool centered = true,
   bool vertical = true,
   bool horizontal = true,
@@ -153,8 +155,8 @@ void scrollToElement(
   }
 
   if (centered) {
-    var w = window.innerWidth ?? 0;
-    var h = window.innerHeight ?? 0;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
 
     x = max(0, x - (w ~/ 2));
     y = max(0, y - (h ~/ 2));
@@ -169,19 +171,19 @@ void scrollToElement(
 }
 
 /// Blocks a scroll event in the vertical direction that traverses the [element].
-void blockVerticalScrollTraverse(Element element) {
+void blockVerticalScrollTraverse(HTMLElement element) {
   element.onWheel
       .listen((event) => blockVerticalScrollTraverseEvent(element, event));
 }
 
 /// Blocks a scroll event in the horizontal direction that traverses the [element].
-void blockHorizontalScrollTraverse(Element element) {
+void blockHorizontalScrollTraverse(HTMLElement element) {
   element.onWheel
       .listen((event) => blockHorizontalScrollTraverseEvent(element, event));
 }
 
 /// Blocks a scroll event in the vertical and horizontal directions that traverses the [element].
-void blockScrollTraverse(Element element) {
+void blockScrollTraverse(HTMLElement element) {
   element.onWheel.listen((event) {
     var block = blockVerticalScrollTraverseEvent(element, event);
     if (!block) {
@@ -191,11 +193,12 @@ void blockScrollTraverse(Element element) {
 }
 
 /// Blocks a [wheelEvent] in the vertical direction that traverses the [element].
-bool blockVerticalScrollTraverseEvent(Element element, WheelEvent wheelEvent) {
+bool blockVerticalScrollTraverseEvent(
+    HTMLElement element, WheelEvent wheelEvent) {
   var delta = -wheelEvent.deltaY;
   var up = delta > 0;
 
-  var height = element.offset.height;
+  var height = element.offsetHeight;
   var scrollTop = element.scrollTop;
   var scrollHeight = element.scrollHeight;
 
@@ -220,11 +223,11 @@ bool blockVerticalScrollTraverseEvent(Element element, WheelEvent wheelEvent) {
 
 /// Blocks a [wheelEvent] in the horizontal direction that traverses the [element].
 bool blockHorizontalScrollTraverseEvent(
-    Element element, WheelEvent wheelEvent) {
+    HTMLElement element, WheelEvent wheelEvent) {
   var delta = -wheelEvent.deltaX;
   var left = delta > 0;
 
-  var width = element.offset.width;
+  var width = element.offsetWidth;
   var scrollLeft = element.scrollLeft;
   var scrollWidth = element.scrollWidth;
 

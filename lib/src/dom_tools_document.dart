@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:html';
+import 'dart:js_interop';
 import 'dart:typed_data';
 
+import 'package:http/browser_client.dart' as http;
 import 'package:markdown/markdown.dart' as mk;
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web/web.dart' hide MimeType;
 
 import 'dom_tools_base.dart';
 import 'dom_tools_css.dart';
@@ -191,7 +193,7 @@ String normalizeIndent(String text) {
 ///
 /// [markdown] The markdown document.
 /// [normalize] If [true] normalizes indent.
-DivElement markdownToDiv(String markdown,
+HTMLDivElement markdownToDiv(String markdown,
     {bool normalize = true,
     Iterable<mk.BlockSyntax>? blockSyntaxes,
     Iterable<mk.InlineSyntax>? inlineSyntaxes,
@@ -207,7 +209,7 @@ DivElement markdownToDiv(String markdown,
       linkResolver: linkResolver,
       imageLinkResolver: imageLinkResolver,
       inlineOnly: inlineOnly);
-  return createDivInline(html);
+  return createDivInline(html: html);
 }
 
 /// Converts a [markdown] document into a HTML string.
@@ -248,42 +250,14 @@ String markdownToHtml(String markdown,
 Blob dataURLToBlob(DataURLBase64 dataURL) {
   var mimeType = dataURL.mimeTypeAsString;
   var buffer = dataURL.payloadArrayBuffer;
-  return Blob([buffer], mimeType);
+  return Blob([buffer.toJS].toJS, BlobPropertyBag(type: mimeType));
 }
 
 /// Makes a HTTP request and returns [url] content as [Uint8List].
 Future<Uint8List> getURLData(String url,
     {String? user, String? password, bool withCredentials = true}) {
-  var httpRequest = HttpRequest();
-
-  httpRequest.withCredentials = withCredentials;
-
-  httpRequest.responseType = 'arraybuffer';
-
-  var completer = Completer<Uint8List>();
-
-  httpRequest.onLoad.listen((event) {
-    var status = httpRequest.status;
-    if (status == 200) {
-      var response = httpRequest.response;
-      var data = Uint8List.view(response);
-      completer.complete(data);
-    } else {
-      completer.completeError('Invalid response status: $status');
-    }
-  }, onError: (error) {
-    completer.completeError(error);
-  });
-
-  httpRequest.onError.listen((event) {
-    completer.completeError(event);
-  });
-
-  httpRequest.open('GET', url, async: true, user: user, password: password);
-
-  httpRequest.send();
-
-  return completer.future;
+  var client = http.BrowserClient()..withCredentials = withCredentials;
+  return client.readBytes(Uri.parse(url));
 }
 
 /// Downloads [dataURL], saving a file with [fileName].
@@ -294,24 +268,30 @@ void downloadDataURL(DataURLBase64 dataURL, String fileName) {
 
 /// Downloads [content] of type [mimeType], saving a file with [fileName].
 void downloadContent(List<String> content, MimeType mimeType, String fileName) {
-  var blob = Blob(content, mimeType.toString());
+  var blob = Blob(
+    content.map((e) => e.toJS).toList().toJS,
+    BlobPropertyBag(type: mimeType.toString()),
+  );
   downloadBlob(blob, fileName);
 }
 
 /// Downloads [bytes] of type [mimeType], saving a file with [fileName].
 void downloadBytes(List<int> bytes, MimeType mimeType, String fileName) {
-  var blob = Blob([bytes], mimeType.toString());
+  var blob = Blob(
+    bytes.map((e) => e.toJS).toList().toJS,
+    BlobPropertyBag(type: mimeType.toString()),
+  );
   downloadBlob(blob, fileName);
 }
 
 /// Downloads [blob] of type [mimeType], saving a file with [fileName].
 void downloadBlob(Blob blob, String fileName) {
-  var fileLink = AnchorElement();
+  var fileLink = HTMLAnchorElement();
   fileLink.style.display = 'none';
 
   if (isNotEmptyObject(fileName)) fileLink.download = fileName;
   // ignore: unsafe_html
-  fileLink.href = Url.createObjectUrlFromBlob(blob);
+  fileLink.href = URL.createObjectURL(blob);
 
   fileLink.onClick.listen((event) {
     fileLink.remove();
@@ -373,7 +353,7 @@ class DataAssets {
 
           if (entryMimeType.type == mimeType.type) {
             if (!matchSubType) return true;
-            entryMimeType.subType == mimeType.subType;
+            return entryMimeType.subType == mimeType.subType;
           }
           return false;
         })
@@ -467,7 +447,7 @@ class DataAssets {
     var prev = _assets.remove(id);
     if (prev != null) {
       try {
-        Url.revokeObjectUrl(prev.objectURL);
+        URL.revokeObjectURL(prev.objectURL);
       } catch (e, s) {
         print(e);
         print(s);
@@ -480,14 +460,20 @@ class DataAssets {
   /// Put an asset [id] of value [content] and [mimeType].
   String? putContent(String id, String content, MimeType mimeType) {
     if (isEmptyString(id)) return null;
-    var blob = Blob([content], mimeType.toString());
+    var blob = Blob(
+      [content.toJS].toJS,
+      BlobPropertyBag(type: mimeType.toString()),
+    );
     return putBlob(id, blob);
   }
 
   /// Put an asset [id] of value [data].
   String? putData(String id, List<int> data, MimeType mimeType) {
     if (id.isEmpty) return null;
-    var blob = Blob([data], mimeType.toString());
+    var blob = Blob(
+      [Uint8List.fromList(data).toJS].toJS,
+      BlobPropertyBag(type: mimeType.toString()),
+    );
     return putBlob(id, blob);
   }
 
@@ -501,7 +487,7 @@ class DataAssets {
   /// Put an asset [id] of value [blob].
   String? putBlob(String id, Blob blob) {
     if (id.isEmpty) return null;
-    var objURL = Url.createObjectUrlFromBlob(blob);
+    var objURL = URL.createObjectURL(blob);
     _assets[id] = _AssetObjectURL(objURL, MimeType.parse(blob.type));
     return objURL;
   }
@@ -509,7 +495,7 @@ class DataAssets {
   /// Put an asset [id] of value [source].
   String? putMediaSource(String id, MediaSource source, [MimeType? mimeType]) {
     if (id.isEmpty) return null;
-    var objURL = Url.createObjectUrlFromSource(source);
+    var objURL = URL.createObjectURL(source);
     _assets[id] = _AssetObjectURL(objURL, mimeType);
     return objURL;
   }
@@ -517,7 +503,7 @@ class DataAssets {
   /// Put an asset [id] of value [stream].
   String? putMediaStream(String id, MediaStream stream, [MimeType? mimeType]) {
     if (id.isEmpty) return null;
-    var objURL = Url.createObjectUrlFromStream(stream);
+    var objURL = URL.createObjectURL(stream);
     _assets[id] = _AssetObjectURL(objURL, mimeType);
     return objURL;
   }
@@ -552,7 +538,7 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
 
   if (docAssetsCount == 0) return false;
 
-  var iFrame = IFrameElement()
+  var iFrame = HTMLIFrameElement()
     ..width = '10'
     ..height = '10'
     ..style.display = 'none';
@@ -576,7 +562,7 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
   });
 
   // ignore: unsafe_html
-  iFrame.srcdoc = doc;
+  iFrame.srcdoc = doc.toJS;
   document.body!.append(iFrame);
 
   if (timeout != null) {
@@ -593,7 +579,7 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
 }
 
 /// Reloads an IFrame document.
-Future<bool> reloadIframe(IFrameElement iFrame, [bool? forceGet]) async {
+Future<bool> reloadIframe(HTMLIFrameElement iFrame, [bool? forceGet]) async {
   var loaded = await addJavaScriptCode('''
     window.__dom_tools_reloadIFrame = function(iframe,forceGet) {
       iframe.contentWindow.location.reload(forceGet);

@@ -1,17 +1,19 @@
 import 'dart:convert';
-import 'dart:html';
-import 'dart:indexed_db';
+import 'dart:js_interop_unsafe';
 
 import 'package:async_extension/async_extension.dart';
-import 'package:json_object_mapper/json_object_mapper.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
+import 'dom_tools_extension.dart';
+
 void _consoleLog(Object? error) {
-  window.console.log(error);
+  if (error == null) return;
+  console.log(error.jsify());
 }
 
 void _consoleError(Object? error) {
-  window.console.error(error);
+  if (error == null) return;
+  console.error(error.jsify());
 }
 
 abstract class _SimpleStorage {
@@ -92,10 +94,7 @@ class _SessionSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  bool remove(String key) {
-    var prev = window.sessionStorage.remove(key);
-    return prev != null;
-  }
+  bool remove(String key) => window.sessionStorage.remove(key);
 
   @override
   bool set(String key, Object? value) {
@@ -218,10 +217,7 @@ class _LocalSimpleStorage extends _SimpleStorage {
   }
 
   @override
-  bool remove(String key) {
-    var prev = window.localStorage.remove(key);
-    return prev != null;
-  }
+  bool remove(String key) => window.localStorage.remove(key);
 
   @override
   bool set(String key, Object? value) {
@@ -233,20 +229,18 @@ class _LocalSimpleStorage extends _SimpleStorage {
 class _DBSimpleStorage extends _SimpleStorage {
   static const String indexedDbName = 'dom_tools__simple_storage';
 
-  static bool get isSupported {
-    return IdbFactory.supported;
-  }
+  static bool get isSupported => window.indexedDB.isDefinedAndNotNull;
 
-  late final Future<Database> _open;
+  late final Future<IDBDatabase> _open;
 
-  Database? _db;
+  IDBDatabase? _db;
 
   _DBSimpleStorage() {
     _openVersioned();
   }
 
   void _openVersioned() {
-    var completer = Completer<Database>();
+    var completer = Completer<IDBDatabase>();
     _open = completer.future;
 
     completer.future.then(_setDB, onError: _onOpenVersionedError);
@@ -283,8 +277,9 @@ class _DBSimpleStorage extends _SimpleStorage {
     });
   }
 
-  Future<Database?> _indexedDBOpen() => window.indexedDB!
-      .open(indexedDbName, version: 1, onUpgradeNeeded: _initializeDatabase);
+  Future<IDBDatabase?> _indexedDBOpen() =>
+      window.indexedDB.openDatabase(indexedDbName,
+          version: 1, onUpgradeNeeded: _initializeDatabase);
 
   bool _loadError = false;
 
@@ -302,13 +297,13 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   bool get isLoaded => _db != null;
 
-  void _setDB(Database db) {
+  void _setDB(IDBDatabase db) {
     _consoleLog('`window.indexedDB.open`> OK');
     _db = db;
     onLoad.add(true);
   }
 
-  FutureOr<Database> _getDB() {
+  FutureOr<IDBDatabase> _getDB() {
     var db = _db;
     if (db != null) return db;
     return _open;
@@ -316,28 +311,36 @@ class _DBSimpleStorage extends _SimpleStorage {
 
   static const String objStore = 'objs';
 
-  void _initializeDatabase(VersionChangeEvent e) {
-    Database db = e.target.result;
-    db.createObjectStore(objStore, keyPath: 'k', autoIncrement: false);
+  void _initializeDatabase(Event e) {
+    var request = e.target as IDBOpenDBRequest;
+    var db = request.result as IDBDatabase;
+    db.createObjectStore(objStore,
+        IDBObjectStoreParameters(keyPath: 'k'.toJS, autoIncrement: false));
   }
 
   @override
   Future<bool> get isEmpty async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore, 'readonly');
+    var transaction = db.transaction(objStore.toJS, 'readonly');
     var objectStore = transaction.objectStore(objStore);
 
-    var cursors = objectStore.openCursor(autoAdvance: true);
+    var cursorRequest = objectStore.openCursor();
 
-    var empty = await cursors
-        .where((cursor) {
-          var k = cursor.key as String;
-          return k.isNotEmpty;
-        })
-        .map((cursor) => cursor.key as String)
-        .isEmpty;
+    var empty = await cursorRequest.process<IDBCursorWithValue, bool>((cursor) {
+      if (cursor != null) {
+        var k = cursor.key.dartify().toString();
+        var valid = k.isNotEmpty;
+        if (valid) {
+          return (next: false, result: false); // Not empty.
+        } else {
+          return (next: true, result: null); // Continue search...
+        }
+      } else {
+        return (next: false, result: true); // Empty.
+      }
+    });
 
-    return empty;
+    return empty ?? true;
   }
 
   @override
@@ -346,16 +349,20 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   FutureOr<Object?> get(String key) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore, 'readonly');
+    var transaction = db.transaction(objStore.toJS, 'readonly');
     var objectStore = transaction.objectStore(objStore);
 
-    var obj = await (objectStore.getObject(key).then((value) {
-      if (value is! Map) return null;
-      var map = value is Map<String, Object?>
-          ? value
-          : value.map((key, value) => MapEntry<String, Object?>('$key', value));
-      return map;
-    }));
+    var objRequest = objectStore.get(key.toJS);
+
+    var obj = await objRequest.process<JSAny, Map<String, Object?>>((value) {
+      if (value != null && value.isA<JSObject>()) {
+        var obj = value as JSObject;
+        var map = obj.toMap();
+        return (next: false, result: map);
+      } else {
+        return (next: false, result: null);
+      }
+    });
 
     if (obj == null) return null;
 
@@ -366,18 +373,25 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<List<String>> listKeys(String prefix) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore, 'readonly');
+    var transaction = db.transaction(objStore.toJS, 'readonly');
     var objectStore = transaction.objectStore(objStore);
 
-    var cursors = objectStore.openCursor(autoAdvance: true);
+    var cursorRequest = objectStore.openCursor();
 
-    var keys = await cursors
-        .where((cursor) {
-          var k = cursor.key as String;
-          return k.startsWith(prefix);
-        })
-        .map((cursor) => cursor.key as String)
-        .toList();
+    final keys = <String>[];
+
+    await cursorRequest.process<IDBCursorWithValue, void>((cursor) {
+      if (cursor != null) {
+        var k = cursor.key.dartify().toString();
+        var valid = k.startsWith(prefix);
+        if (valid) {
+          keys.add(k);
+        }
+        return (next: true, result: null);
+      } else {
+        return (next: false, result: null);
+      }
+    });
 
     return keys;
   }
@@ -385,20 +399,37 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<bool> remove(String key) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore, 'readwrite');
+    var transaction = db.transaction(objStore.toJS, 'readwrite');
     var objectStore = transaction.objectStore(objStore);
-    return objectStore.delete(key).then((_) => true);
+
+    var request = objectStore.delete(key.toJS);
+
+    var ok = await request.process((_) => (next: false, result: true));
+
+    return ok ?? false;
   }
 
   @override
   Future<bool> set(String key, Object? value) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore, 'readwrite');
+    var transaction = db.transaction(objStore.toJS, 'readwrite');
     var objectStore = transaction.objectStore(objStore);
 
-    var obj = <String, Object?>{'k': key, 'v': value};
+    var obj = JSObject();
+    obj.setProperty('k'.toJS, key.toJS);
+    obj.setProperty('v'.toJS, value.jsify());
 
-    return objectStore.put(obj).then((dbKey) => dbKey != null);
+    var request = objectStore.put(
+      obj,
+      //key.toJS,
+    );
+
+    var ok = await request.process((dbKey) {
+      var ok = dbKey is JSAny ? dbKey.isDefinedAndNotNull : dbKey != null;
+      return (next: false, result: ok);
+    });
+
+    return ok ?? false;
   }
 }
 
@@ -531,26 +562,24 @@ class DataStorage {
 }
 
 /// Represents a value stored in [State].
-class StorageValue extends JSONObject {
+class StorageValue {
   /// Time of storage.
   final int storeTime;
 
   /// The stored value.
   Object? value;
 
-  @override
-  List<String> getObjectFields() {
-    return ['storeTime', 'value'];
-  }
-
   StorageValue(this.value) : storeTime = DateTime.now().millisecondsSinceEpoch;
 
   StorageValue.stored(this.storeTime, this.value);
 
   @override
-  String toString() {
-    return 'StorageValue{storeTime: $storeTime, value: $value}';
-  }
+  String toString() => 'StorageValue{storeTime: $storeTime, value: $value}';
+
+  Map<String, dynamic> toJson() => {
+        'storeTime': storeTime,
+        'value': value,
+      };
 }
 
 /// State operation.

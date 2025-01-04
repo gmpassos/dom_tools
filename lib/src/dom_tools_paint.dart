@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:html';
 import 'dart:math' as math;
 import 'dart:math';
 
@@ -7,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 import 'dom_tools_base.dart';
+import 'dom_tools_extension.dart';
 import 'perspective_filter.dart';
 
 /// Represents a color.
@@ -686,11 +686,11 @@ Color _colorFromHue(
 
 /// Gets the width and height from [image] ([CanvasImageSource]).
 Rectangle<int>? getImageDimension(CanvasImageSource image) {
-  if (image is ImageElement) {
+  if (image is HTMLImageElement) {
     return Rectangle(0, 0, image.naturalWidth, image.naturalHeight);
-  } else if (image is CanvasElement) {
-    return Rectangle(0, 0, image.width!, image.height!);
-  } else if (image is VideoElement) {
+  } else if (image is HTMLCanvasElement) {
+    return Rectangle(0, 0, image.width, image.height);
+  } else if (image is HTMLVideoElement) {
     return Rectangle(0, 0, image.width, image.height);
   }
   return null;
@@ -698,19 +698,22 @@ Rectangle<int>? getImageDimension(CanvasImageSource image) {
 
 /// Crops an image using a [Rectangle] ([crop]),
 /// delegating to method [cropImage],
-CanvasElement? cropImageByRectangle(CanvasImageSource image, Rectangle? crop) {
+HTMLCanvasElement? cropImageByRectangle(
+    CanvasImageSource image, Rectangle? crop) {
   if (crop == null) return null;
   return cropImage(image, crop.left as int, crop.top as int, crop.width as int,
       crop.height as int);
 }
 
 /// Crops the [image] using coordinates [x], [y], [width] and [height],
-/// returning new image ([CanvasElement]).
-CanvasElement? cropImage(
+/// returning new image ([HTMLCanvasElement]).
+HTMLCanvasElement? cropImage(
     CanvasImageSource image, int x, int y, int width, int height) {
-  if (image is! CanvasElement) {
+  if (image is! HTMLCanvasElement) {
     var imgDim = getImageDimension(image)!;
-    var imgCanvas = CanvasElement(width: imgDim.width, height: imgDim.height);
+    var imgCanvas = HTMLCanvasElement()
+      ..width = imgDim.width
+      ..height = imgDim.height;
     var context = imgCanvas.getContext('2d') as CanvasRenderingContext2D;
     context.drawImage(image, 0, 0);
     image = imgCanvas;
@@ -719,7 +722,9 @@ CanvasElement? cropImage(
   var imgContext = image.getContext('2d') as CanvasRenderingContext2D;
   var imgCropData = imgContext.getImageData(x, y, width, height);
 
-  var canvasCrop = CanvasElement(width: width, height: height);
+  var canvasCrop = HTMLCanvasElement()
+    ..width = width
+    ..height = height;
   var contextCrop = canvasCrop.getContext('2d') as CanvasRenderingContext2D;
   contextCrop.putImageData(imgCropData, 0, 0, 0, 0, width, height);
 
@@ -733,31 +738,34 @@ CanvasImageSource createScaledImage(
   var w2 = (width * scale).toInt();
   var h2 = (height * scale).toInt();
 
-  var canvas = CanvasElement(width: w2, height: h2);
+  var canvas = HTMLCanvasElement()
+    ..width = w2
+    ..height = h2;
   var context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-  context.drawImageScaledFromSource(image, 0, 0, width, height, 0, 0, w2, h2);
+  context.drawImage(image, 0, 0, width, height, 0, 0, w2, h2);
 
   return canvas;
 }
 
 /// Creates an image from a [file].
-Future<ImageElement> createImageElementFromFile(File file) {
+Future<HTMLImageElement> createImageElementFromFile(File file) {
   var reader = FileReader();
 
-  var completer = Completer<ImageElement>();
+  var completer = Completer<HTMLImageElement>();
 
   reader.onLoadEnd.listen((e) {
     completer.complete(createImageElementFromBase64(reader.result as String?));
   });
 
-  reader.readAsDataUrl(file);
+  reader.readAsDataURL(file);
 
   return completer.future;
 }
 
 /// Creates an image from a Base-64 with [mimeType].
-ImageElement? createImageElementFromBase64(String? base64, [String? mimeType]) {
+HTMLImageElement? createImageElementFromBase64(String? base64,
+    [String? mimeType]) {
   if (base64 == null || base64.isEmpty) return null;
 
   if (!base64.startsWith('data:')) {
@@ -765,7 +773,7 @@ ImageElement? createImageElementFromBase64(String? base64, [String? mimeType]) {
     base64 = 'data:$mimeType;base64,$base64';
   }
 
-  var imgElement = ImageElement();
+  var imgElement = HTMLImageElement();
   // ignore: unsafe_html
   imgElement.src = base64;
 
@@ -977,7 +985,7 @@ class CanvasImageViewer {
   static final dateFormatYYYYMMDDHHMMSS =
       DateFormat('yyyy/MM/dd HH:mm:ss', Intl.getCurrentLocale());
 
-  late final CanvasElement _canvas;
+  late final HTMLCanvasElement _canvas;
 
   final bool canvasSizeSameOfRenderedImageSize;
 
@@ -1015,7 +1023,7 @@ class CanvasImageViewer {
   late ImagePerspectiveFilterCache _imagePerspectiveFilterCache;
 
   CanvasImageViewer(
-      {CanvasElement? canvas,
+      {HTMLCanvasElement? canvas,
       int? width,
       int? height,
       int? maxWidth,
@@ -1071,7 +1079,7 @@ class CanvasImageViewer {
     w ??= 100;
     h ??= 100;
 
-    if (_image is ImageElement) {
+    if (_image is HTMLImageElement) {
       var img = _image;
       img.onLoad.listen((_) => _onLoadImage());
     }
@@ -1079,7 +1087,9 @@ class CanvasImageViewer {
     _renderedImageWidth = _width = w;
     _renderedImageHeight = _height = h;
 
-    _canvas = canvas ?? CanvasElement(width: w, height: h);
+    _canvas = canvas ?? HTMLCanvasElement()
+      ..width = w
+      ..height = h;
 
     _imagePerspectiveFilterCache = ImagePerspectiveFilterCache(_image!, w, h);
 
@@ -1151,7 +1161,7 @@ class CanvasImageViewer {
     onChange.add(this);
   }
 
-  CanvasElement get canvas => _canvas;
+  HTMLCanvasElement get canvas => _canvas;
 
   Rectangle<num> _defaultClip() {
     var border = min(10, min(_width ~/ 10, _height ~/ 10));
@@ -1412,7 +1422,7 @@ class CanvasImageViewer {
   void _onMouseDown(MouseEvent event) {
     _deselectDOM();
 
-    var mouse = event.offset;
+    var mouse = Point(event.offsetX, event.offsetY);
     _pressed = mouse;
 
     var needRender = interact(mouse, false);
@@ -1422,7 +1432,7 @@ class CanvasImageViewer {
   }
 
   void _onMouseClick(MouseEvent event) {
-    var mouse = event.offset;
+    var mouse = Point(event.offsetX, event.offsetY);
 
     var needRender = interact(mouse, true);
     if (needRender != null) {
@@ -1441,14 +1451,14 @@ class CanvasImageViewer {
   void _onMouseMove(MouseEvent event) {
     if (_pressed == null) {
       if (_labels != null) {
-        var mouse = event.offset;
+        var mouse = Point(event.offsetX, event.offsetY);
         var quality = showLabel(mouse);
         _renderImpl(quality, true);
       }
       return;
     }
 
-    var mouse = event.offset;
+    var mouse = Point(event.offsetX, event.offsetY);
 
     var needRender = interact(mouse, false);
     if (needRender != null) {
@@ -1457,13 +1467,13 @@ class CanvasImageViewer {
   }
 
   double get offsetWidthRatio {
-    var offsetW = _canvas.offset.width;
+    var offsetW = _canvas.offsetWidth;
     if (offsetW == 0) return 0;
     return _renderedImageWidth / offsetW;
   }
 
   double get offsetHeightRatio {
-    var offsetH = _canvas.offset.height;
+    var offsetH = _canvas.offsetHeight;
     if (offsetH == 0) return 0;
     return _renderedImageHeight / offsetH;
   }
@@ -2036,8 +2046,7 @@ class CanvasImageViewer {
 
   _RenderImageResult _renderImageImpl(CanvasRenderingContext2D context) {
     context.clearRect(0, 0, width, height);
-    context.drawImageScaledFromSource(
-        _image!, 0, 0, width, height, 0, 0, width, height);
+    context.drawImage(_image!, 0, 0, width, height, 0, 0, width, height);
     return _RenderImageResult(Quality.high, Point(0, 0));
   }
 
@@ -2253,14 +2262,14 @@ class CanvasImageViewer {
     }
 
     Point<num> translate;
-    CanvasElement srcImage;
+    HTMLCanvasElement srcImage;
     Rectangle<int> dstCoords;
 
     if (_cropPerspective) {
       var image = filterResult.imageResult;
       var imageCropped = filterResult.imageResultCropped!;
-      var cropWRatio = imageCropped.width! / image.width!;
-      var cropHRatio = imageCropped.height! / image.height!;
+      var cropWRatio = imageCropped.width / image.width;
+      var cropHRatio = imageCropped.height / image.height;
 
       srcImage = imageCropped;
       translate = Point(0, 0);
@@ -2273,7 +2282,7 @@ class CanvasImageViewer {
       dstCoords = Rectangle(0, 0, width, height);
     }
 
-    var srcCoords = Rectangle(0, 0, srcImage.width!, srcImage.height!);
+    var srcCoords = Rectangle(0, 0, srcImage.width, srcImage.height);
 
     var srWRatio = srcCoords.width / dstCoords.width;
     var srHRatio = srcCoords.height / dstCoords.height;
@@ -2313,7 +2322,7 @@ class CanvasImageViewer {
     }
 
     _updateRenderedImageDimension(dstCoords.width, dstCoords.height);
-    context.drawImageScaledFromSource(
+    context.drawImage(
         srcImage,
         srcCoords.left,
         srcCoords.top,
@@ -2402,6 +2411,7 @@ class CanvasImageViewer {
 
     context.setStrokeColorRgb(
         color.red, color.green, color.blue, color.opacity);
+
     context.lineWidth = lineWidth;
 
     // ignore: omit_local_variable_types
@@ -2549,7 +2559,7 @@ class CanvasImageViewer {
     context.strokeRect(p.x - b, p.y - b, l, l);
   }
 
-  DivElement? _currentHint;
+  HTMLDivElement? _currentHint;
 
   void hideHint() {
     if (_currentHint != null) {
@@ -2575,10 +2585,10 @@ class CanvasImageViewer {
     num x = point.x * (1 / offsetWidthRatio);
     num y = point.y * (1 / offsetHeightRatio);
 
-    x += canvas.offset.left - (8 + arrowSize - 1);
-    y += canvas.offset.top + arrowSize;
+    x += canvas.offsetLeft - (8 + arrowSize - 1);
+    y += canvas.offsetTop + arrowSize;
 
-    var hint = DivElement()
+    var hint = HTMLDivElement()
       ..style.textAlign = 'center'
       ..style.borderRadius = '6px'
       ..style.padding = '6px 6px'
@@ -2592,7 +2602,7 @@ class CanvasImageViewer {
 
     hint.text = label;
 
-    var arrow = DivElement()
+    var arrow = HTMLDivElement()
       ..style.left = '8px'
       ..style.top = '0px'
       ..style.position = 'absolute'
@@ -2605,19 +2615,21 @@ class CanvasImageViewer {
 
     hint.append(arrow);
 
-    canvas.parent!.children.add(hint);
+    canvas.parentElement!.appendChild(hint);
 
     _currentHint = hint;
   }
 }
 
-/// Converts [imageSource] to [CanvasElement].
+/// Converts [imageSource] to [HTMLCanvasElement].
 ///
 /// [width] Width of the image.
 /// [height] Height of the image.
-CanvasElement toCanvasElement(
+HTMLCanvasElement toCanvasElement(
     CanvasImageSource imageSource, int width, int height) {
-  var canvas = CanvasElement(width: width, height: height);
+  var canvas = HTMLCanvasElement()
+    ..width = width
+    ..height = height;
   var context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   context.drawImage(imageSource, 0, 0);
@@ -2625,26 +2637,27 @@ CanvasElement toCanvasElement(
   return canvas;
 }
 
-/// Converts [canvas] to [ImageElement]
+/// Converts [canvas] to [HTMLImageElement]
 ///
 /// [mimeType] MIME-Type of the image.
 /// [quality] Quality of the image.
-ImageElement canvasToImageElement(CanvasElement canvas,
+HTMLImageElement canvasToImageElement(HTMLCanvasElement canvas,
     [String? mimeType, num? quality]) {
   mimeType ??= 'image/png';
   quality ??= 0.99;
 
   var dataUrl = canvas.toDataUrl(mimeType);
-  var img = ImageElement(src: dataUrl);
+  var img = HTMLImageElement()..src = dataUrl;
   img.width = canvas.width;
   img.height = canvas.height;
   return img;
 }
 
 /// Rotates [image] with [angleDegree].
-CanvasElement rotateImageElement(ImageElement image, [angleDegree = 90]) {
-  var w = image.width!;
-  var h = image.height!;
+HTMLCanvasElement rotateImageElement(HTMLImageElement image,
+    [angleDegree = 90]) {
+  var w = image.width;
+  var h = image.height;
   return rotateCanvasImageSource(image, w, h, angleDegree);
 }
 
@@ -2652,15 +2665,17 @@ CanvasElement rotateImageElement(ImageElement image, [angleDegree = 90]) {
 ///
 /// [width] Width of the image.
 /// [height] Height of the image.
-CanvasElement rotateCanvasImageSource(
+HTMLCanvasElement rotateCanvasImageSource(
     CanvasImageSource image, int width, int height,
     [angleDegree = 90]) {
   angleDegree ??= 90;
 
-  var canvas = CanvasElement(width: height, height: width);
+  var canvas = HTMLCanvasElement()
+    ..width = height
+    ..height = width;
   var context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-  context.translate(canvas.width! / 2, canvas.height! / 2);
+  context.translate(canvas.width / 2, canvas.height / 2);
   context.rotate(angleDegree * math.pi / 180);
   context.drawImage(image, -width / 2, -height / 2);
 

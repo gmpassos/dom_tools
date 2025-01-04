@@ -1,7 +1,10 @@
-import 'dart:html';
+import 'package:web_utils/web_utils.dart';
+
+export 'package:js_interop_utils/js_interop_utils.dart';
+export 'package:web_utils/web_utils.dart' hide MimeType;
 
 extension DomElementExtension on Element {
-  /// Alias to [querySelector] casting to [T].
+  /// Alias to [document.querySelector] casting to [T].
   T? querySelectorTyped<T extends Element>(String selectors) {
     var self = this;
     var elem = self.querySelector(selectors);
@@ -16,8 +19,8 @@ extension DomElementExtension on Element {
   }
 
   /// Selects the [AnchorElement] elements.
-  List<AnchorElement> selectAnchorElements() =>
-      querySelectorAllTyped<AnchorElement>('a');
+  List<HTMLAnchorElement> selectAnchorElements() =>
+      querySelectorAllTyped<HTMLAnchorElement>('a');
 
   /// Selects the [AnchorElement] links.
   List<String> selectAnchorLinks() =>
@@ -30,97 +33,102 @@ extension DomElementExtension on Element {
       .toList();
 
   /// Selects the [InputElement] elements.
-  List<InputElement> selectInputElement() =>
-      querySelectorAllTyped<InputElement>('input');
+  List<HTMLInputElement> selectInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>('input');
 
   /// Selects the [CheckboxInputElement] elements (`<input type="checkbox">`).
-  List<CheckboxInputElement> selectCheckboxInputElement() =>
-      querySelectorAllTyped<CheckboxInputElement>("input[type='checkbox']");
+  List<HTMLInputElement> selectCheckboxInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='checkbox']");
 
   /// Selects the [RadioButtonInputElement] elements (`<input type="radio">`).
-  List<RadioButtonInputElement> selectRadioButtonInputElement() =>
-      querySelectorAllTyped<RadioButtonInputElement>("input[type='radio']");
+  List<HTMLInputElement> selectRadioButtonInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='radio']");
 
   /// Selects the [NumberInputElement] elements (`<input type="number">`).
-  List<NumberInputElement> selectNumberInputElement() =>
-      querySelectorAllTyped<NumberInputElement>("input[type='number']");
+  List<HTMLInputElement> selectNumberInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='number']");
 
   /// Selects the [EmailInputElement] elements (`<input type="email">`).
-  List<EmailInputElement> selectEmailInputElement() =>
-      querySelectorAllTyped<EmailInputElement>("input[type='email']");
+  List<HTMLInputElement> selectEmailInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='email']");
 
   /// Selects the [LocalDateTimeInputElement] elements (`<input type="datetime-local">`).
-  List<LocalDateTimeInputElement> selectLocalDateTimeInputElement() =>
-      querySelectorAllTyped<LocalDateTimeInputElement>(
-          "input[type='datetime-local']");
+  List<HTMLInputElement> selectLocalDateTimeInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='datetime-local']");
 
   /// Selects the [ButtonInputElement] elements (`<input type="button">`).
-  List<ButtonInputElement> selectButtonInputElement() =>
-      querySelectorAllTyped<ButtonInputElement>("input[type='button']");
+  List<HTMLInputElement> selectButtonInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='button']");
 
   /// Selects the [FileUploadInputElement] elements (`<input type="file">`).
-  List<FileUploadInputElement> selectFileUploadInputElement() =>
-      querySelectorAllTyped<FileUploadInputElement>("input[type='file']");
+  List<HTMLInputElement> selectFileUploadInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='file']");
 
   /// Selects the [PasswordInputElement] elements (`<input type="password">`).
-  List<PasswordInputElement> selectPasswordInputElement() =>
-      querySelectorAllTyped<PasswordInputElement>("input[type='password']");
+  List<HTMLInputElement> selectPasswordInputElement() =>
+      querySelectorAllTyped<HTMLInputElement>("input[type='password']");
 
   /// Selects the [SelectElement] elements.
-  List<SelectElement> selectSelectElement() =>
-      querySelectorAllTyped<SelectElement>('select');
+  List<HTMLSelectElement> selectSelectElement() =>
+      querySelectorAllTyped<HTMLSelectElement>('select');
 
   /// Selects the [TextAreaElement] elements.
-  List<TextAreaElement> selectTextAreaElement() =>
-      querySelectorAllTyped<TextAreaElement>('textarea');
+  List<HTMLTextAreaElement> selectTextAreaElement() =>
+      querySelectorAllTyped<HTMLTextAreaElement>('textarea');
 
   /// Selects the [ButtonElement] elements.
-  List<ButtonElement> selectButtonElements() =>
-      querySelectorAllTyped<ButtonElement>('button');
+  List<HTMLButtonElement> selectButtonElements() =>
+      querySelectorAllTyped<HTMLButtonElement>('button');
 
-  /// Selects the [ImageElement] elements.
-  List<ImageElement> selectImageElement() =>
-      querySelectorAllTyped<ImageElement>('img');
+  /// Selects the [HTMLImageElement] elements.
+  List<HTMLImageElement> selectImageElement() =>
+      querySelectorAllTyped<HTMLImageElement>('img');
 
   /// Selects the [DivElement] elements.
-  List<DivElement> selectDivElement() =>
-      querySelectorAllTyped<DivElement>('div');
+  List<HTMLDivElement> selectDivElement() =>
+      querySelectorAllTyped<HTMLDivElement>('div');
 
   /// Selects the [SpanElement] elements.
-  List<SpanElement> selectSpanElement() =>
-      querySelectorAllTyped<SpanElement>('span');
+  List<HTMLSpanElement> selectSpanElement() =>
+      querySelectorAllTyped<HTMLSpanElement>('span');
 
   /// Selects the [TableElement] elements.
-  List<TableElement> selectTableElement() =>
-      querySelectorAllTyped<TableElement>('table');
+  List<HTMLTableElement> selectTableElement() =>
+      querySelectorAllTyped<HTMLTableElement>('table');
 
   /// Selects the [TableRowElement] elements.
-  List<TableRowElement> selectTableRowElement() =>
-      querySelectorAllTyped<TableRowElement>('tr');
+  List<HTMLTableRowElement> selectTableRowElement() =>
+      querySelectorAllTyped<HTMLTableRowElement>('tr');
 
   /// Selects the [TableCellElement] elements.
-  List<TableCellElement> selectTableCellElement() =>
-      querySelectorAllTyped<TableCellElement>('td');
+  List<HTMLTableCellElement> selectTableCellElement() =>
+      querySelectorAllTyped<HTMLTableCellElement>('td');
 
-  bool get isDisplayNone => style.display == 'none';
+  CSSStyleDeclaration? get style => asHTMLElement?.style;
 
-  bool get isVisibilityHidden => style.visibility == 'hidden';
+  bool get hidden => asHTMLElement?.hidden?.dartify() == true;
+
+  bool get isDisplayNone => style?.display == 'none';
+
+  bool get isVisibilityHidden => style?.visibility == 'hidden';
 
   bool get isInvisible => isDisplayNone || isVisibilityHidden || hidden;
+
+  DOMTokenList? get classList => asHTMLElement?.classList;
 }
 
 extension IterableDomElementExtension<E extends Element> on Iterable<E> {
   /// Adds a class to all elements of this [Iterable] of [Element]s.
   void addClass(String clazz) {
     for (var e in this) {
-      e.classes.add(clazz);
+      e.classList.add(clazz);
     }
   }
 
   /// Removes a class from all elements of this [Iterable] of [Element]s.
   void removeClass(String clazz) {
     for (var e in this) {
-      e.classes.remove(clazz);
+      e.classList.remove(clazz);
     }
   }
 
@@ -128,16 +136,30 @@ extension IterableDomElementExtension<E extends Element> on Iterable<E> {
   List<E> withID(String id) => where((e) => e.id == id).toList();
 
   /// Filter elements with [clazz].
-  List<E> whithClass(String clazz) {
+  List<E> withClass(String clazz) {
     clazz = clazz.trim();
     var classes = clazz.split(RegExp(r'\s+'));
-    return whithClasses(classes);
+    return withClasses(classes);
   }
 
   /// Filter elements with all [classes].
-  List<E> whithClasses(List<String> classes) {
+  List<E> withClasses(List<String> classes) {
     classes = classes.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     if (classes.isEmpty) return <E>[];
-    return where((e) => e.classes.containsAll(classes)).toList();
+    return where((e) => e.classList.toList().containsAll(classes)).toList();
+  }
+}
+
+extension _IterableExtension<T> on Iterable<T> {
+  bool containsAll(Iterable<T> l) {
+    var found = false;
+    for (var e in l) {
+      if (!contains(e)) {
+        return false;
+      } else {
+        found = true;
+      }
+    }
+    return found;
   }
 }
