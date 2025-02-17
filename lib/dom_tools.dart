@@ -1,4 +1,5 @@
-library dom_tools;
+/// DOM Tools library.
+library;
 
 export 'package:js_interop_utils/js_interop_utils.dart';
 

@@ -4,9 +4,9 @@ import 'dart:math';
 
 import 'package:intl/intl.dart';
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web_utils/web_utils.dart';
 
 import 'dom_tools_base.dart';
-import 'dom_tools_extension.dart';
 import 'perspective_filter.dart';
 
 /// Represents a color.
@@ -686,12 +686,15 @@ Color _colorFromHue(
 
 /// Gets the width and height from [image] ([CanvasImageSource]).
 Rectangle<int>? getImageDimension(CanvasImageSource image) {
-  if (image is HTMLImageElement) {
-    return Rectangle(0, 0, image.naturalWidth, image.naturalHeight);
-  } else if (image is HTMLCanvasElement) {
-    return Rectangle(0, 0, image.width, image.height);
-  } else if (image is HTMLVideoElement) {
-    return Rectangle(0, 0, image.width, image.height);
+  if (image.isA<HTMLImageElement>()) {
+    final img = image as HTMLImageElement;
+    return Rectangle(0, 0, img.naturalWidth, img.naturalHeight);
+  } else if (image.isA<HTMLCanvasElement>()) {
+    final canvas = image as HTMLCanvasElement;
+    return Rectangle(0, 0, canvas.width, canvas.height);
+  } else if (image.isA<HTMLVideoElement>()) {
+    final video = image as HTMLVideoElement;
+    return Rectangle(0, 0, video.width, video.height);
   }
   return null;
 }
@@ -709,17 +712,20 @@ HTMLCanvasElement? cropImageByRectangle(
 /// returning new image ([HTMLCanvasElement]).
 HTMLCanvasElement? cropImage(
     CanvasImageSource image, int x, int y, int width, int height) {
-  if (image is! HTMLCanvasElement) {
+  HTMLCanvasElement canvas;
+  if (image.isA<HTMLCanvasElement>()) {
+    canvas = image as HTMLCanvasElement;
+  } else {
     var imgDim = getImageDimension(image)!;
     var imgCanvas = HTMLCanvasElement()
       ..width = imgDim.width
       ..height = imgDim.height;
     var context = imgCanvas.getContext('2d') as CanvasRenderingContext2D;
     context.drawImage(image, 0, 0);
-    image = imgCanvas;
+    canvas = imgCanvas;
   }
 
-  var imgContext = image.getContext('2d') as CanvasRenderingContext2D;
+  var imgContext = canvas.getContext('2d') as CanvasRenderingContext2D;
   var imgCropData = imgContext.getImageData(x, y, width, height);
 
   var canvasCrop = HTMLCanvasElement()
@@ -755,7 +761,8 @@ Future<HTMLImageElement> createImageElementFromFile(File file) {
   var completer = Completer<HTMLImageElement>();
 
   reader.onLoadEnd.listen((e) {
-    completer.complete(createImageElementFromBase64(reader.result as String?));
+    var base64 = reader.result.dartify()?.toString();
+    completer.complete(createImageElementFromBase64(base64));
   });
 
   reader.readAsDataURL(file);
@@ -1079,8 +1086,8 @@ class CanvasImageViewer {
     w ??= 100;
     h ??= 100;
 
-    if (_image is HTMLImageElement) {
-      var img = _image;
+    if (_image.isA<HTMLImageElement>()) {
+      var img = _image as HTMLImageElement;
       img.onLoad.listen((_) => _onLoadImage());
     }
 

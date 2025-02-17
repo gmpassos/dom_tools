@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:enum_to_string/enum_to_string.dart';
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web_utils/web_utils.dart';
 
 import 'dom_tools_base.dart';
-import 'dom_tools_extension.dart';
 
 final RegExp _patternCssLengthUnit =
     RegExp(r'(px|%|vw|vh|vmin|vmax|em|ex|ch|rem|cm|mm|in|pc|pt)$');
@@ -116,7 +115,7 @@ Future<bool> addCssSource(String cssSource, {int? insertIndex}) async {
     insertIndex = Math.min(insertIndex, head!.children.length);
     head.insertChild(insertIndex, script);
   } else {
-    head!.children.add(script);
+    head!.appendChild(script);
   }
 
   var call = completer.future;
@@ -153,7 +152,7 @@ CSSStyleDeclaration getComputedStyle(
     element.style.cssText = style;
   }
 
-  parent!.children.add(element);
+  parent!.appendChild(element);
 
   var computedStyle = window.getComputedStyle(element);
   var cssText = computedStyle.cssText;
@@ -243,10 +242,10 @@ class TextStyle implements CSSValueBase {
     if (backgroundColor != null) str += 'background-color: $backgroundColor ;';
 
     if (fontStyle != null) {
-      str += 'font-style: ${EnumToString.convertToString(fontStyle)} ;';
+      str += 'font-style: ${fontStyle!.name} ;';
     }
     if (fontWeight != null) {
-      str += 'font-weight: ${EnumToString.convertToString(fontWeight)} ;';
+      str += 'font-weight: ${fontWeight!.name} ;';
     }
 
     if (borderColor != null) str += 'border-color: $borderColor ;';

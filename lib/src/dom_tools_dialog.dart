@@ -1,7 +1,7 @@
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web_utils/web_utils.dart';
 
 import 'dom_tools_base.dart';
-import 'dom_tools_extension.dart';
 import 'dom_tools_paint.dart';
 
 /// Shows a text dialog.
@@ -99,12 +99,12 @@ HTMLDivElement showDialogElement(HTMLElement content,
   String? title;
   var isImage = false;
 
-  if (content is HTMLImageElement) {
-    src = content.src;
+  if (content.isA<HTMLImageElement>()) {
+    src = (content as HTMLImageElement).src;
     title = content.title;
     isImage = true;
-  } else if (content is HTMLVideoElement) {
-    src = content.src;
+  } else if (content.isA<HTMLVideoElement>()) {
+    src = (content as HTMLVideoElement).src;
     title = content.title;
   }
 
@@ -140,7 +140,7 @@ HTMLDivElement showDialogElement(HTMLElement content,
       ..title = 'Download'
       ..style.cursor = 'pointer';
 
-    dialog.children.add(download);
+    dialog.appendChild(download);
   }
 
   if (isImage) {
@@ -163,11 +163,14 @@ HTMLDivElement showDialogElement(HTMLElement content,
 
       late HTMLCanvasElement canvasRotated;
 
-      if (img is HTMLCanvasElement) {
-        canvasRotated = rotateCanvasImageSource(img, img.width, img.height);
-      } else if (img is HTMLImageElement) {
+      if (img.isA<HTMLCanvasElement>()) {
+        var canvas = img as HTMLCanvasElement;
         canvasRotated =
-            rotateCanvasImageSource(img, img.naturalWidth, img.naturalHeight);
+            rotateCanvasImageSource(img, canvas.width, canvas.height);
+      } else if (img.isA<HTMLImageElement>()) {
+        var img2 = img as HTMLImageElement;
+        canvasRotated = rotateCanvasImageSource(
+            img2, img2.naturalWidth, img2.naturalHeight);
       }
 
       var imgRotated = canvasToImageElement(canvasRotated);
@@ -191,9 +194,9 @@ HTMLDivElement showDialogElement(HTMLElement content,
     ..style.maxWidth = '98vw'
     ..style.maxHeight = '90vh';
 
-  dialog.children.add(content);
+  dialog.appendChild(content);
 
-  document.body!.children.add(dialog);
+  document.body!.appendChild(dialog);
 
   return dialog;
 }

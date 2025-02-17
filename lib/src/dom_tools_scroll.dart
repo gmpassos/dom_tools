@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:math';
 
+import 'package:dom_tools/dom_tools.dart';
 import 'package:web/web.dart';
-
-import 'dom_tools_base.dart';
 
 bool? _safariIOS;
 
@@ -44,41 +42,43 @@ void scrollTo(num? x, num? y,
     return;
   }
 
-  scrollable = _resolveScrollable(scrollable);
+  var scrollableResolved = _resolveScrollable(scrollable);
 
   var params = JSObject();
   if (x != null) params.setProperty('left'.toJS, x.toInt().toJS);
   if (y != null) params.setProperty('top'.toJS, y.toInt().toJS);
   if (smooth) params.setProperty('behavior'.toJS, 'smooth'.toJS);
 
-  if (scrollable is Window) {
-    scrollable.scrollTo(params);
-  } else if (scrollable is Element) {
-    scrollable.scrollTo(params);
+  if (scrollableResolved.isA<Window>()) {
+    (scrollableResolved as Window).scrollTo(params);
+  } else if (scrollableResolved.isA<Element>()) {
+    (scrollableResolved as Element).scrollTo(params);
   } else {
     window.scrollTo(params);
   }
 }
 
-Object? _resolveScrollable(Object? scrollable) {
-  if (scrollable is! Window && scrollable is! Element) {
-    scrollable = null;
+JSObject? _resolveScrollable(Object? scrollable) {
+  var jsAny = scrollable.asJSAny;
+
+  if (!jsAny.isA<Window>() && !jsAny.isA<Element>()) {
+    jsAny = null;
   }
 
-  if (scrollable == null) {
+  if (jsAny.isA<JSObject>()) {
+    return jsAny as JSObject;
+  } else {
     final body = document.body!;
 
     final windowScrolled = window.scrollY != 0 || window.scrollX != 0;
     final bodyScrolled = body.scrollTop != 0 || body.scrollLeft != 0;
 
     if (bodyScrolled && !windowScrolled) {
-      scrollable = body;
+      return body;
     } else {
-      scrollable = window;
+      return window;
     }
   }
-
-  return scrollable;
 }
 
 /// Use [scrollToTop] instead.

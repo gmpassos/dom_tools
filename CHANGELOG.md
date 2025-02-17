@@ -1,3 +1,15 @@
+## 3.0.0-beta.3
+
+- Use `web_utils` and `js_interop_utils`.
+
+- web_utils: ^1.0.4
+- js_interop_utils: ^1.0.4
+- collection: ^1.19.1
+- http: ^1.3.0
+
+- lints: ^5.1.1
+- test: ^1.25.15
+
 ## 3.0.0-beta.2
 
 - web_utils: ^1.0.2

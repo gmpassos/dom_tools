@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:js_interop_unsafe';
 
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web_utils/web_utils.dart';
 
 import 'dom_tools_base.dart';
-import 'dom_tools_extension.dart';
 
 class _ElementTrack<T> {
   final TrackElementValue _trackElementValue;
@@ -333,17 +333,19 @@ class TrackElementResize {
     }
   }
 
-  List<Element> _getEntriesTargets(List entries) {
+  List<Element> _getEntriesTargets(List<Object?> entries) {
     var targets = <Element>[];
 
-    for (var entry in entries) {
-      if (entry is ResizeObserverEntry) {
-        var target = entry.target;
+    for (var entry in entries.nonNulls) {
+      var jsAny = entry.asJSAny;
+
+      if (jsAny.isA<ResizeObserverEntry>()) {
+        var target = (jsAny as ResizeObserverEntry).target;
         targets.add(target);
-      } else if (entry is JSObject) {
-        var target = entry['target'];
-        if (target is Element) {
-          targets.add(target);
+      } else if (jsAny.isA<JSObject>()) {
+        var target = (entry as JSObject).getProperty('target'.toJS);
+        if (target.isA<Element>()) {
+          targets.add(target as Element);
         }
       }
     }
@@ -354,7 +356,7 @@ class TrackElementResize {
   void _trackResizeFallbackByElementValue(TrackElementValue trackElementValue,
       Element element, OnElementEvent onResize) {
     trackElementValue.track<Object>(element, (e) {
-      var element = e.asHTMLElement;
+      var element = e.asHTMLElementChecked;
       return (element?.offsetWidth, element?.offsetHeight);
     }, (e, v) {
       onResize(e);

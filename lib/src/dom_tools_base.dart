@@ -3,9 +3,9 @@ import 'dart:math';
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web_utils/web_utils.dart';
 
 import 'dom_tools_css.dart';
-import 'dom_tools_extension.dart';
 
 /// Gets the [element] value depending of identified type.
 ///
@@ -322,8 +322,10 @@ HTMLLabelElement createLabel(
 
 /// Returns the [node] tag name.
 /// Returns null if [node] is not an [Element].
-String? getElementTagName(Node node) =>
-    node is Element ? node.tagName.toLowerCase() : null;
+String? getElementTagName(Node node) {
+  final element = node.asElementChecked;
+  return element?.tagName.toLowerCase();
+}
 
 final RegExp _regexpDependentTag =
     RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
@@ -362,7 +364,7 @@ HTMLElement createHTML(
     }
 
     var childNode = div.querySelector(dependentTagName);
-    return childNode?.asHTMLElement ??
+    return childNode?.asHTMLElementChecked ??
         (throw StateError("Can't create HTML:\n$html"));
   } else {
     var div = createDiv(inline: true, html: html, unsafe: unsafe);
@@ -372,12 +374,13 @@ HTMLElement createHTML(
 
     var childNode = childNodes.whereElement().firstOrNull;
 
-    if (childNode is HTMLElement) {
-      return childNode;
+    var htmlElement = childNode.asHTMLElementChecked;
+    if (htmlElement != null) {
+      return htmlElement;
     }
 
     var span = HTMLSpanElement();
-    span.appendNodes(div.childNodes.toIterable());
+    span.appendNodes(div.childNodes.toList());
     return span;
   }
 }
@@ -422,7 +425,7 @@ Pair<num> getElementDocumentPosition(HTMLElement element) {
     do {
       top += obj!.offsetTop;
       left += obj.offsetLeft;
-    } while ((obj = obj.offsetParent?.asHTMLElement) != null);
+    } while ((obj = obj.offsetParent?.asHTMLElementChecked) != null);
   }
 
   return Pair<num>(left, top);
@@ -587,7 +590,7 @@ String buildMetaContent(Map<String, String?> map) {
 /// Returns [element] attribute with [key].
 ///
 /// [key] Can be a [RegExp] or a [String].
-String? getElementAttribute(HTMLElement element, Object? key) {
+String? getElementAttribute(Element element, Object? key) {
   if (key == null) return null;
 
   if (key is RegExp) {
@@ -598,7 +601,7 @@ String? getElementAttribute(HTMLElement element, Object? key) {
 }
 
 /// Returns [element] attribute with [RegExp] [key].
-String? getElementAttributeRegExp(HTMLElement element, RegExp key) {
+String? getElementAttributeRegExp(Element element, RegExp key) {
   for (var k in element.getAttributeNames().toList()) {
     if (key.hasMatch(k)) {
       return element.getAttribute(k);
@@ -662,8 +665,8 @@ String _toHTMLAny(HTMLElement e) {
   var innerHTML = e.innerHTML.dartify()?.toString();
 
   if (innerHTML != null && innerHTML.isNotEmpty) {
-    if (e is HTMLSelectElement) {
-      html += _toHTMLInnerHtmlSelect(e);
+    if (e.isA<HTMLSelectElement>()) {
+      html += _toHTMLInnerHtmlSelect(e as HTMLSelectElement);
     } else {
       html += innerHTML;
     }
@@ -745,11 +748,11 @@ bool isNodeInDOM(Node node) {
 /// Returns [true] if [element] is in DOM tree.
 ///
 /// [element] Can be a [Node] or a [List] of [Node].
-bool isInDOM(dynamic element) {
+bool isInDOM(Object? element) {
   if (element == null) return false;
 
-  if (element is Node) {
-    return document.body!.contains(element);
+  if (element.asJSAny.isA<Node>()) {
+    return document.body!.contains(element as Node);
   } else if (element is List) {
     for (var elem in element) {
       var inDom = isInDOM(elem);
@@ -799,10 +802,23 @@ CSSStyleDeclaration newCSSStyleDeclaration({String? cssText}) {
 }
 
 /// Parses dynamic [css] as [CSSStyleDeclaration].
-CSSStyleDeclaration asCssStyleDeclaration(dynamic css) {
+CSSStyleDeclaration asCssStyleDeclaration(Object? css) {
   if (css == null) return newCSSStyleDeclaration();
-  if (css is CSSStyleDeclaration) return css;
+
+  final jsAny = css.asJSAny;
+
+  if (jsAny.isA<CSSStyleDeclaration>()) return jsAny as CSSStyleDeclaration;
+
+  if (jsAny.isA<JSString>()) {
+    return newCSSStyleDeclaration(cssText: (jsAny as JSString).toDart);
+  }
+
+  if (jsAny.isA<JSFunction>()) {
+    return asCssStyleDeclaration((jsAny as JSFunction).callAsFunction());
+  }
+
   if (css is String) return newCSSStyleDeclaration(cssText: css);
+
   if (css is Function) return asCssStyleDeclaration(css());
 
   throw StateError("Can't convert to CSS: $css");
@@ -926,15 +942,15 @@ bool copyElementToClipboard(Element element) {
 }
 
 /// Set all [element] sub div with [className] to centered content.
-void setTreeElementsDivCentered(HTMLElement element, String className,
+void setTreeElementsDivCentered(Element element, String className,
     {bool centerVertically = true, bool centerHorizontally = true}) {
   if (isEmptyString(className, trim: true)) return;
 
   var elements = element.querySelectorAll('div.$className').toIterable();
 
   for (var e in elements) {
-    if (e is HTMLDivElement) {
-      setDivCentered(e,
+    if (e.isA<HTMLDivElement>()) {
+      setDivCentered(e as HTMLDivElement,
           centerVertically: centerVertically,
           centerHorizontally: centerHorizontally);
     }

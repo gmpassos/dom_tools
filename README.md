@@ -21,8 +21,7 @@ replacing the deprecated `dart:html` library (deprecated as of Dart `3.7.0+`).
 A simple usage example:
 
 ```dart
-import 'dart:html';
-import 'package:dom_tools/dom_tools.dart';
+import 'package:dom_tools/dom_tools_kit.dart';
 
 void main() {
 

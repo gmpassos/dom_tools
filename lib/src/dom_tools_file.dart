@@ -3,9 +3,9 @@ import 'dart:convert' as data_convert;
 import 'dart:typed_data';
 
 import 'package:swiss_knife/swiss_knife.dart';
+import 'package:web_utils/web_utils.dart' hide MimeType;
 
 import 'dom_tools_base.dart';
-import 'dom_tools_extension.dart';
 import 'dom_tools_paint.dart';
 
 /// Reads selected file of [input] as [Uint8List].

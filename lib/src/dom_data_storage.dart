@@ -3,8 +3,7 @@ import 'dart:js_interop_unsafe';
 
 import 'package:async_extension/async_extension.dart';
 import 'package:swiss_knife/swiss_knife.dart';
-
-import 'dom_tools_extension.dart';
+import 'package:web_utils/web_utils.dart';
 
 void _consoleLog(Object? error) {
   if (error == null) return;
@@ -425,7 +424,8 @@ class _DBSimpleStorage extends _SimpleStorage {
     );
 
     var ok = await request.process((dbKey) {
-      var ok = dbKey is JSAny ? dbKey.isDefinedAndNotNull : dbKey != null;
+      final jsAny = dbKey.asJSAny;
+      var ok = jsAny != null ? jsAny.isDefinedAndNotNull : dbKey != null;
       return (next: false, result: ok);
     });
 

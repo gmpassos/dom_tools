@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:http/browser_client.dart' as http;
 import 'package:markdown/markdown.dart' as mk;
 import 'package:swiss_knife/swiss_knife.dart';
-import 'package:web/web.dart' hide MimeType;
+import 'package:web_utils/web_utils.dart' hide MimeType;
 
 import 'dom_tools_base.dart';
 import 'dom_tools_css.dart';

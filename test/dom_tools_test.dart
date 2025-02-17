@@ -1,7 +1,7 @@
 @TestOn('browser')
 library;
 
-import 'package:dom_tools/dom_tools.dart';
+import 'package:dom_tools/dom_tools_kit.dart';
 import 'package:test/test.dart';
 
 void main() {

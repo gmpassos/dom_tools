@@ -1,4 +1,4 @@
-import 'package:dom_tools/dom_tools.dart';
+import 'package:dom_tools/dom_tools_kit.dart';
 
 void main() {
   var imgSrc =

@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:swiss_knife/swiss_knife.dart';
-
-import 'dom_tools_extension.dart';
+import 'package:web_utils/web_utils.dart';
 
 /// Status type of touch device detection.
 enum TouchDeviceDetection {
