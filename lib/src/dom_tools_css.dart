@@ -1102,8 +1102,15 @@ List<CSSRule> selectCssRuleWithSelector(Pattern targetSelector) {
 
 /// Returns all current [CssStyleSheet].
 List<CSSStyleSheet> getAllCssStyleSheet() {
-  var styles = document.querySelectorAll('style').whereType<HTMLStyleElement>();
-  var links = document.querySelectorAll('link').whereType<HTMLLinkElement>();
+  var styles = document
+      .querySelectorAll('style')
+      .where((e) => e.isA<HTMLStyleElement>())
+      .cast<HTMLStyleElement>();
+
+  var links = document
+      .querySelectorAll('link')
+      .where((e) => e.isA<HTMLLinkElement>())
+      .cast<HTMLLinkElement>();
 
   var sheets = [
     ...styles.map((s) => s.sheet).whereType<CSSStyleSheet>(),

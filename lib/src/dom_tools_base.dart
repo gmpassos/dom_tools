@@ -372,7 +372,7 @@ HTMLElement createHTML(
     var childNodes = div.childNodes;
     if (childNodes.isEmpty) return div;
 
-    var childNode = childNodes.whereElement().firstOrNull;
+    var childNode = childNodes.whereHTMLElement().firstOrNull;
 
     var htmlElement = childNode.asHTMLElementChecked;
     if (htmlElement != null) {
