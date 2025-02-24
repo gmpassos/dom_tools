@@ -1,3 +1,10 @@
+## 3.0.0-beta.5
+
+- web_utils: ^1.0.9
+- js_interop_utils: ^1.0.6
+- intl: ^0.20.2
+- swiss_knife: ^3.3.0
+
 ## 3.0.0-beta.4
 
 - 🚀 feat: update querySelectorAll in getAllCssStyleSheet to use
