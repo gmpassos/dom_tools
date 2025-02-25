@@ -54,7 +54,8 @@ abstract class _SimpleStorage {
     return timeValue.resolveBoth(value, (timeValue, value) {
       if (timeValue == null) return null;
 
-      var time = timeValue is int ? timeValue : int.parse('$timeValue'.trim());
+      var time =
+          timeValue is num ? timeValue.toInt() : int.parse('$timeValue'.trim());
 
       var storageValue = StorageValue.stored(time, value);
       return storageValue;

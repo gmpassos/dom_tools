@@ -1,3 +1,9 @@
+## 3.0.0-beta.6
+
+- `SimpleStorage`:
+  - Fix handling of `time` when the stored value is a `num/double` and not an `int`.
+    - Identified when compiled to Wasm.
+
 ## 3.0.0-beta.5
 
 - web_utils: ^1.0.9
