@@ -3,7 +3,6 @@ import 'dart:html';
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:dom_tools/dom_tools.dart';
-import 'package:enum_to_string/enum_to_string.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 final RegExp _patternCssLengthUnit =
@@ -242,10 +241,10 @@ class TextStyle implements CSSValueBase {
     if (backgroundColor != null) str += 'background-color: $backgroundColor ;';
 
     if (fontStyle != null) {
-      str += 'font-style: ${EnumToString.convertToString(fontStyle)} ;';
+      str += 'font-style: ${fontStyle!.name} ;';
     }
     if (fontWeight != null) {
-      str += 'font-weight: ${EnumToString.convertToString(fontWeight)} ;';
+      str += 'font-weight: ${fontWeight!.name} ;';
     }
 
     if (borderColor != null) str += 'border-color: $borderColor ;';

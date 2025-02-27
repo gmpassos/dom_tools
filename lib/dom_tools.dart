@@ -1,4 +1,5 @@
-library dom_tools;
+/// DOM Tools Library
+library;
 
 export 'package:json_object_mapper/json_object_mapper.dart';
 
