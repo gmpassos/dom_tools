@@ -3,7 +3,6 @@ import 'dart:html';
 import 'dart:indexed_db';
 
 import 'package:async_extension/async_extension.dart';
-import 'package:json_object_mapper/json_object_mapper.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 
 void _consoleLog(Object? error) {
@@ -531,17 +530,12 @@ class DataStorage {
 }
 
 /// Represents a value stored in [State].
-class StorageValue extends JSONObject {
+class StorageValue {
   /// Time of storage.
   final int storeTime;
 
   /// The stored value.
   Object? value;
-
-  @override
-  List<String> getObjectFields() {
-    return ['storeTime', 'value'];
-  }
 
   StorageValue(this.value) : storeTime = DateTime.now().millisecondsSinceEpoch;
 

@@ -3,6 +3,8 @@
 - sdk: '>=3.6.0 <4.0.0'
 
 - collection: ^1.19.0
+- intl: ^0.20.2
+- swiss_knife: ^3.3.0
 
 - lints: ^5.1.1
 - test: ^1.25.15

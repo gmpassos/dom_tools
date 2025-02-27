@@ -1,8 +1,6 @@
 /// DOM Tools Library
 library;
 
-export 'package:json_object_mapper/json_object_mapper.dart';
-
 export 'src/dom_data_storage.dart';
 export 'src/dom_tools_base.dart';
 export 'src/dom_tools_css.dart';
