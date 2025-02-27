@@ -81,7 +81,7 @@ class _SessionSimpleStorage extends _SimpleStorage {
 
   @override
   Object? get(String key) {
-    var valueJson = window.sessionStorage[key];
+    var valueJson = window.sessionStorage.getItem(key);
     var value = valueJson == null ? null : json.decode(valueJson);
     return value;
   }
@@ -98,7 +98,7 @@ class _SessionSimpleStorage extends _SimpleStorage {
 
   @override
   bool set(String key, Object? value) {
-    window.sessionStorage[key] = json.encode(value);
+    window.sessionStorage.setItem(key, json.encode(value));
     return true;
   }
 }
@@ -198,7 +198,7 @@ class _LocalSimpleStorage extends _SimpleStorage {
 
   @override
   Object? get(String key) {
-    var valueJson = window.localStorage[key];
+    var valueJson = window.localStorage.getItem(key);
     var value = valueJson == null ? null : json.decode(valueJson);
     return value;
   }
@@ -221,7 +221,7 @@ class _LocalSimpleStorage extends _SimpleStorage {
 
   @override
   bool set(String key, Object? value) {
-    window.localStorage[key] = json.encode(value);
+    window.localStorage.setItem(key, json.encode(value));
     return true;
   }
 }

@@ -1,3 +1,9 @@
+## 3.0.0-beta.7
+
+- Fix use of `identical` with `web` `Element`s (`JSObject`).
+
+- web: ^1.1.1
+
 ## 3.0.0-beta.6
 
 - `SimpleStorage`:
