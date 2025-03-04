@@ -706,7 +706,7 @@ class State {
 
     _notifyChange(StateOperation.set, key, value);
 
-    return prev as V?;
+    return _castTo<V>(prev);
   }
 
   /// Sets [key] to [value] if not stored yet.
@@ -742,7 +742,7 @@ class State {
   ///
   /// Note, this [State] should be already loaded [isLoaded].
   V? get<V>(String key) {
-    return _properties[key] as V?;
+    return _castTo<V>(_properties[key]);
   }
 
   /// Gets [key] value or returns [defaultValue].
@@ -752,7 +752,7 @@ class State {
     if (!_properties.containsKey(key)) {
       return defaultValue;
     } else {
-      return _properties[key] as V?;
+      return _castTo<V>(_properties[key]);
     }
   }
 
@@ -765,7 +765,7 @@ class State {
       _notifyChange(StateOperation.set, key, defaultValue);
       return defaultValue;
     } else {
-      return _properties[key] as V?;
+      return _castTo<V>(_properties[key]);
     }
   }
 
@@ -865,4 +865,35 @@ class State {
 
 extension _IterableMapEntryExtension<K, V> on Iterable<MapEntry<K, V>> {
   Map<K, V> toMapFromEntries() => Map<K, V>.fromEntries(this);
+}
+
+V? _castTo<V>(Object? val) {
+  if (val == null) return null;
+  if (val is V) return val as V;
+
+  if (V == int) {
+    return parseInt(val) as V?;
+  } else if (V == double) {
+    return parseDouble(val) as V?;
+  } else if (V == num) {
+    return parseNum(val) as V?;
+  } else if (V == String) {
+    return val.toString() as V?;
+  } else if (V == bool) {
+    return parseBool(val) as V?;
+  } else if (V == List<int>) {
+    return parseListOf(val, parseInt) as V?;
+  } else if (V == List<double>) {
+    return parseListOf(val, parseDouble) as V?;
+  } else if (V == List<num>) {
+    return parseListOf(val, parseNum) as V?;
+  }
+
+  try {
+    return val as V;
+  } catch (e, s) {
+    print("** [State] Can't cast to `$V`> ${val.runtimeType}: $val");
+    print(s);
+    return null;
+  }
 }

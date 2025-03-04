@@ -1,3 +1,9 @@
+## 3.0.0-beta.8
+
+- `State`: use `_castTo<V>(...)` to return values and avoid casting errors.
+
+- web_utils: ^1.0.11
+
 ## 3.0.0-beta.7
 
 - Fix use of `identical` with `web` `Element`s (`JSObject`).
