@@ -1,3 +1,7 @@
+## 3.0.0-beta.9
+
+- Fix `readFileDataAsArrayBuffer`.
+
 ## 3.0.0-beta.8
 
 - `State`: use `_castTo<V>(...)` to return values and avoid casting errors.

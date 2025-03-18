@@ -175,8 +175,18 @@ Future<Uint8List?> readFileDataAsArrayBuffer(File file) async {
     return null;
   }
 
-  var fileData = reader.result as JSUint8Array?;
-  return fileData?.toDart;
+  var result = reader.result;
+
+  if (result.isA<JSArrayBuffer>()) {
+    var arrayBuffer = result as JSArrayBuffer;
+    var byteBuffer = arrayBuffer.toDart;
+    return Uint8List.view(byteBuffer);
+  } else if (result.isA<JSUint8Array>()) {
+    var fileData = result as JSUint8Array?;
+    return fileData?.toDart;
+  } else {
+    return null;
+  }
 }
 
 /// Reads [file] as text.
