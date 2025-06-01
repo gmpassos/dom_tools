@@ -330,7 +330,7 @@ String? getElementTagName(Node node) {
 final RegExp _regexpDependentTag =
     RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
 
-/// Creates a HTML [Element]. Returns 1st node form parsed HTML.
+/// Creates a [HTMLElement]. Returns 1st node form parsed HTML.
 HTMLElement createHTML(
     {String? html,
     @Deprecated("`NodeValidator` not implemented on package `web`")
@@ -341,31 +341,7 @@ HTMLElement createHTML(
   var dependentTagMatch = _regexpDependentTag.firstMatch(html);
 
   if (dependentTagMatch != null) {
-    var dependentTagName = dependentTagMatch.group(1)!.toLowerCase();
-
-    HTMLDivElement div;
-    if (dependentTagName == 'td' || dependentTagName == 'th') {
-      div = createDiv(
-          inline: true,
-          html: '<table><tbody><tr>\n$html\n</tr></tbody></table>',
-          unsafe: unsafe);
-    } else if (dependentTagName == 'tr') {
-      div = createDiv(
-          inline: true,
-          html: '<table><tbody>\n$html\n</tbody></table>',
-          unsafe: unsafe);
-    } else if (dependentTagName == 'tbody' ||
-        dependentTagName == 'thead' ||
-        dependentTagName == 'tfoot') {
-      div = createDiv(
-          inline: true, html: '<table>\n$html\n</table>', unsafe: unsafe);
-    } else {
-      throw StateError("Can't handle dependent tag: $dependentTagName");
-    }
-
-    var childNode = div.querySelector(dependentTagName);
-    return childNode?.asHTMLElementChecked ??
-        (throw StateError("Can't create HTML:\n$html"));
+    return _createDependentTagElement(dependentTagMatch, html, unsafe);
   } else {
     var div = createDiv(inline: true, html: html, unsafe: unsafe);
 
@@ -383,6 +359,62 @@ HTMLElement createHTML(
     span.appendNodes(div.childNodes.toList());
     return span;
   }
+}
+
+/// Creates a HTML [Element]. Returns 1st node form parsed HTML.
+Element createElement({String? html, bool unsafe = false}) {
+  if (html == null || html.isEmpty) return HTMLSpanElement();
+
+  var dependentTagMatch = _regexpDependentTag.firstMatch(html);
+
+  if (dependentTagMatch != null) {
+    return _createDependentTagElement(dependentTagMatch, html, unsafe);
+  } else {
+    var div = createDiv(inline: true, html: html, unsafe: unsafe);
+
+    var childNodes = div.childNodes;
+    if (childNodes.isEmpty) return div;
+
+    var childNode = childNodes.whereElement().firstOrNull;
+
+    var element = childNode.asElementChecked;
+    if (element != null) {
+      return element;
+    }
+
+    var span = HTMLSpanElement();
+    span.appendNodes(div.childNodes.toList());
+    return span;
+  }
+}
+
+HTMLElement _createDependentTagElement(
+    RegExpMatch dependentTagMatch, String html, bool unsafe) {
+  var dependentTagName = dependentTagMatch.group(1)!.toLowerCase();
+
+  HTMLDivElement div;
+  if (dependentTagName == 'td' || dependentTagName == 'th') {
+    div = createDiv(
+        inline: true,
+        html: '<table><tbody><tr>\n$html\n</tr></tbody></table>',
+        unsafe: unsafe);
+  } else if (dependentTagName == 'tr') {
+    div = createDiv(
+        inline: true,
+        html: '<table><tbody>\n$html\n</tbody></table>',
+        unsafe: unsafe);
+  } else if (dependentTagName == 'tbody' ||
+      dependentTagName == 'thead' ||
+      dependentTagName == 'tfoot') {
+    div = createDiv(
+        inline: true, html: '<table>\n$html\n</table>', unsafe: unsafe);
+  } else {
+    throw StateError("Can't handle dependent tag: $dependentTagName");
+  }
+
+  var childNode = div.querySelector(dependentTagName);
+  return childNode?.asHTMLElementChecked ??
+      (throw StateError("Can't create HTML:\n$html"));
 }
 
 /// Sets the inner HTML of [element] with parsed result of [html].

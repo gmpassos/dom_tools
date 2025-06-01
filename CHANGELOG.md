@@ -1,3 +1,15 @@
+## 3.0.0-beta.10
+
+- Added `createElement`: allow creation of `SVGElement` and non `HTMLElement` from HTML source.
+
+- web_utils: ^1.0.15
+- js_interop_utils: ^1.0.8
+- async_extension: ^1.2.15
+- http: ^1.4.0
+
+- test: ^1.26.2
+- dependency_validator: ^4.1.3
+
 ## 3.0.0-beta.9
 
 - Fix `readFileDataAsArrayBuffer`.
