@@ -1,3 +1,8 @@
+## 2.3.5
+
+- `DBSimpleStorage`:
+  - Small fix for `_recreateDB` future cleanup.
+
 ## 2.3.4
 
 - `DBSimpleStorage`:

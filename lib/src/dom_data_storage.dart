@@ -386,11 +386,11 @@ class _DBSimpleStorage extends _SimpleStorage {
     var recreateDB = _recreateDBFuture = _recreateDBImpl();
 
     recreateDB.then((_) {
-      if (identical(recreateDB, _recreateDB)) {
+      if (identical(recreateDB, _recreateDBFuture)) {
         _recreateDBFuture = null;
       }
     }, onError: (_) {
-      if (identical(recreateDB, _recreateDB)) {
+      if (identical(recreateDB, _recreateDBFuture)) {
         _recreateDBFuture = null;
       }
     });
