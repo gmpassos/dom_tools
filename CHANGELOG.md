@@ -1,3 +1,9 @@
+## 2.3.4
+
+- `DBSimpleStorage`:
+  - `_transactionObjStore`: wrap calls to `db.transaction()`.
+    - If the indexedDB doesn't have the ObjectStore (`objs`) re-create the indexedDB. 
+
 ## 2.3.3
 
 - sdk: '>=3.6.0 <4.0.0'
