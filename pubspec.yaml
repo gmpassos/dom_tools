@@ -1,6 +1,6 @@
 name: dom_tools
 description: DOM rich elements and tools for CSS, JavaScript, Element Tracking, DOM Manipulation, Storage, Dialog and more.
-version: 3.0.0-beta.10
+version: 3.0.0-beta.11
 homepage: https://github.com/gmpassos/dom_tools
 
 environment:
