@@ -306,7 +306,7 @@ class _DBSimpleStorage extends _SimpleStorage {
   FutureOr<IDBDatabase> _getDB() {
     var db = _db;
     if (db != null) return db;
-    return _open;
+    return _recreateDBFuture ?? _open;
   }
 
   static const String objStore = 'objs';
@@ -318,10 +318,123 @@ class _DBSimpleStorage extends _SimpleStorage {
         IDBObjectStoreParameters(keyPath: 'k'.toJS, autoIncrement: false));
   }
 
+  FutureOr<IDBTransaction?> _transactionObjStore(IDBDatabase db, String mode,
+      {bool autoRecreateDB = false, bool verbose = false}) {
+    if (_recreateDBFuture != null) {
+      return _transactionObjStore2(mode, verbose);
+    }
+
+    try {
+      return db.transaction(objStore.toJS, mode);
+    } catch (e) {
+      if (!autoRecreateDB) {
+        if (verbose) {
+          _consoleLog(
+              '[WARN] Failed to open indexedDB `$indexedDbName` transaction for ObjectStore `$objStore`: $this');
+          _consoleError(e);
+        }
+        return null;
+      }
+
+      if (verbose) {
+        _consoleLog(
+            '[WARN] Failed to open transaction for indexedDB `$indexedDbName` ObjectStore `$objStore`. Attempting to auto-recreate indexedDB ...');
+      }
+
+      return _transactionObjStore2(mode, verbose);
+    }
+  }
+
+  Future<IDBTransaction?> _transactionObjStore2(
+      String mode, bool verbose) async {
+    var db = await _recreateDB(verbose);
+
+    try {
+      return db.transaction(objStore.toJS, mode);
+    } catch (e2) {
+      _consoleLog(
+          '[WARN] Failed to open indexedDB `$indexedDbName` transaction for ObjectStore `$objStore` (after auto-recreate DB): $this');
+      _consoleError(e2);
+      return null;
+    }
+  }
+
+  Future<IDBDatabase> _recreateDB(bool verbose) async {
+    if (_recreateDBFuture != null) {
+      return _recreateDBFuture!;
+    }
+
+    var prevDB = _db;
+    if (prevDB != null) {
+      var objectStoreNames = prevDB.objectStoreNames;
+      if (objectStoreNames.contains(objStore)) {
+        throw StateError(
+            "Can't re-create indexedDB `$indexedDbName`: `ObjectStore` `$objStore` already present on DB. objectStoreNames: $objectStoreNames");
+      }
+
+      prevDB.close();
+    }
+
+    if (verbose) {
+      _consoleLog(
+          '[WARN] Attempting to re-create indexedDB `$indexedDbName` ...');
+    }
+
+    _db = null;
+
+    var recreateDB = _recreateDBFuture = _recreateDBImpl();
+
+    recreateDB.then((_) {
+      if (identical(recreateDB, _recreateDBFuture)) {
+        _recreateDBFuture = null;
+      }
+    }, onError: (_) {
+      if (identical(recreateDB, _recreateDBFuture)) {
+        _recreateDBFuture = null;
+      }
+    });
+
+    return recreateDB;
+  }
+
+  Future<IDBDatabase>? _recreateDBFuture;
+
+  Future<IDBDatabase> _recreateDBImpl() async {
+    try {
+      var req = window.indexedDB.deleteDatabase(indexedDbName);
+      await req.toFuture();
+    } catch (e2) {
+      _consoleError(
+          '[ERROR] Failed to delete indexedDB `$indexedDbName` (auto-recreate DB)');
+      _consoleError(e2);
+
+      throw StateError(
+          "Failed to delete indexedDB `$indexedDbName`. Can't auto-recreate DB & ObjectStore `$objStore` for: $this");
+    }
+
+    try {
+      var db = await _indexedDBOpen();
+      if (db == null) {
+        throw StateError("Can't open indexedDB `$indexedDbName`!");
+      }
+      _db = db;
+      return db;
+    } catch (e2) {
+      _consoleError('[ERROR] Failed to auto-recreate DB for $this');
+      _consoleError(e2);
+
+      throw StateError(
+          "Can't auto-recreate indexedDB `$indexedDbName` & ObjectStore `$objStore` for: $this");
+    }
+  }
+
   @override
   Future<bool> get isEmpty async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore.toJS, 'readonly');
+
+    var transaction = await _transactionObjStore(db, 'readonly');
+    if (transaction == null) return false;
+
     var objectStore = transaction.objectStore(objStore);
 
     var cursorRequest = objectStore.openCursor();
@@ -349,7 +462,10 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   FutureOr<Object?> get(String key) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore.toJS, 'readonly');
+
+    var transaction = await _transactionObjStore(db, 'readonly');
+    if (transaction == null) return null;
+
     var objectStore = transaction.objectStore(objStore);
 
     var objRequest = objectStore.get(key.toJS);
@@ -373,7 +489,10 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<List<String>> listKeys(String prefix) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore.toJS, 'readonly');
+
+    var transaction = await _transactionObjStore(db, 'readonly');
+    if (transaction == null) return [];
+
     var objectStore = transaction.objectStore(objStore);
 
     var cursorRequest = objectStore.openCursor();
@@ -399,7 +518,10 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<bool> remove(String key) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore.toJS, 'readwrite');
+
+    var transaction = await _transactionObjStore(db, 'readwrite');
+    if (transaction == null) return false;
+
     var objectStore = transaction.objectStore(objStore);
 
     var request = objectStore.delete(key.toJS);
@@ -412,7 +534,11 @@ class _DBSimpleStorage extends _SimpleStorage {
   @override
   Future<bool> set(String key, Object? value) async {
     var db = await _getDB();
-    var transaction = db.transaction(objStore.toJS, 'readwrite');
+
+    var transaction =
+        await _transactionObjStore(db, 'readwrite', autoRecreateDB: true);
+    if (transaction == null) return false;
+
     var objectStore = transaction.objectStore(objStore);
 
     var obj = JSObject();
@@ -432,6 +558,10 @@ class _DBSimpleStorage extends _SimpleStorage {
 
     return ok ?? false;
   }
+
+  @override
+  String toString() =>
+      '_DBSimpleStorage{name: $indexedDbName, loaded: $isLoaded, recreatingDB: ${_recreateDBFuture != null}}${_db != null ? '@$_db' : ''}';
 }
 
 /// Type of [DataStorage].
@@ -895,5 +1025,40 @@ V? _castTo<V>(Object? val) {
     print("** [State] Can't cast to `$V`> ${val.runtimeType}: $val");
     print(s);
     return null;
+  }
+}
+
+extension IDBRequestToFutureExtension on IDBRequest {
+  Future<JSAny?> toFuture() {
+    final completer = Completer<JSAny?>();
+
+    late void Function() cleanup;
+
+    void success(Event _) {
+      if (!completer.isCompleted) {
+        completer.complete(result);
+      }
+      cleanup();
+    }
+
+    void fail(Event _) {
+      if (!completer.isCompleted) {
+        completer.completeError(error ?? 'IDBRequest error');
+      }
+      cleanup();
+    }
+
+    final successJS = success.toJS;
+    final failJS = fail.toJS;
+
+    cleanup = () {
+      removeEventListener('success', successJS);
+      removeEventListener('error', failJS);
+    };
+
+    addEventListener('success', successJS);
+    addEventListener('error', failJS);
+
+    return completer.future;
   }
 }

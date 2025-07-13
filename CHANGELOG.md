@@ -1,3 +1,9 @@
+## 3.0.0-beta.11
+
+- `DBSimpleStorage`:
+  - `_transactionObjStore`: wrap calls to `db.transaction()`.
+    - If the indexedDB doesn't have the ObjectStore (`objs`) re-create the indexedDB.
+
 ## 3.0.0-beta.10
 
 - Added `createElement`: allow creation of `SVGElement` and non `HTMLElement` from HTML source.
