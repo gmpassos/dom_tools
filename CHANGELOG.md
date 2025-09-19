@@ -1,3 +1,7 @@
+## 3.0.0-beta.12
+
+- Add optional parameter `scrollable` to scroll functions.
+
 ## 3.0.0-beta.11
 
 - `DBSimpleStorage`:

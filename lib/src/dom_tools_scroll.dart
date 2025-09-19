@@ -95,33 +95,39 @@ void scrollToTopDelayed(int delayMs) {
 ///   even at `scrollX == 0`. Bug still present on iOS 16.4 (latest version on current date).
 /// - See [scrollTo].
 void scrollToTop(
-    {bool smooth = true, int y = 0, bool fixSafariIOS = false, int? delayMs}) {
+    {bool smooth = true,
+    int y = 0,
+    bool fixSafariIOS = false,
+    int? delayMs,
+    Object? scrollable}) {
   if (fixSafariIOS && y == 0 && isSafariIOS()) {
     y = 1;
   }
 
-  scrollTo(window.scrollX, y, smooth: smooth, delayMs: delayMs);
+  scrollTo(window.scrollX, y,
+      smooth: smooth, delayMs: delayMs, scrollable: scrollable);
 }
 
 /// Scrolls viewport to the bottom.
 ///
 /// - See [scrollTo].
-void scrollToBottom({bool smooth = true, int? delayMs}) =>
+void scrollToBottom({bool smooth = true, int? delayMs, Object? scrollable}) =>
     scrollTo(window.scrollX, document.body!.scrollHeight,
-        smooth: smooth, delayMs: delayMs);
+        smooth: smooth, delayMs: delayMs, scrollable: scrollable);
 
 /// Scrolls viewport to the left border.
 ///
 /// - See [scrollTo].
-void scrollToLeft({bool smooth = true, int? delayMs}) =>
-    scrollTo(0, window.scrollY, smooth: smooth, delayMs: delayMs);
+void scrollToLeft({bool smooth = true, int? delayMs, Object? scrollable}) =>
+    scrollTo(0, window.scrollY,
+        smooth: smooth, delayMs: delayMs, scrollable: scrollable);
 
 /// Scrolls viewport to the right border.
 ///
 /// - See [scrollTo].
-void scrollToRight({bool smooth = true, int? delayMs}) =>
+void scrollToRight({bool smooth = true, int? delayMs, Object? scrollable}) =>
     scrollTo(document.body!.scrollWidth, window.scrollY,
-        smooth: smooth, delayMs: delayMs);
+        smooth: smooth, delayMs: delayMs, scrollable: scrollable);
 
 /// Scrolls the viewport to the [element].
 ///
