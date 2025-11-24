@@ -1,3 +1,14 @@
+## 3.0.0-beta.13
+
+- Improve `_resolveScrollable`.
+
+- web_utils: ^1.0.18
+- js_interop_utils: ^1.0.9
+- swiss_knife: ^3.3.3
+- http: ^1.6.0
+
+- test: ^1.26.3
+
 ## 3.0.0-beta.12
 
 - Add optional parameter `scrollable` to scroll functions.

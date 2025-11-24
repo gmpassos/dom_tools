@@ -70,11 +70,15 @@ JSObject? _resolveScrollable(Object? scrollable) {
   } else {
     final body = document.body!;
 
-    final windowScrolled = window.scrollY != 0 || window.scrollX != 0;
-    final bodyScrolled = body.scrollTop != 0 || body.scrollLeft != 0;
+    final windowScrolled = window.scrollY != 0.0 || window.scrollX != 0.0;
+    final bodyScrolled = body.scrollTop != 0.0 || body.scrollLeft != 0.0;
 
     if (bodyScrolled && !windowScrolled) {
       return body;
+    } else if (bodyScrolled && windowScrolled) {
+      var windowScroll = window.scrollY + window.scrollX;
+      var bodyScroll = body.scrollTop + body.scrollLeft;
+      return bodyScroll > windowScroll ? body : window;
     } else {
       return window;
     }
