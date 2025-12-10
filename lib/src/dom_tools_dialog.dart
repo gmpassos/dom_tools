@@ -77,7 +77,7 @@ HTMLDivElement showDialogElement(HTMLElement content,
     ..style.overflow = 'auto'
     ..style.backgroundColor = 'rgba(0,0,0, $transparency)'
     ..style.textAlign = 'center'
-    ..style.setProperty('backdrop-filter', 'blur(6px)');
+    ..style.backdropFilter = 'blur(6px)';
 
   var close = HTMLSpanElement()
     ..innerHTML = '&times;'.toJS

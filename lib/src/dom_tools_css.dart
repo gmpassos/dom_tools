@@ -746,9 +746,8 @@ String? setElementScrollColors(
 
   removeElementScrollColors(element);
 
-  element.style?.setProperty('scrollbar-width', '${scrollWidth}px');
-  element.style?.setProperty(
-      'scrollbar-color', '$scrollButtonColor $scrollBgColor'.trim());
+  element.style?.scrollbarWidth = '${scrollWidth}px';
+  element.style?.scrollbarColor = '$scrollButtonColor $scrollBgColor'.trim();
 
   var regExpNonWord = RegExp(r'\W+');
 
@@ -839,12 +838,12 @@ void setTreeElementsBackgroundBlur(Element element, String className) {
 void setElementBackgroundBlur(Element element, [int? blurSize]) {
   blurSize ??= 3;
   var filter = blurSize > 0 ? 'blur(${blurSize}px)' : 'none';
-  element.style?.setProperty('backdrop-filter', filter);
+  element.style?.backdropFilter = filter;
 }
 
 /// Removes [element] background blur effect, set by [setElementBackgroundBlur].
 void removeElementBackgroundBlur(Element element, [int? blurSize]) {
-  var val = element.style?.getPropertyValue('backdrop-filter');
+  var val = element.style?.backdropFilter;
   if (val != null && val.contains('blur')) {
     element.style?.removeProperty('backdrop-filter');
   }

@@ -1,3 +1,12 @@
+## 3.0.0-beta.14
+
+- Use new `styles` properties:
+  - `scrollbarWidth`
+  - `scrollbarColor`
+  - `backdropFilter`
+
+- web_utils: ^1.0.19
+
 ## 3.0.0-beta.13
 
 - Improve `_resolveScrollable`.
