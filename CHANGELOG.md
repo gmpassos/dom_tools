@@ -1,3 +1,12 @@
+## 3.0.0-beta.15
+
+- Added full backdrop-filter helpers:
+    - `getElementBackdropFilter`
+    - `setElementBackdropFilter`
+    - `removeElementBackdropFilter`
+- Updated `setElementBackgroundBlur` and `removeElementBackgroundBlur` to use the new helpers.
+- Updated dialog styling to use `setElementBackdropFilter` for Safari compatibility.
+
 ## 3.0.0-beta.14
 
 - Use new `styles` properties:

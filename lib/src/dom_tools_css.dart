@@ -833,19 +833,42 @@ void setTreeElementsBackgroundBlur(Element element, String className) {
   }
 }
 
+/// Returns the current backdrop-filter value (standard or prefixed).
+String? getElementBackdropFilter(Element element) {
+  final v = element.style?.backdropFilter;
+  if (v != null && v.isNotEmpty) return v;
+
+  final w = element.style?.getPropertyValue('-webkit-backdrop-filter');
+  return (w != null && w.isNotEmpty) ? w : null;
+}
+
+/// Sets a backdrop-filter on the element, including Safari’s
+/// `-webkit-backdrop-filter` prefix. Example: `"blur(3px)"`.
+void setElementBackdropFilter(Element element, String filter) {
+  element.style?.backdropFilter = filter;
+  element.style?.setProperty("-webkit-backdrop-filter", filter);
+}
+
+/// Clears all backdrop-filter styles from the element.
+void removeElementBackdropFilter(Element element) {
+  element.style?.backdropFilter = '';
+  element.style?.removeProperty('backdrop-filter');
+  element.style?.removeProperty("-webkit-backdrop-filter");
+}
+
 /// Sets [element] background as a blur effect of size [blurSize].
 /// Uses CSS property `backdrop-filter`.
 void setElementBackgroundBlur(Element element, [int? blurSize]) {
   blurSize ??= 3;
   var filter = blurSize > 0 ? 'blur(${blurSize}px)' : 'none';
-  element.style?.backdropFilter = filter;
+  setElementBackdropFilter(element, filter);
 }
 
 /// Removes [element] background blur effect, set by [setElementBackgroundBlur].
 void removeElementBackgroundBlur(Element element, [int? blurSize]) {
-  var val = element.style?.backdropFilter;
+  var val = getElementBackdropFilter(element);
   if (val != null && val.contains('blur')) {
-    element.style?.removeProperty('backdrop-filter');
+    removeElementBackdropFilter(element);
   }
 }
 

@@ -1,8 +1,6 @@
+import 'package:dom_tools/dom_tools.dart';
 import 'package:swiss_knife/swiss_knife.dart';
 import 'package:web_utils/web_utils.dart';
-
-import 'dom_tools_base.dart';
-import 'dom_tools_paint.dart';
 
 /// Shows a text dialog.
 ///
@@ -76,8 +74,8 @@ HTMLDivElement showDialogElement(HTMLElement content,
     ..style.height = '100vh'
     ..style.overflow = 'auto'
     ..style.backgroundColor = 'rgba(0,0,0, $transparency)'
-    ..style.textAlign = 'center'
-    ..style.backdropFilter = 'blur(6px)';
+    ..style.textAlign = 'center';
+  setElementBackdropFilter(dialog, 'blur(6px)');
 
   var close = HTMLSpanElement()
     ..innerHTML = '&times;'.toJS
