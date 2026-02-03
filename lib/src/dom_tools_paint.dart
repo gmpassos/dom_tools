@@ -2653,7 +2653,7 @@ HTMLImageElement canvasToImageElement(HTMLCanvasElement canvas,
   mimeType ??= 'image/png';
   quality ??= 0.99;
 
-  var dataUrl = canvas.toDataUrl(mimeType);
+  var dataUrl = canvas.toDataUrl(mimeType, quality);
   var img = HTMLImageElement()..src = dataUrl;
   img.width = canvas.width;
   img.height = canvas.height;

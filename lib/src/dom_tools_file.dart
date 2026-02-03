@@ -25,6 +25,7 @@ Future<Uint8List?> readFileInputElementAsArrayBuffer(HTMLInputElement? input,
       data = DataURLBase64.parsePayloadAsArrayBuffer(dataURL);
     }
   }
+
   data ??= await readFileDataAsArrayBuffer(file);
 
   return data;
@@ -47,6 +48,7 @@ Future<String?> readFileInputElementAsString(HTMLInputElement? input,
       data = DataURLBase64.parseMimeTypeAsString(dataURL);
     }
   }
+
   data ??= await readFileDataAsText(file);
 
   return data;
@@ -69,6 +71,7 @@ Future<String?> readFileInputElementAsBase64(HTMLInputElement? input,
       data = DataURLBase64.parsePayloadAsBase64(dataURL);
     }
   }
+
   data ??= await readFileDataAsBase64(file);
 
   return data;
@@ -86,10 +89,38 @@ Future<String?> readFileInputElementAsDataURLBase64(HTMLInputElement? input,
 
   String? data;
   if (removeExifFromImage) {
-    var dataURL = await removeExifFromImageFile(file);
-    data = dataURL;
+    data = await removeExifFromImageFile(file);
   }
+
   data ??= await readFileDataAsDataURLBase64(file);
+
+  return data;
+}
+
+/// Reads selected file of [input] and return a [Blob] URL.
+Future<String?> readFileInputElementAsBlobUrl(HTMLInputElement? input,
+    [bool removeExifFromImage = false]) async {
+  if (input == null) return null;
+
+  final files = input.files;
+  if (files == null || files.isEmpty) return null;
+
+  var file = files.item(0)!;
+
+  String? data;
+  if (removeExifFromImage) {
+    data = await removeExifFromImageFile(file);
+  }
+
+  if (data == null) {
+    data = await readFileDataAsBlobURL(file);
+  } else if (data.startsWith('data:')) {
+    var dataUrlBase64 = DataURLBase64.parse(data);
+    if (dataUrlBase64 != null) {
+      data = createBlobURL(
+          dataUrlBase64.payloadArrayBuffer, dataUrlBase64.mimeTypeAsString);
+    }
+  }
 
   return data;
 }
@@ -101,17 +132,30 @@ Future<String?> removeExifFromImageFile(File file) async {
   var mimeType = getFileMimeType(file);
 
   if (mimeType != null && mimeType.isImageJPEG) {
-    var fileDataURL = await readFileDataAsDataURLBase64(file);
+    var fileURL = await readFileDataAsBlobURL(file);
 
-    if (fileDataURL != null) {
-      var img = HTMLImageElement()..src = fileDataURL;
+    if (fileURL != null) {
+      var img = HTMLImageElement()..src = fileURL;
+
+      await _yeld();
 
       await elementOnLoad(img);
 
-      var canvas = toCanvasElement(img, img.naturalWidth, img.naturalHeight);
-      img = canvasToImageElement(canvas, mimeType.toString());
+      await _yeld();
 
-      return img.src;
+      var canvas = toCanvasElement(img, img.naturalWidth, img.naturalHeight);
+
+      await _yeld();
+
+      revokeBlobURL(fileURL);
+
+      await _yeld();
+
+      var dataUrl = canvas.toDataUrl('image/png', 0.99);
+
+      await _yeld();
+
+      return dataUrl;
     }
   }
 
@@ -147,6 +191,23 @@ MimeType? getFileMimeType(File file, [String accept = '']) {
   }
 
   return MimeType.parse(mediaType);
+}
+
+/// Reads [file] as [Blob] URL.
+Future<String?> readFileDataAsBlobURL(File file, [String accept = '']) async {
+  var bs = await readFileDataAsArrayBuffer(file);
+  if (bs == null) return null;
+
+  var mimeType = getFileMimeType(file, accept);
+  var mimeTypeStr = mimeType?.toString() ?? MimeType.applicationOctetStream;
+
+  await _yeld();
+
+  var blobURL = createBlobURL(bs, mimeTypeStr);
+
+  await _yeld();
+
+  return blobURL;
 }
 
 /// Reads [file] as DATA URL Base64 [String].
@@ -208,3 +269,19 @@ Future<String?> readFileDataAsText(File file) async {
 String toDataURLBase64(String? mediaType, String base64) {
   return 'data:$mediaType;base64,$base64';
 }
+
+String createBlobURL(Uint8List data, String mimeType) {
+  var blob = Blob(
+    [data.toJS].toJS,
+    BlobPropertyBag(type: mimeType),
+  );
+
+  var blobUrl = URL.createObjectURL(blob);
+  return blobUrl;
+}
+
+void revokeBlobURL(String blobUrl) {
+  URL.revokeObjectURL(blobUrl);
+}
+
+Future<void> _yeld({int ms = 1}) => Future.delayed(Duration(milliseconds: ms));
