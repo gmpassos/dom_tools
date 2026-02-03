@@ -1,3 +1,23 @@
+## 3.0.0-beta.16
+
+- `dom_tools_file.dart`:
+  - Added `readFileInputElementAsBlobUrl` to read file input as Blob URL, optionally removing EXIF.
+  - Updated `removeExifFromImageFile` to:
+    - Use Blob URL for image loading.
+    - Convert canvas output to PNG Data URL.
+    - Revoke Blob URL after use.
+  - Added `readFileDataAsBlobURL` to read a file as a Blob URL.
+  - Added utility functions:
+    - `createBlobURL` to create a Blob URL from `Uint8List` and MIME type.
+    - `revokeBlobURL` to revoke a Blob URL.
+    - `_yeld` to introduce small async delays (allow browser GC).
+  - Updated all `readFileInputElementAs*` functions to consistently handle optional EXIF removal and await yield points.
+
+- `dom_tools_paint.dart`:
+  - Fixed `canvasToImageElement` to pass `quality` parameter to `canvas.toDataUrl`.
+
+- async_extension: ^1.2.20
+
 ## 3.0.0-beta.15
 
 - Added full backdrop-filter helpers:
