@@ -1161,12 +1161,14 @@ Element? getParentElement(Element element,
 }
 
 /// A [TreeReferenceMap] for DOM Nodes.
-class DOMTreeReferenceMap<V> extends TreeReferenceMap<Node, V> {
+class DOMTreeReferenceMap<V extends Object> extends TreeReferenceMap<Node, V> {
   DOMTreeReferenceMap(super.root,
       {super.autoPurge,
+      super.autoPurgeThreshold,
       super.keepPurgedKeys,
       super.purgedEntriesTimeout,
-      super.maxPurgedEntries});
+      super.maxPurgedEntries,
+      super.onPurgedEntries});
 
   @override
   bool isInTree(Node? key) {
