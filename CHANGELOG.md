@@ -1,3 +1,12 @@
+## 3.0.0-beta.17
+
+- `DOMTreeReferenceMap`:
+  - Added generic constraint `V extends Object`.
+  - Added support for `autoPurgeThreshold` and `onPurgedEntries` parameters in constructor.
+
+- Dependencies:
+  - Updated `swiss_knife` from ^3.3.3 to ^3.3.4.
+
 ## 3.0.0-beta.16
 
 - `dom_tools_file.dart`:
