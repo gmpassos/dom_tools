@@ -645,18 +645,9 @@ String? getElementAttributeRegExp(Element element, RegExp key) {
 
 /// Returns [element] attribute with [String] [key].
 String? getElementAttributeStr(Element element, String key) {
+  // `Element.getAttribute()` is case-insensitive
   var val = element.getAttribute(key);
-  if (val != null) return val;
-
-  key = key.trim().toLowerCase();
-
-  for (var k in element.getAttributeNames().toList()) {
-    if (k.toLowerCase() == key) {
-      return element.getAttribute(k);
-    }
-  }
-
-  return null;
+  return val;
 }
 
 /// Clears selected text in vieport.

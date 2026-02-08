@@ -1,3 +1,11 @@
+## 3.0.0-beta.18
+
+- `getElementAttributeStr`:
+  - Fixed redundant case-insensitive attribute lookup by relying on `Element.getAttribute()` which is case-insensitive.
+
+- Dependency updates:
+  - `web_utils`: ^1.0.20
+
 ## 3.0.0-beta.17
 
 - `DOMTreeReferenceMap`:
