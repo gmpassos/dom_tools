@@ -1,3 +1,9 @@
+## 3.0.0-beta.19
+
+- Dependency updates:
+  - `web_utils`: ^1.0.20 → ^1.0.21
+  - `async_extension`: ^1.2.20 → ^1.2.21
+
 ## 3.0.0-beta.18
 
 - `getElementAttributeStr`:
