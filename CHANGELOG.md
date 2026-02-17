@@ -1,3 +1,10 @@
+## 3.0.0
+
+- Release version update from `3.0.0-beta.19` to `3.0.0`.
+
+- Dependency updates in `pubspec.yaml`:
+  - `swiss_knife`: updated from `^3.3.4` to `^3.3.5`.
+
 ## 3.0.0-beta.19
 
 - Dependency updates:
