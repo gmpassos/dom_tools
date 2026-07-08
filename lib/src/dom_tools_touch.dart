@@ -44,7 +44,7 @@ TouchDeviceDetection? detectTouchDevice() {
   return _detectTouchDevice;
 }
 
-void _onTouchEvent(event) {
+void _onTouchEvent(TouchEvent event) {
   if (_detectTouchDeviceListen == null) return;
 
   for (var listen in _detectTouchDeviceListen!) {

@@ -1,3 +1,19 @@
+## 3.0.1
+
+- `dom_tools_touch.dart`:
+  - `_onTouchEvent`: added explicit `TouchEvent` type to `event` parameter.
+  - Improved cleanup of `_detectTouchDeviceListen` subscriptions with try-catch around `cancel()` calls.
+
+- `pubspec.yaml`:
+  - Updated dependencies:
+    - `web_utils`: ^1.0.23
+    - `js_interop_utils`: ^1.0.11
+    - `async_extension`: ^1.2.22
+    - `intl`: ^0.20.3
+    - `swiss_knife`: ^3.3.14
+    - `markdown`: ^7.3.1
+  - Updated dev dependency `lints` to ^6.1.0
+
 ## 3.0.0
 
 - Release version update from `3.0.0-beta.19` to `3.0.0`.
