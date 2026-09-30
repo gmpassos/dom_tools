@@ -796,7 +796,17 @@ bool isOrientationInLandscapeMode() {
     return angle == 90 || angle == -90;
   }
 
-  return window.screen.orientation.type.startsWith('landscape');
+  // `screen.orientation` is missing in older browsers (e.g. desktop Safari
+  // before 16.4):
+  var screenOrientation = window.screen.getProperty<JSAny?>('orientation'.toJS);
+  if (screenOrientation.isA<JSObject>()) {
+    var type = (screenOrientation as JSObject).getProperty<JSAny?>('type'.toJS);
+    if (type.isA<JSString>()) {
+      return (type as JSString).toDart.startsWith('landscape');
+    }
+  }
+
+  return window.innerWidth > window.innerHeight;
 }
 
 /// Attaches [listener] to `orientationchange` event.

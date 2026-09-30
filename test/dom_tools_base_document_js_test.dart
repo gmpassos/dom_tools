@@ -4,6 +4,7 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop_unsafe';
 
 import 'package:dom_tools/dom_tools_kit.dart' hide MimeType;
 import 'package:swiss_knife/swiss_knife.dart' show DataURLBase64, MimeType;
@@ -559,6 +560,29 @@ void main() {
       expect(
         landscape,
         equals(window.screen.orientation.type.startsWith('landscape')),
+      );
+    });
+
+    // Regression: without `screen.orientation` (e.g. desktop Safari < 16.4)
+    // the fallback threw a `TypeError`.
+    test('orientation without screen.orientation', () {
+      final JSObject screen = window.screen;
+      (globalContext['Object'] as JSObject).callMethod(
+        'defineProperty'.toJS,
+        screen,
+        'orientation'.toJS,
+        {'value': null, 'configurable': true}.jsify(),
+      );
+      addTearDown(() => screen.delete('orientation'.toJS));
+
+      expect(screen['orientation'], isNull);
+      expect(
+        isOrientationInLandscapeMode(),
+        equals(window.innerWidth > window.innerHeight),
+      );
+      expect(
+        isOrientationInPortraitMode(),
+        equals(!(window.innerWidth > window.innerHeight)),
       );
     });
 

@@ -20,7 +20,8 @@
   - `toHTML`: renders the real attribute names (it rendered a literal `attr`).
   - `replaceElement`: fixed `NotFoundError` (swapped `insertBefore` arguments).
   - `isOrientationInLandscapeMode`/`isOrientationInPortraitMode`: no longer throw where `window.orientation` is
-    undefined (desktop); fall back to `screen.orientation.type`.
+    undefined (desktop); fall back to `screen.orientation.type`, or to the window's aspect ratio where
+    `screen.orientation` is missing (e.g. desktop Safari before 16.4).
   - `resetZoom`: the retry counter now increments.
   - `setDivCentered`: removed a leftover debug `print`.
 
@@ -46,7 +47,8 @@
 
 - Fixes in `dom_data_storage.dart`, `dom_tools_file.dart`, `dom_tools_dialog.dart`:
   - `State.listenAll` listeners are called once per event (they were called an increasing number of times).
-  - `State.get<List<int>>()`/`<List<double>>()`/`<List<num>>()`: no longer throw a `TypeError`.
+  - `State.get<List<int>>()`/`<List<double>>()`/`<List<num>>()`: no longer throw a `TypeError` (they always did);
+    entries that can't be parsed are skipped.
   - `removeExifFromImageFile`: no longer hangs (the image `load` listener was attached after setting `src`).
   - `readFileInputElementAsString(removeExifFromImage: true)`: returns the file content (it returned the MIME type).
   - Image dialog rotate button: fixed `LateInitializationError` (it matched the close button as the image).
