@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   web_utils: ^1.1.0
-  js_interop_utils: ^1.1.0
+  js_interop_utils: ^1.1.1
   async_extension: ^1.2.22
   intl: ^0.20.3
   swiss_knife: ^3.3.14

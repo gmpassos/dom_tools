@@ -63,14 +63,15 @@
   - `TrackElementResize` (fallback without `ResizeObserver`): listens to the `resize` event (it listened to
     `onresize`, which never fires).
 
-- Now based on `web_utils` 1.1.0 and `js_interop_utils` 1.1.0, which bring:
+- Now based on `web_utils` 1.1.0 and `js_interop_utils` 1.1.1, which bring:
   - Typed lists `.toJS` (e.g. `Uint8ClampedList`) producing JS typed arrays for code importing `dom_tools`
     (they produced plain JS `Array`s).
   - `isA`-based `asJSAny`/`asJSObject`.
+  - `toListNum`/`toListOfInt` no longer cap whole numbers beyond `±(2^53 - 1)` (a `js_interop_utils` 1.1.0 bug).
 
 - Dependencies:
   - web_utils: ^1.1.0
-  - js_interop_utils: ^1.1.0
+  - js_interop_utils: ^1.1.1
   - test: ^1.32.0
   - dependency_validator: ^5.1.0
 
