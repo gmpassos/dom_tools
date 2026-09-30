@@ -60,7 +60,6 @@ jobs:
           directory: ./coverage/
           flags: unittests
           env_vars: OS,DART
-          # Set to `true` once the `CODECOV_TOKEN` repository secret is configured.
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           verbose: true
 
