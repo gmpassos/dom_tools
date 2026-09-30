@@ -9,8 +9,10 @@ import 'dom_tools_base.dart';
 import 'dom_tools_paint.dart';
 
 /// Reads selected file of [input] as [Uint8List].
-Future<Uint8List?> readFileInputElementAsArrayBuffer(HTMLInputElement? input,
-    [bool removeExifFromImage = false]) async {
+Future<Uint8List?> readFileInputElementAsArrayBuffer(
+  HTMLInputElement? input, [
+  bool removeExifFromImage = false,
+]) async {
   if (input == null) return null;
 
   final files = input.files;
@@ -32,8 +34,10 @@ Future<Uint8List?> readFileInputElementAsArrayBuffer(HTMLInputElement? input,
 }
 
 /// Reads selected file of [input] as [String].
-Future<String?> readFileInputElementAsString(HTMLInputElement? input,
-    [bool removeExifFromImage = false]) async {
+Future<String?> readFileInputElementAsString(
+  HTMLInputElement? input, [
+  bool removeExifFromImage = false,
+]) async {
   if (input == null) return null;
 
   final files = input.files;
@@ -55,8 +59,10 @@ Future<String?> readFileInputElementAsString(HTMLInputElement? input,
 }
 
 /// Reads selected file of [input] as Base64.
-Future<String?> readFileInputElementAsBase64(HTMLInputElement? input,
-    [bool removeExifFromImage = false]) async {
+Future<String?> readFileInputElementAsBase64(
+  HTMLInputElement? input, [
+  bool removeExifFromImage = false,
+]) async {
   if (input == null) return null;
 
   final files = input.files;
@@ -78,8 +84,10 @@ Future<String?> readFileInputElementAsBase64(HTMLInputElement? input,
 }
 
 /// Reads selected file of [input] as DATA URL Base64.
-Future<String?> readFileInputElementAsDataURLBase64(HTMLInputElement? input,
-    [bool removeExifFromImage = false]) async {
+Future<String?> readFileInputElementAsDataURLBase64(
+  HTMLInputElement? input, [
+  bool removeExifFromImage = false,
+]) async {
   if (input == null) return null;
 
   final files = input.files;
@@ -98,8 +106,10 @@ Future<String?> readFileInputElementAsDataURLBase64(HTMLInputElement? input,
 }
 
 /// Reads selected file of [input] and return a [Blob] URL.
-Future<String?> readFileInputElementAsBlobUrl(HTMLInputElement? input,
-    [bool removeExifFromImage = false]) async {
+Future<String?> readFileInputElementAsBlobUrl(
+  HTMLInputElement? input, [
+  bool removeExifFromImage = false,
+]) async {
   if (input == null) return null;
 
   final files = input.files;
@@ -118,7 +128,9 @@ Future<String?> readFileInputElementAsBlobUrl(HTMLInputElement? input,
     var dataUrlBase64 = DataURLBase64.parse(data);
     if (dataUrlBase64 != null) {
       data = createBlobURL(
-          dataUrlBase64.payloadArrayBuffer, dataUrlBase64.mimeTypeAsString);
+        dataUrlBase64.payloadArrayBuffer,
+        dataUrlBase64.mimeTypeAsString,
+      );
     }
   }
 
@@ -211,8 +223,10 @@ Future<String?> readFileDataAsBlobURL(File file, [String accept = '']) async {
 }
 
 /// Reads [file] as DATA URL Base64 [String].
-Future<String?> readFileDataAsDataURLBase64(File file,
-    [String accept = '']) async {
+Future<String?> readFileDataAsDataURLBase64(
+  File file, [
+  String accept = '',
+]) async {
   var base64 = await readFileDataAsBase64(file);
   if (base64 == null) return null;
   var mediaType = getFileMimeType(file, accept);
@@ -271,10 +285,7 @@ String toDataURLBase64(String? mediaType, String base64) {
 }
 
 String createBlobURL(Uint8List data, String mimeType) {
-  var blob = Blob(
-    [data.toJS].toJS,
-    BlobPropertyBag(type: mimeType),
-  );
+  var blob = Blob([data.toJS].toJS, BlobPropertyBag(type: mimeType));
 
   var blobUrl = URL.createObjectURL(blob);
   return blobUrl;

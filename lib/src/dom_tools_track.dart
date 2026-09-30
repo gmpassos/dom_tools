@@ -20,11 +20,12 @@ class _ElementTrack<T> {
   T? _lastCheckValue;
 
   _ElementTrack(
-      this._trackElementValue,
-      this._element,
-      this._elementValueGetter,
-      this._periodicTracking,
-      this._onTrackValueEvent);
+    this._trackElementValue,
+    this._element,
+    this._elementValueGetter,
+    this._periodicTracking,
+    this._onTrackValueEvent,
+  );
 
   T? _initialize() {
     _lastCheckValue = _elementValueGetter(_element);
@@ -80,9 +81,12 @@ class TrackElementValue {
   /// [elementValueGetter] The value getter.
   /// [onTrackValueEvent] Callback to call when value changes.
   /// [periodicTracking] If [true] this tracking will continue after first event.
-  T? track<T>(Element? element, ElementValueGetter<T>? elementValueGetter,
-      OnElementTrackValueEvent<T>? onTrackValueEvent,
-      {bool periodicTracking = false}) {
+  T? track<T>(
+    Element? element,
+    ElementValueGetter<T>? elementValueGetter,
+    OnElementTrackValueEvent<T>? onTrackValueEvent, {
+    bool periodicTracking = false,
+  }) {
     if (element == null ||
         elementValueGetter == null ||
         onTrackValueEvent == null) {
@@ -92,7 +96,12 @@ class TrackElementValue {
     if (_elements.containsKey(element)) return null;
 
     var elementTrack = _ElementTrack(
-        this, element, elementValueGetter, periodicTracking, onTrackValueEvent);
+      this,
+      element,
+      elementValueGetter,
+      periodicTracking,
+      onTrackValueEvent,
+    );
     _elements[element] = elementTrack;
 
     var initialValue = elementTrack._initialize();
@@ -188,27 +197,32 @@ class TrackElementInViewport {
   /// [onEnterViewport] Callback to call when element shows up in viewport.
   /// [onLeaveViewport] Callback to call when element leaves viewport.
   /// [periodicTracking] If [true] this tracking will continue after first event.
-  bool track(Element element,
-      {OnElementEvent? onEnterViewport,
-      OnElementEvent? onLeaveViewport,
-      bool periodicTracking = false}) {
+  bool track(
+    Element element, {
+    OnElementEvent? onEnterViewport,
+    OnElementEvent? onLeaveViewport,
+    bool periodicTracking = false,
+  }) {
     if ((onEnterViewport == null && onLeaveViewport == null)) {
       return false;
     }
 
-    var initValue = _trackElementValue
-        .track<bool>(element, (elem) => isInViewport(elem), (elem, show) {
-      if (show!) {
-        _trackElementValue.setProperty(element, 'viewport', true);
-        if (onEnterViewport != null) onEnterViewport(element);
-        return periodicTracking || onLeaveViewport != null;
-      } else {
-        var alreadyViewed =
-            _trackElementValue.getProperty(element, 'viewport') ?? false;
-        if (onLeaveViewport != null) onLeaveViewport(element);
-        return !(alreadyViewed as bool) || periodicTracking;
-      }
-    });
+    var initValue = _trackElementValue.track<bool>(
+      element,
+      (elem) => isInViewport(elem),
+      (elem, show) {
+        if (show!) {
+          _trackElementValue.setProperty(element, 'viewport', true);
+          if (onEnterViewport != null) onEnterViewport(element);
+          return periodicTracking || onLeaveViewport != null;
+        } else {
+          var alreadyViewed =
+              _trackElementValue.getProperty(element, 'viewport') ?? false;
+          if (onLeaveViewport != null) onLeaveViewport(element);
+          return !(alreadyViewed as bool) || periodicTracking;
+        }
+      },
+    );
 
     return initValue == true;
   }
@@ -228,10 +242,11 @@ class TrackElementResize {
       _trackElementValueInstance = TrackElementValue();
 
       window.addEventListener(
-          'onresize',
-          (Event e) {
-            _onResizeWindow();
-          }.toJS);
+        'onresize',
+        (Event e) {
+          _onResizeWindow();
+        }.toJS,
+      );
     }
 
     return _trackElementValueInstance;
@@ -247,10 +262,12 @@ class TrackElementResize {
     if (_resizeObserverInstance == null) {
       try {
         ResizeObserver? observer;
-        observer = ResizeObserver((JSArray? ar) {
-          var l = ar?.toList() ?? [];
-          _onResizeObserver(l, observer!);
-        }.toJS);
+        observer = ResizeObserver(
+          (JSArray? ar) {
+            var l = ar?.toList() ?? [];
+            _onResizeObserver(l, observer!);
+          }.toJS,
+        );
         _resizeObserverInstance = observer;
       } catch (e, s) {
         _resizeObserverInstanceError = true;
@@ -307,7 +324,10 @@ class TrackElementResize {
   final Map<Element, OnElementEvent> _resizeObserverListeners = {};
 
   void _trackResizeObserver(
-      ResizeObserver resizeObserver, Element element, OnElementEvent onResize) {
+    ResizeObserver resizeObserver,
+    Element element,
+    OnElementEvent onResize,
+  ) {
     _resizeObserverListeners[element] = onResize;
     resizeObserver.observe(element);
   }
@@ -353,15 +373,23 @@ class TrackElementResize {
     return targets;
   }
 
-  void _trackResizeFallbackByElementValue(TrackElementValue trackElementValue,
-      Element element, OnElementEvent onResize) {
-    trackElementValue.track<Object>(element, (e) {
-      var element = e.asHTMLElementChecked;
-      return (element?.offsetWidth, element?.offsetHeight);
-    }, (e, v) {
-      onResize(e);
-      return true;
-    }, periodicTracking: true);
+  void _trackResizeFallbackByElementValue(
+    TrackElementValue trackElementValue,
+    Element element,
+    OnElementEvent onResize,
+  ) {
+    trackElementValue.track<Object>(
+      element,
+      (e) {
+        var element = e.asHTMLElementChecked;
+        return (element?.offsetWidth, element?.offsetHeight);
+      },
+      (e, v) {
+        onResize(e);
+        return true;
+      },
+      periodicTracking: true,
+    );
   }
 
   void _onResizeWindow() {

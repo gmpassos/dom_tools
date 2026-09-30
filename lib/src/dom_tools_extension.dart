@@ -22,42 +22,58 @@ extension DomElementExtension on Element {
   /// Selects the [CheckboxInputElement] elements (`<input type="checkbox">`).
   List<HTMLInputElement> selectCheckboxInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='checkbox']", Web.HTMLInputElement);
+        "input[type='checkbox']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [RadioButtonInputElement] elements (`<input type="radio">`).
   List<HTMLInputElement> selectRadioButtonInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='radio']", Web.HTMLInputElement);
+        "input[type='radio']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [NumberInputElement] elements (`<input type="number">`).
   List<HTMLInputElement> selectNumberInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='number']", Web.HTMLInputElement);
+        "input[type='number']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [EmailInputElement] elements (`<input type="email">`).
   List<HTMLInputElement> selectEmailInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='email']", Web.HTMLInputElement);
+        "input[type='email']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [LocalDateTimeInputElement] elements (`<input type="datetime-local">`).
   List<HTMLInputElement> selectLocalDateTimeInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='datetime-local']", Web.HTMLInputElement);
+        "input[type='datetime-local']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [ButtonInputElement] elements (`<input type="button">`).
   List<HTMLInputElement> selectButtonInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='button']", Web.HTMLInputElement);
+        "input[type='button']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [FileUploadInputElement] elements (`<input type="file">`).
   List<HTMLInputElement> selectFileUploadInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='file']", Web.HTMLInputElement);
+        "input[type='file']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [PasswordInputElement] elements (`<input type="password">`).
   List<HTMLInputElement> selectPasswordInputElement() =>
       querySelectorAllTyped<HTMLInputElement>(
-          "input[type='password']", Web.HTMLInputElement);
+        "input[type='password']",
+        Web.HTMLInputElement,
+      );
 
   /// Selects the [SelectElement] elements.
   List<HTMLSelectElement> selectSelectElement() =>
@@ -66,7 +82,9 @@ extension DomElementExtension on Element {
   /// Selects the [TextAreaElement] elements.
   List<HTMLTextAreaElement> selectTextAreaElement() =>
       querySelectorAllTyped<HTMLTextAreaElement>(
-          'textarea', Web.HTMLTextAreaElement);
+        'textarea',
+        Web.HTMLTextAreaElement,
+      );
 
   /// Selects the [ButtonElement] elements.
   List<HTMLButtonElement> selectButtonElements() =>
@@ -95,7 +113,9 @@ extension DomElementExtension on Element {
   /// Selects the [TableCellElement] elements.
   List<HTMLTableCellElement> selectTableCellElement() =>
       querySelectorAllTyped<HTMLTableCellElement>(
-          'td', Web.HTMLTableCellElement);
+        'td',
+        Web.HTMLTableCellElement,
+      );
 
   bool get isDisplayNone => style?.display == 'none';
 

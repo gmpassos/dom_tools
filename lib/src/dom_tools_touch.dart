@@ -4,12 +4,7 @@ import 'package:swiss_knife/swiss_knife.dart';
 import 'package:web_utils/web_utils.dart';
 
 /// Status type of touch device detection.
-enum TouchDeviceDetection {
-  unknown,
-  none,
-  maybe,
-  detected,
-}
+enum TouchDeviceDetection { unknown, none, maybe, detected }
 
 TouchDeviceDetection? _detectTouchDevice;
 
@@ -27,12 +22,15 @@ TouchDeviceDetection? detectTouchDevice() {
       // At the 1st, it won't be null:
       assert(_detectTouchDeviceListen != null);
 
-      _detectTouchDeviceListen!
-          .add(document.body!.onTouchStart.listen(_onTouchEvent));
-      _detectTouchDeviceListen!
-          .add(document.body!.onTouchEnd.listen(_onTouchEvent));
-      _detectTouchDeviceListen!
-          .add(document.body!.onTouchMove.listen(_onTouchEvent));
+      _detectTouchDeviceListen!.add(
+        document.body!.onTouchStart.listen(_onTouchEvent),
+      );
+      _detectTouchDeviceListen!.add(
+        document.body!.onTouchEnd.listen(_onTouchEvent),
+      );
+      _detectTouchDeviceListen!.add(
+        document.body!.onTouchMove.listen(_onTouchEvent),
+      );
 
       _detectTouchDevice = TouchDeviceDetection.maybe;
     } catch (e) {

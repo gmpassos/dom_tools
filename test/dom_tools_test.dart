@@ -19,14 +19,16 @@ void main() {
       Touch? touch;
 
       try {
-        touch = Touch(TouchInit(
-          identifier: 123,
-          target: div,
-          screenX: 200,
-          screenY: 100,
-          clientX: 100,
-          clientY: 50,
-        ));
+        touch = Touch(
+          TouchInit(
+            identifier: 123,
+            target: div,
+            screenX: 200,
+            screenY: 100,
+            clientX: 100,
+            clientY: 50,
+          ),
+        );
       } catch (e) {
         print(e);
       }
@@ -37,14 +39,15 @@ void main() {
       }
 
       var touchEvent = TouchEvent(
-          'touchstart',
-          TouchEventInit(
-            touches: [touch].toJS,
-            ctrlKey: false,
-            shiftKey: true,
-            altKey: false,
-            metaKey: false,
-          ));
+        'touchstart',
+        TouchEventInit(
+          touches: [touch].toJS,
+          ctrlKey: false,
+          shiftKey: true,
+          altKey: false,
+          metaKey: false,
+        ),
+      );
 
       var mouseEvent = touchEventToMouseEvent(touchEvent)!;
       expect(mouseEvent, isNotNull);
@@ -106,7 +109,8 @@ void main() {
 
     test('extensions', () {
       var div = HTMLDivElement()
-        ..innerHTML = '''
+        ..innerHTML =
+            '''
       
         <a id="lnk1" href="link1.html">link 1</a>
         <a id="lnk2" href="link2.html#h2" class="hash hash2">link 2</a>
@@ -121,51 +125,61 @@ void main() {
         <img id="img1" src='foo.png'>
         
       '''
-            .toJS;
+                .toJS;
 
       var innerElements = _elementsToTag(div.children.toList());
 
       expect(
-          innerElements,
-          equals([
-            '<a id=lnk1 href=link1.html>',
-            '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
-            '<a id=lnk3 href=link3.html#h3 class=hash>',
-            '<input id=chk1 type=checkbox value=a checked>',
-            '<input id=chk2 type=checkbox value=b class=chkb>',
-            '<input id=rad1 type=radio value=c checked>',
-            '<input id=rad2 type=radio value=d>',
-            '<img id=img1 src=foo.png>',
-          ]));
+        innerElements,
+        equals([
+          '<a id=lnk1 href=link1.html>',
+          '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
+          '<a id=lnk3 href=link3.html#h3 class=hash>',
+          '<input id=chk1 type=checkbox value=a checked>',
+          '<input id=chk2 type=checkbox value=b class=chkb>',
+          '<input id=rad1 type=radio value=c checked>',
+          '<input id=rad2 type=radio value=d>',
+          '<img id=img1 src=foo.png>',
+        ]),
+      );
 
       {
         expect(
-            _elementsToTag(div.children.toIterable().withClass('hash')),
-            equals([
-              '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
-              '<a id=lnk3 href=link3.html#h3 class=hash>',
-            ]));
-
-        expect(_elementsToTag(div.children.toIterable().withClass('hash2')),
-            equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']));
-
-        expect(_elementsToTag(div.children.toIterable().withClass('chkb')),
-            equals(['<input id=chk2 type=checkbox value=b class=chkb>']));
+          _elementsToTag(div.children.toIterable().withClass('hash')),
+          equals([
+            '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
+            '<a id=lnk3 href=link3.html#h3 class=hash>',
+          ]),
+        );
 
         expect(
-            _elementsToTag(
-                div.children.toIterable().withClasses(['hash', 'hash2'])),
-            equals([
-              '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
-            ]));
+          _elementsToTag(div.children.toIterable().withClass('hash2')),
+          equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']),
+        );
+
+        expect(
+          _elementsToTag(div.children.toIterable().withClass('chkb')),
+          equals(['<input id=chk2 type=checkbox value=b class=chkb>']),
+        );
+
+        expect(
+          _elementsToTag(
+            div.children.toIterable().withClasses(['hash', 'hash2']),
+          ),
+          equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']),
+        );
       }
 
       {
-        expect(_elementsToTag(div.children.toIterable().withID('lnk2')),
-            equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']));
+        expect(
+          _elementsToTag(div.children.toIterable().withID('lnk2')),
+          equals(['<a id=lnk2 href=link2.html#h2 class=hash+hash2>']),
+        );
 
-        expect(_elementsToTag(div.children.toIterable().withID('img1')),
-            equals(['<img id=img1 src=foo.png>']));
+        expect(
+          _elementsToTag(div.children.toIterable().withID('img1')),
+          equals(['<img id=img1 src=foo.png>']),
+        );
       }
 
       {
@@ -176,17 +190,20 @@ void main() {
         expect(sel.length, equals(3));
 
         expect(
-            _elementsToTag(sel),
-            equals([
-              '<a id=lnk1 href=link1.html>',
-              '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
-              '<a id=lnk3 href=link3.html#h3 class=hash>'
-            ]));
+          _elementsToTag(sel),
+          equals([
+            '<a id=lnk1 href=link1.html>',
+            '<a id=lnk2 href=link2.html#h2 class=hash+hash2>',
+            '<a id=lnk3 href=link3.html#h3 class=hash>',
+          ]),
+        );
 
         var selLinks = div.selectAnchorLinks();
 
-        expect(selLinks.map((e) => e.split('/').last),
-            equals(['link1.html', 'link2.html#h2', 'link3.html#h3']));
+        expect(
+          selLinks.map((e) => e.split('/').last),
+          equals(['link1.html', 'link2.html#h2', 'link3.html#h3']),
+        );
 
         var selLinksTargets = div.selectAnchorLinksTargets();
 
@@ -201,11 +218,12 @@ void main() {
         expect(sel.length, equals(2));
 
         expect(
-            _elementsToTag(sel),
-            equals([
-              '<input id=chk1 type=checkbox value=a checked>',
-              '<input id=chk2 type=checkbox value=b class=chkb>'
-            ]));
+          _elementsToTag(sel),
+          equals([
+            '<input id=chk1 type=checkbox value=a checked>',
+            '<input id=chk2 type=checkbox value=b class=chkb>',
+          ]),
+        );
 
         expect(sel[0].id, equals('chk1'));
         expect(sel[0].value, equals('a'));
@@ -224,11 +242,12 @@ void main() {
         expect(sel.length, equals(2));
 
         expect(
-            _elementsToTag(sel),
-            equals([
-              '<input id=rad1 type=radio value=c checked>',
-              '<input id=rad2 type=radio value=d>'
-            ]));
+          _elementsToTag(sel),
+          equals([
+            '<input id=rad1 type=radio value=c checked>',
+            '<input id=rad2 type=radio value=d>',
+          ]),
+        );
 
         expect(sel[0].id, equals('rad1'));
         expect(sel[0].value, equals('c'));
@@ -261,19 +280,24 @@ void main() {
       var m2 = measureText(text, fontFamily: 'Arial', fontSize: 12)!;
 
       expect(m1.width > m2.width, isTrue);
-      expect(m1.height > m2.height, isTrue,
-          reason: "m1.height: ${m1.height} ; m2.height: ${m2.height}");
+      expect(
+        m1.height > m2.height,
+        isTrue,
+        reason: "m1.height: ${m1.height} ; m2.height: ${m2.height}",
+      );
     });
   });
 }
 
 List<String> _elementsToTag(Iterable<Element> children) {
   return children
-      .map((e) =>
-          '<${e.tagName.toLowerCase()} ${e.attributes.toIterable().map((e) {
-            var key = e.name;
-            var value = e.value.replaceAll(' ', '+');
-            return value.isNotEmpty ? '$key=$value' : key;
-          }).join(' ')}>')
+      .map(
+        (e) =>
+            '<${e.tagName.toLowerCase()} ${e.attributes.toIterable().map((e) {
+              var key = e.name;
+              var value = e.value.replaceAll(' ', '+');
+              return value.isNotEmpty ? '$key=$value' : key;
+            }).join(' ')}>',
+      )
       .toList();
 }

@@ -7,16 +7,22 @@ import 'package:web_utils/web_utils.dart';
 /// [text] The text to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-HTMLDivElement? showDialogText(String? text,
-    {double? transparency, String? padding}) {
+HTMLDivElement? showDialogText(
+  String? text, {
+  double? transparency,
+  String? padding,
+}) {
   if (text == null || text.isEmpty) return null;
 
   var element = HTMLSpanElement();
 
   element.text = text;
 
-  return showDialogElement(element,
-      transparency: transparency, padding: padding);
+  return showDialogElement(
+    element,
+    transparency: transparency,
+    padding: padding,
+  );
 }
 
 /// Shows a [html] dialog.
@@ -24,20 +30,25 @@ HTMLDivElement? showDialogText(String? text,
 /// [html] The HTML to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-HTMLDivElement? showDialogHTML(String? html,
-    {double? transparency,
-    String? padding,
-    @Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator,
-    bool unsafe = false}) {
+HTMLDivElement? showDialogHTML(
+  String? html, {
+  double? transparency,
+  String? padding,
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+  bool unsafe = false,
+}) {
   if (html == null || html.isEmpty) return null;
 
   var element = HTMLSpanElement();
 
   setElementInnerHTML(element, html, unsafe: unsafe);
 
-  return showDialogElement(element,
-      transparency: transparency, padding: padding);
+  return showDialogElement(
+    element,
+    transparency: transparency,
+    padding: padding,
+  );
 }
 
 /// Shows an image ([src]) dialog.
@@ -58,8 +69,11 @@ void showDialogImage(String src) {
 /// [content] The element to show.
 /// [transparency] The transparency of the dialog as double.
 /// [padding] The padding of the dialog.
-HTMLDivElement showDialogElement(HTMLElement content,
-    {double? transparency, String? padding}) {
+HTMLDivElement showDialogElement(
+  HTMLElement content, {
+  double? transparency,
+  String? padding,
+}) {
   if (transparency == null || transparency <= 0) transparency = 0.90;
 
   padding ??= '2vh 0 0 0';
@@ -163,12 +177,18 @@ HTMLDivElement showDialogElement(HTMLElement content,
 
       if (img.isA<HTMLCanvasElement>()) {
         var canvas = img as HTMLCanvasElement;
-        canvasRotated =
-            rotateCanvasImageSource(img, canvas.width, canvas.height);
+        canvasRotated = rotateCanvasImageSource(
+          img,
+          canvas.width,
+          canvas.height,
+        );
       } else if (img.isA<HTMLImageElement>()) {
         var img2 = img as HTMLImageElement;
         canvasRotated = rotateCanvasImageSource(
-            img2, img2.naturalWidth, img2.naturalHeight);
+          img2,
+          img2.naturalWidth,
+          img2.naturalHeight,
+        );
       }
 
       var imgRotated = canvasToImageElement(canvasRotated);
