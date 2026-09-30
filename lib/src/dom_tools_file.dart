@@ -49,7 +49,7 @@ Future<String?> readFileInputElementAsString(
   if (removeExifFromImage) {
     var dataURL = await removeExifFromImageFile(file);
     if (dataURL != null) {
-      data = DataURLBase64.parseMimeTypeAsString(dataURL);
+      data = DataURLBase64.parsePayloadAsString(dataURL);
     }
   }
 
@@ -147,11 +147,13 @@ Future<String?> removeExifFromImageFile(File file) async {
     var fileURL = await readFileDataAsBlobURL(file);
 
     if (fileURL != null) {
-      var img = HTMLImageElement()..src = fileURL;
+      // Listen before setting `src`: the `load` event could fire before a
+      // later listener is attached, hanging forever.
+      var img = HTMLImageElement();
+      var loaded = elementOnLoad(img);
+      img.src = fileURL;
 
-      await _yeld();
-
-      await elementOnLoad(img);
+      await loaded;
 
       await _yeld();
 

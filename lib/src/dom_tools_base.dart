@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:js_interop_unsafe';
 import 'dart:math';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -259,10 +260,14 @@ int? getElementHeight(HTMLElement element, [int? def]) {
 /// Returns a [Future<bool>] for when [img] loads.
 Future<bool> elementOnLoad(HTMLImageElement img) {
   var completer = Completer<bool>();
-  img.onLoad.listen(
-    (e) => completer.complete(true),
-    onError: (e) => completer.complete(false),
-  );
+
+  void complete(bool loaded) {
+    if (!completer.isCompleted) completer.complete(loaded);
+  }
+
+  img.onLoad.listen((e) => complete(true), onError: (e) => complete(false));
+  // A failed load fires an `error` event (not an error in `onLoad`):
+  img.onError.listen((e) => complete(false));
   return completer.future;
 }
 
@@ -342,7 +347,7 @@ String? getElementTagName(Node node) {
 }
 
 final RegExp _regexpDependentTag = RegExp(
-  r'^\s*<(tbody|thread|tfoot|tr|td|th)\W',
+  r'^\s*<(tbody|thead|tfoot|tr|td|th)\W',
   multiLine: false,
 );
 
@@ -484,14 +489,13 @@ String? htmlToText(
 Pair<num> getElementDocumentPosition(HTMLElement element) {
   var obj = getVisibleNode(element);
 
-  num top = obj!.offsetTop;
-  num left = obj.offsetLeft;
+  num top = 0;
+  num left = 0;
 
-  if (obj.offsetParent != null) {
-    do {
-      top += obj!.offsetTop;
-      left += obj.offsetLeft;
-    } while ((obj = obj.offsetParent?.asHTMLElementChecked) != null);
+  while (obj != null) {
+    top += obj.offsetTop;
+    left += obj.offsetLeft;
+    obj = obj.offsetParent?.asHTMLElementChecked;
   }
 
   return Pair<num>(left, top);
@@ -523,7 +527,10 @@ bool _resettingViewportScale = false;
 void _resetZoomImpl(int retry) {
   if (_resettingZoom || _resettingViewportScale) {
     if (retry < 100) {
-      Future.delayed(Duration(milliseconds: 10), () => _resetZoomImpl(retry++));
+      Future.delayed(
+        Duration(milliseconds: 10),
+        () => _resetZoomImpl(retry + 1),
+      );
     }
     return;
   }
@@ -580,8 +587,8 @@ bool setMetaViewportScale({String? minimumScale, String? maximumScale}) {
 
   var changed = false;
 
-  if (maximumScale != null) {
-    minimumScale = minimumScale!.trim();
+  if (minimumScale != null) {
+    minimumScale = minimumScale.trim();
     if (minimumScale.isEmpty || minimumScale == '*') {
       minimumScale = defaultScale;
     }
@@ -708,12 +715,12 @@ String _toHTMLAny(HTMLElement e) {
     var val = e.getAttribute(attr);
     if (val != null) {
       if (val.contains("'")) {
-        html += ' attr="$val"';
+        html += ' $attr="$val"';
       } else {
-        html += " attr='$val'";
+        html += " $attr='$val'";
       }
     } else {
-      html += ' attr';
+      html += ' $attr';
     }
   }
 
@@ -780,13 +787,16 @@ bool isOrientationInPortraitMode() {
 
 /// Returns [true] if device orientation is in Landscape mode.
 bool isOrientationInLandscapeMode() {
-  var orientation = window.orientation;
+  // `window.orientation` is only defined in mobile browsers (reading it as an
+  // `int` throws when it's `undefined`):
+  var orientation = window.getProperty<JSAny?>('orientation'.toJS);
 
-  if (orientation == 90 || orientation == -90) {
-    return true;
-  } else {
-    return false;
+  if (orientation.isA<JSNumber>()) {
+    var angle = (orientation as JSNumber).toDartDouble;
+    return angle == 90 || angle == -90;
   }
+
+  return window.screen.orientation.type.startsWith('landscape');
 }
 
 /// Attaches [listener] to `orientationchange` event.
@@ -1067,8 +1077,6 @@ void setDivCentered(
   var subDivs = div.querySelectorAll(':scope > div').whereHTMLElement();
 
   for (var subDiv in subDivs) {
-    print(subDiv.outerHTML);
-
     subDiv.classList.removeAll(_divCenteredBootstrapConflictingClasses);
     subDiv.style.display = 'table-cell';
 
@@ -1155,14 +1163,13 @@ Future<bool> prefetchHref(
 
   var completer = Completer<bool>();
 
-  script.onLoad.listen(
-    (e) {
-      completer.complete(true);
-    },
-    onError: (e) {
-      completer.complete(false);
-    },
-  );
+  void complete(bool loaded) {
+    if (!completer.isCompleted) completer.complete(loaded);
+  }
+
+  script.onLoad.listen((e) => complete(true), onError: (e) => complete(false));
+  // A failed load fires an `error` event (not an error in `onLoad`):
+  script.onError.listen((e) => complete(false));
 
   if (insertIndex != null) {
     insertIndex = Math.min(insertIndex, head!.children.length);
@@ -1187,7 +1194,7 @@ bool replaceElement(Node n1, Node n2) {
   if (parent != null) {
     var idx = parent.childNodes.indexOf(n1);
     if (idx >= 0) {
-      parent.insertBefore(n1, n2);
+      parent.insertBefore(n2, n1);
       parent.removeChild(n1);
       return true;
     }

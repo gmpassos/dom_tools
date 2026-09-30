@@ -106,11 +106,21 @@ class Color {
     colorStr = colorStr.trim();
 
     if (RegExp(r'\d+\s*,\s*\d+\s*,\s*\d+').hasMatch(colorStr)) {
-      var parts = colorStr.split(RegExp(r'\D+'));
-      var r = int.parse(parts[0]);
-      var g = int.parse(parts[1]);
-      var b = int.parse(parts[2]);
-      return Color.fromARGB(0, r, g, b);
+      // `r, g, b` with an optional alpha (a `0..1` ratio or `0..255`),
+      // with or without a `rgb(...)`/`rgba(...)` wrapper:
+      var nums = RegExp(r'\d+(?:\.\d+)?|\.\d+')
+          .allMatches(colorStr)
+          .map((m) => double.parse(m[0]!))
+          .toList();
+      var r = nums[0].round();
+      var g = nums[1].round();
+      var b = nums[2].round();
+      var a = 255;
+      if (nums.length > 3) {
+        var alpha = nums[3];
+        a = (alpha <= 1 ? alpha * 255 : alpha).round().clamp(0, 255);
+      }
+      return Color.fromARGB(a, r, g, b);
     } else if (colorStr.startsWith('#')) {
       return Color.fromHex(colorStr);
     } else {
@@ -719,10 +729,10 @@ HTMLCanvasElement? cropImageByRectangle(
   if (crop == null) return null;
   return cropImage(
     image,
-    crop.left as int,
-    crop.top as int,
-    crop.width as int,
-    crop.height as int,
+    crop.left.toInt(),
+    crop.top.toInt(),
+    crop.width.toInt(),
+    crop.height.toInt(),
   );
 }
 
@@ -1326,7 +1336,9 @@ class CanvasImageViewer {
           parseNum(e[3])!,
         );
       } else if (e is String) {
-        var ns = parseNumsFromInlineList(e)!;
+        // Not `parseNumsFromInlineList`: it throws a `TypeError` for any
+        // `String` (swiss_knife 3.3.14 casts `parseNum` to `num Function(String)`).
+        var ns = parseNumsFromList([e]);
         return Rectangle<num>(
           parseNum(ns[0])!,
           parseNum(ns[1])!,

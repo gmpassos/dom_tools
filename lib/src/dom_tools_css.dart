@@ -110,14 +110,14 @@ Future<bool> addCssSource(String cssSource, {int? insertIndex}) async {
 
   var completer = Completer<bool>();
 
-  script.onLoad.listen(
-    (e) {
-      completer.complete(true);
-    },
-    onError: (e) {
-      completer.complete(false);
-    },
-  );
+  script.onLoad.listen((e) {
+    if (!completer.isCompleted) completer.complete(true);
+  });
+
+  // A failed load fires an `error` event (not an error on `onLoad`):
+  script.onError.listen((e) {
+    if (!completer.isCompleted) completer.complete(false);
+  });
 
   if (insertIndex != null) {
     insertIndex = Math.min(insertIndex, head!.children.length);
@@ -166,10 +166,14 @@ CSSStyleDeclaration getComputedStyle({
   parent!.appendChild(element);
 
   var computedStyle = window.getComputedStyle(element);
-  var cssText = computedStyle.cssText;
 
+  // Copy property by property: a computed style's `cssText` is empty in
+  // Chromium (and Firefox).
   var computedStyle2 = newCSSStyleDeclaration();
-  computedStyle2.cssText = cssText;
+  for (var i = 0; i < computedStyle.length; ++i) {
+    var name = computedStyle.item(i);
+    computedStyle2.setProperty(name, computedStyle.getPropertyValue(name));
+  }
 
   element.remove();
 
@@ -205,7 +209,8 @@ class StyleColor {
     } else if (colorRGBa != null) {
       return colorRGBa!.startsWith('rgba(') ? colorRGBa! : 'rgba($colorRGBa)';
     } else {
-      return '#${color!.toRadixString(16).substring(2)}';
+      // `color` is `0xAARRGGBB`: pad before dropping the alpha digits.
+      return '#${color!.toRadixString(16).padLeft(8, '0').substring(2)}';
     }
   }
 }
@@ -270,6 +275,8 @@ Map<String, Map<dynamic, bool>> _loadedThemesByPrefix = {};
 /// [cssClassPrefix] Prefix for each class in [css] Map.
 /// [css] Map of CSS classes.
 void loadCSS(String cssClassPrefix, Map<String, CSSValueBase>? css) {
+  if (css == null) return;
+
   var loadedThemes = _loadedThemesByPrefix[cssClassPrefix];
 
   if (loadedThemes == null) {
@@ -292,7 +299,7 @@ void loadCSS(String cssClassPrefix, Map<String, CSSValueBase>? css) {
 
   var sheet = styleElement.sheet;
 
-  for (var key in css!.keys) {
+  for (var key in css.keys) {
     var val = css[key]!;
     var rule = '.$cssClassPrefix$key { ${val.cssValue()} }\n';
     sheet!.insertRule(rule, 0);
@@ -726,7 +733,7 @@ bool addElementsClasses(Iterable<Element> elements, Iterable<String> classes) {
   if (isEmptyObject(classes)) return false;
 
   var initialClasses = Set<String>.from(
-    classes.where((c) => isNotEmptyString(c)),
+    classes.where((c) => isNotEmptyString(c, trim: true)),
   );
   if (initialClasses.isEmpty) return false;
 
@@ -777,7 +784,7 @@ String? setElementScrollColors(
   var regExpNonWord = RegExp(r'\W+');
 
   var buttonColorID = scrollButtonColor.replaceAll(regExpNonWord, '_');
-  var bgColorID = scrollButtonColor.replaceAll(regExpNonWord, '_');
+  var bgColorID = scrollBgColor.replaceAll(regExpNonWord, '_');
 
   var scrollColorClassID =
       '__scroll_color__${scrollWidth}__${buttonColorID}__$bgColorID';
@@ -954,6 +961,12 @@ List<CSSRule> getElementAllCssRule(Element element) {
   return rules;
 }
 
+/// The [CSSStyleRule]s of [rules]. Not `whereType<CSSStyleRule>()`: JS interop
+/// types can't be checked with `is` (nested `@supports`/`@media` rules would
+/// pass).
+Iterable<CSSStyleRule> _whereCSSStyleRule(CSSRuleList rules) =>
+    rules.toIterable().where((r) => r.isA<CSSStyleRule>()).cast<CSSStyleRule>();
+
 /// Transforms all [CssMediaRule] to [targetClass] rule applied for [viewportWidth] and [viewportHeight].
 List<String> getAllViewportMediaCssRuleAsClassRule(
   int viewportWidth,
@@ -965,8 +978,7 @@ List<String> getAllViewportMediaCssRuleAsClassRule(
   var rulesFixed = <String, List<String>>{};
 
   for (var mediaRule in rules) {
-    var cssRules = mediaRule.cssRules.toIterable();
-    for (var rule in cssRules.whereType<CSSStyleRule>()) {
+    for (var rule in _whereCSSStyleRule(mediaRule.cssRules)) {
       var block = rule.style.as<CSSStyleDeclaration>();
       if (block == null || block.isEmpty) continue;
 
@@ -1007,8 +1019,7 @@ List<String> getAllOutOfViewportMediaCssRuleAsClassRule(
   var rulesFixed = <String, List<String>>{};
 
   for (var mediaRule in rules) {
-    for (var rule
-        in mediaRule.cssRules.toIterable().whereType<CSSStyleRule>()) {
+    for (var rule in _whereCSSStyleRule(mediaRule.cssRules)) {
       var selectors = parseCssRuleSelectors(rule);
       var selectorsFixed = selectors.map((s) => '.$targetClass $s');
 

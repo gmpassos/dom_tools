@@ -65,6 +65,8 @@ void _onTouchEvent(TouchEvent event) {
 /// simplifying UI support for touch events and mouse events.
 MouseEvent? touchEventToMouseEvent(TouchEvent event) {
   var touches = event.touches;
+  // On `touchend` the lifted touch is only in `changedTouches`:
+  if (touches.isEmpty) touches = event.changedTouches;
   if (touches.isEmpty) return null;
 
   var first = touches.item(0)!;

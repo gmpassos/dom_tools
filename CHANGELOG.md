@@ -1,3 +1,81 @@
+## 3.1.0
+
+- sdk: ^3.13.0
+
+- `DataStorage`:
+  - Fix: `_getStorageValue` returned the storage read unawaited inside `try`, so asynchronous read errors escaped the
+    `catch` (not logged, not turned into `null`).
+
+- `CanvasImageViewer`:
+  - Constructor uses Dart 3.12 private named parameters (`this._clip`, `this._rectangles`, …); the named arguments
+    (`clip:`, `rectangles:`, …) are unchanged.
+
+- `isInDOM`: uses `Object?.isA<Node>()` (Dart 3.12).
+
+- Fixes in `dom_tools_base.dart`:
+  - `elementOnLoad` and `prefetchHref`: complete with `false` when loading fails (they never completed).
+  - `createHTML`/`createElement`: `<thead>` HTML creates a `thead` (the pattern said `thread`).
+  - `getElementDocumentPosition`: no longer adds the element's own offset twice when it has an `offsetParent`.
+  - `setMetaViewportScale`: `minimumScale` alone applies, and `maximumScale` alone no longer throws.
+  - `toHTML`: renders the real attribute names (it rendered a literal `attr`).
+  - `replaceElement`: fixed `NotFoundError` (swapped `insertBefore` arguments).
+  - `isOrientationInLandscapeMode`/`isOrientationInPortraitMode`: no longer throw where `window.orientation` is
+    undefined (desktop); fall back to `screen.orientation.type`.
+  - `resetZoom`: the retry counter now increments.
+  - `setDivCentered`: removed a leftover debug `print`.
+
+- Fixes in `dom_tools_js.dart`, `dom_tools_touch.dart`, `dom_tools_document.dart`:
+  - `addJavaScriptSource`: completes with `false` when the script fails to load (it never completed).
+  - `touchEventToMouseEvent`: `touchend` converts to `mouseup` (via `changedTouches`), so
+    `redirectOnTouchEndToMouseEvent` fires.
+  - `downloadBytes`: downloads the actual bytes (each byte was a stringified `Blob` part: `[65,66,67]` → `"656667"`).
+  - `markdownToDiv(normalize:)` is honored, and `{:target="_blank"}` link attributes are no longer HTML-escaped.
+  - `reloadAssets`: reloads the assets and completes with `true` (it removed its iframe on the first `load`, so it
+    returned `false` at the timeout, or never completed without one).
+
+- Fixes in `dom_tools_css.dart`:
+  - `getComputedStyle`: returns the computed properties (it returned an empty declaration in Chromium).
+  - `addCssSource`: completes with `false` when the stylesheet fails to load (it never completed).
+  - `setElementScrollColors`: the class id includes the background color (elements with different track colors
+    shared one class).
+  - `StyleColor(int).toString()`: keeps leading zero digits (`0x00112233` rendered `#2233`).
+  - `loadCSS(prefix, null)` (and `CSSThemeSet` without themes): no-op instead of throwing.
+  - `addElementsClasses`: ignores blank class names (they threw a `SyntaxError`).
+  - Viewport media rules to classes: nested rules (e.g. `@supports`) no longer leak into the output as invalid rules
+    (filter with `isA<CSSStyleRule>()` — `whereType` can't tell JS interop types apart).
+
+- Fixes in `dom_data_storage.dart`, `dom_tools_file.dart`, `dom_tools_dialog.dart`:
+  - `State.listenAll` listeners are called once per event (they were called an increasing number of times).
+  - `State.get<List<int>>()`/`<List<double>>()`/`<List<num>>()`: no longer throw a `TypeError`.
+  - `removeExifFromImageFile`: no longer hangs (the image `load` listener was attached after setting `src`).
+  - `readFileInputElementAsString(removeExifFromImage: true)`: returns the file content (it returned the MIME type).
+  - Image dialog rotate button: fixed `LateInitializationError` (it matched the close button as the image).
+
+- Fixes in `dom_tools_paint.dart`, `dom_tools_track.dart`:
+  - `Color.parse('r, g, b')` is opaque (it had alpha 0). Also accepts an alpha component (`r, g, b, a`, as a `0..1`
+    ratio or `0..255`) and a `rgb(...)`/`rgba(...)` wrapper.
+  - `cropImageByRectangle`: accepts `Rectangle<double>` (non-integral values are truncated).
+  - `CanvasImageViewer.rectanglesViewerElementFromNums`: fixed a `TypeError` for `String` entries.
+  - `TrackElementValue`: non-periodic tracking ends after the first change event (it ended after the first check).
+  - `TrackElementInViewport`: fixed `onEnterViewport`/`onLeaveViewport` never firing after the first check interval.
+  - `TrackElementResize` (fallback without `ResizeObserver`): listens to the `resize` event (it listened to
+    `onresize`, which never fires).
+
+- Now based on `web_utils` 1.1.0 and `js_interop_utils` 1.1.0, which bring:
+  - Typed lists `.toJS` (e.g. `Uint8ClampedList`) producing JS typed arrays for code importing `dom_tools`
+    (they produced plain JS `Array`s).
+  - `isA`-based `asJSAny`/`asJSObject`.
+
+- Dependencies:
+  - web_utils: ^1.1.0
+  - js_interop_utils: ^1.1.0
+  - test: ^1.32.0
+  - dependency_validator: ^5.1.0
+
+- Tests (browser integration tests, dart2js and dart2wasm):
+  - Added `test/dom_tools_base_document_js_test.dart`, `test/dom_tools_css_storage_file_test.dart` and
+    `test/dom_tools_paint_track_test.dart`.
+
 ## 3.0.1
 
 - `dom_tools_touch.dart`:

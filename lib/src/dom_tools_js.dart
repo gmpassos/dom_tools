@@ -85,14 +85,13 @@ Future<bool> addJavaScriptSource(
 
   var completer = Completer<bool>();
 
-  script.onLoad.listen(
-    (e) {
-      completer.complete(true);
-    },
-    onError: (e) {
-      completer.complete(false);
-    },
-  );
+  void complete(bool loaded) {
+    if (!completer.isCompleted) completer.complete(loaded);
+  }
+
+  script.onLoad.listen((e) => complete(true), onError: (e) => complete(false));
+  // A failed load fires an `error` event (not an error in `onLoad`):
+  script.onError.listen((e) => complete(false));
 
   parent.appendChild(script);
 

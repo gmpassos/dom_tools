@@ -35,14 +35,17 @@ class _ElementTrack<T> {
     return _lastCheckValue;
   }
 
-  void check() {
+  /// Returns `true` if the value changed (and was notified).
+  bool check() {
     var value = _elementValueGetter(_element);
 
-    if (!isEquals(value, _lastCheckValue)) {
+    var changed = !isEquals(value, _lastCheckValue);
+    if (changed) {
       _notifyValue(value);
     }
 
     _lastCheckValue = value;
+    return changed;
   }
 
   void _notifyValue(T? value) {
@@ -131,9 +134,11 @@ class TrackElementValue {
     var values = _elements.values.toList(growable: false);
 
     for (var e in values) {
-      e.check();
+      var changed = e.check();
 
-      if (!e._periodicTracking) {
+      // A non-periodic tracking ends after its first change event
+      // (not after the first check).
+      if (changed && !e._periodicTracking) {
         _elements.remove(e._element);
       }
     }
@@ -222,6 +227,8 @@ class TrackElementInViewport {
           return !(alreadyViewed as bool) || periodicTracking;
         }
       },
+      // The callback above decides when to stop tracking:
+      periodicTracking: true,
     );
 
     return initValue == true;
@@ -242,7 +249,7 @@ class TrackElementResize {
       _trackElementValueInstance = TrackElementValue();
 
       window.addEventListener(
-        'onresize',
+        'resize',
         (Event e) {
           _onResizeWindow();
         }.toJS,

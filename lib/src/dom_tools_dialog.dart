@@ -168,9 +168,12 @@ HTMLDivElement showDialogElement(
       ..style.cursor = 'pointer';
 
     rotate.onClick.listen((e) {
+      // Not `isA<CanvasImageSource>()`: it's a `JSObject` typedef, which
+      // matched the close button first.
       var img = dialog.children
-          .whereType<HTMLElement>()
-          .where((e) => e.isA<HTMLImageElement>() || e.isA<CanvasImageSource>())
+          .toIterable()
+          .where((e) => e.isA<HTMLImageElement>() || e.isA<HTMLCanvasElement>())
+          .cast<HTMLElement>()
           .first;
 
       late HTMLCanvasElement canvasRotated;

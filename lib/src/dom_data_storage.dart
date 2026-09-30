@@ -993,15 +993,15 @@ class State {
   }
 
   void _fireEvent(StateOperation op, State state, String key, dynamic value) {
-    var eventListeners = _eventListeners[op];
+    // A copy: don't add the `all` listeners into the registered `op` list.
+    var eventListeners = [...?_eventListeners[op]];
     var eventListenersAll = _eventListeners[StateOperation.all];
 
     if (eventListenersAll != null) {
-      eventListeners ??= [];
       eventListeners.addAll(eventListenersAll);
     }
 
-    if (eventListeners != null && eventListeners.isNotEmpty) {
+    if (eventListeners.isNotEmpty) {
       for (var listener in eventListeners) {
         try {
           listener(op, state, key, value);
@@ -1046,11 +1046,12 @@ V? _castTo<V>(Object? val) {
   } else if (V == bool) {
     return parseBool(val) as V?;
   } else if (V == List<int>) {
-    return parseListOf(val, parseInt) as V?;
+    // `parseListOf` returns a `List<int?>` (not a `List<int>`):
+    return parseListOf(val, parseInt)?.whereType<int>().toList() as V?;
   } else if (V == List<double>) {
-    return parseListOf(val, parseDouble) as V?;
+    return parseListOf(val, parseDouble)?.whereType<double>().toList() as V?;
   } else if (V == List<num>) {
-    return parseListOf(val, parseNum) as V?;
+    return parseListOf(val, parseNum)?.whereType<num>().toList() as V?;
   }
 
   try {

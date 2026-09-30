@@ -251,6 +251,7 @@ HTMLDivElement markdownToDiv(
   if (markdown.isEmpty) return createDivInline();
   var html = markdownToHtml(
     markdown,
+    normalize: normalize,
     blockSyntaxes: blockSyntaxes,
     inlineSyntaxes: inlineSyntaxes,
     extensionSet: extensionSet,
@@ -290,14 +291,17 @@ String markdownToHtml(
 
   // allow attributes for url. For example:
   // [GitHub](https://github.com/){:target="_blank"}
-  markdownHtml = regExpReplaceAll(
+  // (The attributes are HTML-escaped by the markdown parser: unescape quotes.)
+  markdownHtml = markdownHtml.replaceAllMapped(
     RegExp(
       r'(<a.*?)(>.*?</a>){:(.*?)}',
       multiLine: false,
       caseSensitive: false,
     ),
-    markdownHtml,
-    r'$1 $3$2',
+    (m) {
+      var attributes = m[3]!.replaceAll('&quot;', '"').replaceAll('&#39;', "'");
+      return '${m[1]} $attributes${m[2]}';
+    },
   );
 
   return markdownHtml;
@@ -338,8 +342,9 @@ void downloadContent(List<String> content, MimeType mimeType, String fileName) {
 
 /// Downloads [bytes] of type [mimeType], saving a file with [fileName].
 void downloadBytes(List<int> bytes, MimeType mimeType, String fileName) {
+  // A single typed array part (a part per byte would be stringified):
   var blob = Blob(
-    bytes.map((e) => e.toJS).toList().toJS,
+    [Uint8List.fromList(bytes).toJS].toJS,
     BlobPropertyBag(type: mimeType.toString()),
   );
   downloadBlob(blob, fileName);
@@ -619,7 +624,10 @@ Future<bool> reloadAssets(
   listen = iFrame.onLoad.listen((event) {
     if (reloadCounter == 0) {
       reloadCounter++;
-      Future.microtask(() => iFrame.remove());
+      // Reload the document, forcing the assets to be requested again; the
+      // 2nd `load` completes. (It used to remove the iframe here, so the 2nd
+      // `load` never happened.)
+      iFrame.contentWindow?.location.reload();
     } else if (reloadCounter == 1) {
       listen?.cancel();
       completer.complete(true);
