@@ -684,7 +684,8 @@ class DataStorage {
 
   FutureOr<StorageValue?> _getStorageValue(String fullKey) async {
     try {
-      var storageValue = _simpleStorage.getStorageValue(fullKey);
+      // Awaited, so asynchronous errors are caught below:
+      var storageValue = await _simpleStorage.getStorageValue(fullKey);
       return storageValue;
     } catch (e, s) {
       _consoleError('DataStorage[$id]> Error loading key: $fullKey >> $e');

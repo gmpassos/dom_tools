@@ -812,7 +812,7 @@ bool isNodeInDOM(Node node) {
 bool isInDOM(Object? element) {
   if (element == null) return false;
 
-  if (element.asJSAny.isA<Node>()) {
+  if (element.isA<Node>()) {
     return document.body!.contains(element as Node);
   } else if (element is List) {
     for (var elem in element) {
