@@ -2,6 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/dom_tools.svg?logo=dart&logoColor=00b9fc)](https://pub.dartlang.org/packages/dom_tools)
 [![Dart CI](https://github.com/gmpassos/dom_tools/actions/workflows/dart.yml/badge.svg?branch=master)](https://github.com/gmpassos/dom_tools/actions/workflows/dart.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/gmpassos/dom_tools)](https://app.codecov.io/gh/gmpassos/dom_tools)
 [![GitHub Tag](https://img.shields.io/github/v/tag/gmpassos/dom_tools?logo=git&logoColor=white)](https://github.com/gmpassos/dom_tools/releases)
 [![New Commits](https://img.shields.io/github/commits-since/gmpassos/dom_tools/latest?logo=git&logoColor=white)](https://github.com/gmpassos/dom_tools/network)
 [![Last Commits](https://img.shields.io/github/last-commit/gmpassos/dom_tools?logo=git&logoColor=white)](https://github.com/gmpassos/dom_tools/commits/master)
