@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:js_interop_unsafe';
 import 'dart:math';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -40,8 +41,12 @@ typedef ElementValueGetter<T> = T? Function(Element element);
 
 /// selects in DOM an [Element] with [tag] and one of [values] provided by [getter].
 Element? getElementByValues<V>(
-    String tag, ElementValueGetter getter, List<V> values,
-    [ElementValueGetter? getter2, List<V>? values2]) {
+  String tag,
+  ElementValueGetter getter,
+  List<V> values, [
+  ElementValueGetter? getter2,
+  List<V>? values2,
+]) {
   if (tag.isEmpty) return null;
   if (values.isEmpty) return null;
 
@@ -213,8 +218,13 @@ HTMLLinkElement? getLinkElementByHREF(String href, [String? rel]) {
 
   if (isNotEmptyString(rel)) {
     var resolvedURL = resolveUri(href).toString();
-    return getElementByValues('link', getElementHREF, [href, resolvedURL],
-        (e) => e.getAttribute('rel'), [rel]) as HTMLLinkElement?;
+    return getElementByValues(
+      'link',
+      getElementHREF,
+      [href, resolvedURL],
+      (e) => e.getAttribute('rel'),
+      [rel],
+    ) as HTMLLinkElement?;
   } else {
     return getElementByHREF('link', href) as HTMLLinkElement?;
   }
@@ -250,8 +260,14 @@ int? getElementHeight(HTMLElement element, [int? def]) {
 /// Returns a [Future<bool>] for when [img] loads.
 Future<bool> elementOnLoad(HTMLImageElement img) {
   var completer = Completer<bool>();
-  img.onLoad.listen((e) => completer.complete(true),
-      onError: (e) => completer.complete(false));
+
+  void complete(bool loaded) {
+    if (!completer.isCompleted) completer.complete(loaded);
+  }
+
+  img.onLoad.listen((e) => complete(true), onError: (e) => complete(false));
+  // A failed load fires an `error` event (not an error in `onLoad`):
+  img.onError.listen((e) => complete(false));
   return completer.future;
 }
 
@@ -262,12 +278,13 @@ HTMLDivElement createDivInlineBlock() =>
 /// Creates a `div`.
 /// [inline] If [true] sets `display: inline-block`.
 /// [html] The HTML to parse as content.
-HTMLDivElement createDiv(
-    {bool inline = false,
-    String? html,
-    @Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator,
-    bool unsafe = false}) {
+HTMLDivElement createDiv({
+  bool inline = false,
+  String? html,
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+  bool unsafe = false,
+}) {
   var div = HTMLDivElement();
 
   if (inline) div.style.display = 'inline-block';
@@ -289,11 +306,12 @@ HTMLDivElement createDivInline({String? html, bool unsafe = false}) {
 /// Creates a `span` element.
 ///
 /// [html] The HTML to parse as content.
-HTMLSpanElement createSpan(
-    {String? html,
-    @Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator,
-    bool unsafe = false}) {
+HTMLSpanElement createSpan({
+  String? html,
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+  bool unsafe = false,
+}) {
   var span = HTMLSpanElement();
 
   if (html != null) {
@@ -306,11 +324,12 @@ HTMLSpanElement createSpan(
 /// Creates a `label` element.
 ///
 /// [html] The HTML to parse as content.
-HTMLLabelElement createLabel(
-    {String? html,
-    @Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator,
-    bool unsafe = false}) {
+HTMLLabelElement createLabel({
+  String? html,
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+  bool unsafe = false,
+}) {
   var label = HTMLLabelElement();
 
   if (html != null) {
@@ -327,15 +346,18 @@ String? getElementTagName(Node node) {
   return element?.tagName.toLowerCase();
 }
 
-final RegExp _regexpDependentTag =
-    RegExp(r'^\s*<(tbody|thread|tfoot|tr|td|th)\W', multiLine: false);
+final RegExp _regexpDependentTag = RegExp(
+  r'^\s*<(tbody|thead|tfoot|tr|td|th)\W',
+  multiLine: false,
+);
 
 /// Creates a [HTMLElement]. Returns 1st node form parsed HTML.
-HTMLElement createHTML(
-    {String? html,
-    @Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator,
-    bool unsafe = false}) {
+HTMLElement createHTML({
+  String? html,
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+  bool unsafe = false,
+}) {
   if (html == null || html.isEmpty) return HTMLSpanElement();
 
   var dependentTagMatch = _regexpDependentTag.firstMatch(html);
@@ -389,25 +411,33 @@ Element createElement({String? html, bool unsafe = false}) {
 }
 
 HTMLElement _createDependentTagElement(
-    RegExpMatch dependentTagMatch, String html, bool unsafe) {
+  RegExpMatch dependentTagMatch,
+  String html,
+  bool unsafe,
+) {
   var dependentTagName = dependentTagMatch.group(1)!.toLowerCase();
 
   HTMLDivElement div;
   if (dependentTagName == 'td' || dependentTagName == 'th') {
     div = createDiv(
-        inline: true,
-        html: '<table><tbody><tr>\n$html\n</tr></tbody></table>',
-        unsafe: unsafe);
+      inline: true,
+      html: '<table><tbody><tr>\n$html\n</tr></tbody></table>',
+      unsafe: unsafe,
+    );
   } else if (dependentTagName == 'tr') {
     div = createDiv(
-        inline: true,
-        html: '<table><tbody>\n$html\n</tbody></table>',
-        unsafe: unsafe);
+      inline: true,
+      html: '<table><tbody>\n$html\n</tbody></table>',
+      unsafe: unsafe,
+    );
   } else if (dependentTagName == 'tbody' ||
       dependentTagName == 'thead' ||
       dependentTagName == 'tfoot') {
     div = createDiv(
-        inline: true, html: '<table>\n$html\n</table>', unsafe: unsafe);
+      inline: true,
+      html: '<table>\n$html\n</table>',
+      unsafe: unsafe,
+    );
   } else {
     throw StateError("Can't handle dependent tag: $dependentTagName");
   }
@@ -418,11 +448,15 @@ HTMLElement _createDependentTagElement(
 }
 
 /// Sets the inner HTML of [element] with parsed result of [html].
-void setElementInnerHTML(HTMLElement element, String html,
-    {@Deprecated(
-        "`NodeValidator` not implemented on package `web`. See parameter `unsafe`.")
-    Object? validator,
-    bool unsafe = false}) {
+void setElementInnerHTML(
+  HTMLElement element,
+  String html, {
+  @Deprecated(
+    "`NodeValidator` not implemented on package `web`. See parameter `unsafe`.",
+  )
+  Object? validator,
+  bool unsafe = false,
+}) {
   if (unsafe) {
     element.setHTMLUnsafe(html.toJS);
   } else {
@@ -431,17 +465,22 @@ void setElementInnerHTML(HTMLElement element, String html,
 }
 
 /// Appends to the inner HTML of [element] with parsed result of [html].
-void appendElementInnerHTML(HTMLElement element, String html,
-    {@Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator,
-    bool unsafe = false}) {
+void appendElementInnerHTML(
+  HTMLElement element,
+  String html, {
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+  bool unsafe = false,
+}) {
   element.insertAdjacentHTML("beforeend", html.toJS);
 }
 
 /// Transform [html] to plain text.
-String? htmlToText(String html,
-    [@Deprecated("`NodeValidator` not implemented on package `web`")
-    Object? validator]) {
+String? htmlToText(
+  String html, [
+  @Deprecated("`NodeValidator` not implemented on package `web`")
+  Object? validator,
+]) {
   var elem = createHTML(html: '<div>$html</div>');
   return elem.textContent;
 }
@@ -450,14 +489,13 @@ String? htmlToText(String html,
 Pair<num> getElementDocumentPosition(HTMLElement element) {
   var obj = getVisibleNode(element);
 
-  num top = obj!.offsetTop;
-  num left = obj.offsetLeft;
+  num top = 0;
+  num left = 0;
 
-  if (obj.offsetParent != null) {
-    do {
-      top += obj!.offsetTop;
-      left += obj.offsetLeft;
-    } while ((obj = obj.offsetParent?.asHTMLElementChecked) != null);
+  while (obj != null) {
+    top += obj.offsetTop;
+    left += obj.offsetLeft;
+    obj = obj.offsetParent?.asHTMLElementChecked;
   }
 
   return Pair<num>(left, top);
@@ -489,7 +527,10 @@ bool _resettingViewportScale = false;
 void _resetZoomImpl(int retry) {
   if (_resettingZoom || _resettingViewportScale) {
     if (retry < 100) {
-      Future.delayed(Duration(milliseconds: 10), () => _resetZoomImpl(retry++));
+      Future.delayed(
+        Duration(milliseconds: 10),
+        () => _resetZoomImpl(retry + 1),
+      );
     }
     return;
   }
@@ -546,8 +587,8 @@ bool setMetaViewportScale({String? minimumScale, String? maximumScale}) {
 
   var changed = false;
 
-  if (maximumScale != null) {
-    minimumScale = minimumScale!.trim();
+  if (minimumScale != null) {
+    minimumScale = minimumScale.trim();
     if (minimumScale.isEmpty || minimumScale == '*') {
       minimumScale = defaultScale;
     }
@@ -674,12 +715,12 @@ String _toHTMLAny(HTMLElement e) {
     var val = e.getAttribute(attr);
     if (val != null) {
       if (val.contains("'")) {
-        html += ' attr="$val"';
+        html += ' $attr="$val"';
       } else {
-        html += " attr='$val'";
+        html += " $attr='$val'";
       }
     } else {
-      html += ' attr';
+      html += ' $attr';
     }
   }
 
@@ -717,10 +758,14 @@ typedef FunctionTest = bool Function();
 bool isInViewport(Element element, {bool fully = false}) {
   var rect = element.getBoundingClientRect();
 
-  var windowWidth =
-      min(window.innerWidth, document.documentElement!.clientWidth);
-  var windowHeight =
-      min(window.innerHeight, document.documentElement!.clientHeight);
+  var windowWidth = min(
+    window.innerWidth,
+    document.documentElement!.clientWidth,
+  );
+  var windowHeight = min(
+    window.innerHeight,
+    document.documentElement!.clientHeight,
+  );
 
   if (fully) {
     return rect.left >= 0 &&
@@ -742,13 +787,26 @@ bool isOrientationInPortraitMode() {
 
 /// Returns [true] if device orientation is in Landscape mode.
 bool isOrientationInLandscapeMode() {
-  var orientation = window.orientation;
+  // `window.orientation` is only defined in mobile browsers (reading it as an
+  // `int` throws when it's `undefined`):
+  var orientation = window.getProperty<JSAny?>('orientation'.toJS);
 
-  if (orientation == 90 || orientation == -90) {
-    return true;
-  } else {
-    return false;
+  if (orientation.isA<JSNumber>()) {
+    var angle = (orientation as JSNumber).toDartDouble;
+    return angle == 90 || angle == -90;
   }
+
+  // `screen.orientation` is missing in older browsers (e.g. desktop Safari
+  // before 16.4):
+  var screenOrientation = window.screen.getProperty<JSAny?>('orientation'.toJS);
+  if (screenOrientation.isA<JSObject>()) {
+    var type = (screenOrientation as JSObject).getProperty<JSAny?>('type'.toJS);
+    if (type.isA<JSString>()) {
+      return (type as JSString).toDart.startsWith('landscape');
+    }
+  }
+
+  return window.innerWidth > window.innerHeight;
 }
 
 /// Attaches [listener] to `orientationchange` event.
@@ -774,7 +832,7 @@ bool isNodeInDOM(Node node) {
 bool isInDOM(Object? element) {
   if (element == null) return false;
 
-  if (element.asJSAny.isA<Node>()) {
+  if (element.isA<Node>()) {
     return document.body!.contains(element as Node);
   } else if (element is List) {
     for (var elem in element) {
@@ -803,8 +861,10 @@ bool nodeTreeContainsAny(Node rootNode, Iterable<Node> list) {
 ///
 /// [defaultCSS] if [currentCSS] and [appendCSS] are [null].
 CSSStyleDeclaration defineCSS(
-    CSSStyleDeclaration? currentCSS, CSSStyleDeclaration? appendCSS,
-    [dynamic defaultCSS]) {
+  CSSStyleDeclaration? currentCSS,
+  CSSStyleDeclaration? appendCSS, [
+  dynamic defaultCSS,
+]) {
   if (currentCSS == null) {
     return appendCSS ?? asCssStyleDeclaration(defaultCSS);
   } else if (appendCSS == null) {
@@ -859,8 +919,11 @@ bool isCssNotEmpty(CSSStyleDeclaration css) {
 }
 
 /// Applies [css] to [element] and [extraElements] list if present.
-bool applyCSS(CSSStyleDeclaration css, Element element,
-    [List<Element>? extraElements]) {
+bool applyCSS(
+  CSSStyleDeclaration css,
+  Element element, [
+  List<Element>? extraElements,
+]) {
   if (!isCssNotEmpty(css)) return false;
 
   var apply = _applyCSS(css, element);
@@ -883,7 +946,9 @@ bool _applyCSS(CSSStyleDeclaration css, Element element) {
 
 /// Returns [true] if [element] matches [attributes].
 bool elementMatchesAttributes(
-    Element element, Map<String, dynamic> attributes) {
+  Element element,
+  Map<String, dynamic> attributes,
+) {
   for (var entry in attributes.entries) {
     if (!elementMatchesAttribute(element, entry.key, entry.value)) {
       return false;
@@ -896,7 +961,10 @@ typedef MatchesValue = bool Function(String value);
 
 /// Returns [true] if [element] matches [attributeName] and [attributeValue].
 bool elementMatchesAttribute(
-    Element element, String attributeName, dynamic attributeValue) {
+  Element element,
+  String attributeName,
+  dynamic attributeValue,
+) {
   var value = element.getAttribute(attributeName);
   if (value == attributeValue) return true;
   if (value == null || attributeValue == null) return false;
@@ -917,7 +985,9 @@ bool elementMatchesAttribute(
 /// [tag] Type of tag for selection.
 /// [matchAttributes] Attributes to match in selection.
 List<Element> getElementsWithAttributes(
-    String tag, Map<String, dynamic> matchAttributes) {
+  String tag,
+  Map<String, dynamic> matchAttributes,
+) {
   var tags = (document.getElementsByTagName(tag)).whereType<Element>();
   return tags
       .where((e) => elementMatchesAttributes(e, matchAttributes))
@@ -939,8 +1009,9 @@ List<String?> getMetaTagsContentWithName(String name) {
 /// Returns [true] if `meta` tag of name `apple-mobile-web-app-status-bar-style`
 /// is `translucent`.
 bool isMobileAppStatusBarTranslucent() {
-  var metaTagsContents =
-      getMetaTagsContentWithName('apple-mobile-web-app-status-bar-style');
+  var metaTagsContents = getMetaTagsContentWithName(
+    'apple-mobile-web-app-status-bar-style',
+  );
   if (metaTagsContents.isEmpty) return false;
   var metaStatusContent = metaTagsContents[0]!;
   return metaStatusContent.contains('translucent');
@@ -965,17 +1036,23 @@ bool copyElementToClipboard(Element element) {
 }
 
 /// Set all [element] sub div with [className] to centered content.
-void setTreeElementsDivCentered(Element element, String className,
-    {bool centerVertically = true, bool centerHorizontally = true}) {
+void setTreeElementsDivCentered(
+  Element element,
+  String className, {
+  bool centerVertically = true,
+  bool centerHorizontally = true,
+}) {
   if (isEmptyString(className, trim: true)) return;
 
   var elements = element.querySelectorAll('div.$className').toIterable();
 
   for (var e in elements) {
     if (e.isA<HTMLDivElement>()) {
-      setDivCentered(e as HTMLDivElement,
-          centerVertically: centerVertically,
-          centerHorizontally: centerHorizontally);
+      setDivCentered(
+        e as HTMLDivElement,
+        centerVertically: centerVertically,
+        centerHorizontally: centerHorizontally,
+      );
     }
   }
 }
@@ -994,22 +1071,22 @@ const _divCenteredBootstrapConflictingClasses = <String>{
 
 /// Sets [div] as centered content, using `display` property as `table` and sub
 /// div elements `display` property as `table-cell`.
-void setDivCentered(HTMLDivElement div,
-    {bool centerVertically = true,
-    bool centerHorizontally = true,
-    bool checkBootstrapClasses = true}) {
+void setDivCentered(
+  HTMLDivElement div, {
+  bool centerVertically = true,
+  bool centerHorizontally = true,
+  bool checkBootstrapClasses = true,
+}) {
   div.style.display =
       isInlineElement(div, checkBootstrapClasses: checkBootstrapClasses)
-          ? 'inline-table'
-          : 'table';
+      ? 'inline-table'
+      : 'table';
 
   div.classList.removeAll(_divCenteredBootstrapConflictingClasses);
 
   var subDivs = div.querySelectorAll(':scope > div').whereHTMLElement();
 
   for (var subDiv in subDivs) {
-    print(subDiv.outerHTML);
-
     subDiv.classList.removeAll(_divCenteredBootstrapConflictingClasses);
     subDiv.style.display = 'table-cell';
 
@@ -1021,12 +1098,15 @@ void setDivCentered(HTMLDivElement div,
       subDiv.style.verticalAlign = 'middle';
     }
 
-    var contentDivs =
-        subDiv.querySelectorAll(':scope > div').whereHTMLElement();
+    var contentDivs = subDiv
+        .querySelectorAll(':scope > div')
+        .whereHTMLElement();
 
     for (var contentDiv in contentDivs) {
-      if (!isInlineElement(contentDiv as HTMLDivElement,
-          checkBootstrapClasses: checkBootstrapClasses)) {
+      if (!isInlineElement(
+        contentDiv as HTMLDivElement,
+        checkBootstrapClasses: checkBootstrapClasses,
+      )) {
         contentDiv.style.display = 'inline-block';
       }
     }
@@ -1034,8 +1114,10 @@ void setDivCentered(HTMLDivElement div,
 }
 
 /// Returns [true] if [element] `display` property is inline.
-bool isInlineElement(HTMLDivElement element,
-    {bool checkBootstrapClasses = true}) {
+bool isInlineElement(
+  HTMLDivElement element, {
+  bool checkBootstrapClasses = true,
+}) {
   if (element.style.display.toLowerCase().contains('inline')) return true;
 
   if (checkBootstrapClasses) {
@@ -1055,8 +1137,11 @@ Map<String, Future<bool>> _prefetchedHref = {};
 ///
 /// [href] The path to the CSS source file.
 /// [insertIndex] optional index of insertion inside `head` node.
-Future<bool> prefetchHref(String href,
-    {int? insertIndex, bool? preLoad}) async {
+Future<bool> prefetchHref(
+  String href, {
+  int? insertIndex,
+  bool? preLoad,
+}) async {
   var rel = 'prefetch';
 
   if (preLoad ?? false) {
@@ -1088,11 +1173,13 @@ Future<bool> prefetchHref(String href,
 
   var completer = Completer<bool>();
 
-  script.onLoad.listen((e) {
-    completer.complete(true);
-  }, onError: (e) {
-    completer.complete(false);
-  });
+  void complete(bool loaded) {
+    if (!completer.isCompleted) completer.complete(loaded);
+  }
+
+  script.onLoad.listen((e) => complete(true), onError: (e) => complete(false));
+  // A failed load fires an `error` event (not an error in `onLoad`):
+  script.onError.listen((e) => complete(false));
 
   if (insertIndex != null) {
     insertIndex = Math.min(insertIndex, head!.children.length);
@@ -1117,7 +1204,7 @@ bool replaceElement(Node n1, Node n2) {
   if (parent != null) {
     var idx = parent.childNodes.indexOf(n1);
     if (idx >= 0) {
-      parent.insertBefore(n1, n2);
+      parent.insertBefore(n2, n1);
       parent.removeChild(n1);
       return true;
     }
@@ -1127,8 +1214,11 @@ bool replaceElement(Node n1, Node n2) {
 }
 
 /// Returns the parent of [element] applying [validator] and [maxLevels].
-Element? getParentElement(Element element,
-    {bool Function(Element parent)? validator, int maxLevels = 1000}) {
+Element? getParentElement(
+  Element element, {
+  bool Function(Element parent)? validator,
+  int maxLevels = 1000,
+}) {
   if (maxLevels < 1) return null;
 
   for (var level = 1; level <= maxLevels; ++level) {
@@ -1153,13 +1243,15 @@ Element? getParentElement(Element element,
 
 /// A [TreeReferenceMap] for DOM Nodes.
 class DOMTreeReferenceMap<V extends Object> extends TreeReferenceMap<Node, V> {
-  DOMTreeReferenceMap(super.root,
-      {super.autoPurge,
-      super.autoPurgeThreshold,
-      super.keepPurgedKeys,
-      super.purgedEntriesTimeout,
-      super.maxPurgedEntries,
-      super.onPurgedEntries});
+  DOMTreeReferenceMap(
+    super.root, {
+    super.autoPurge,
+    super.autoPurgeThreshold,
+    super.keepPurgedKeys,
+    super.purgedEntriesTimeout,
+    super.maxPurgedEntries,
+    super.onPurgedEntries,
+  });
 
   @override
   bool isInTree(Node? key) {
@@ -1247,8 +1339,12 @@ bool get isExtraLargeDevice => deviceWidth! >= 1200;
 
 HTMLCanvasElement? _measureTextCanvas;
 
-Dimension? measureText(String text,
-    {required String fontFamily, required Object fontSize, bool bold = false}) {
+Dimension? measureText(
+  String text, {
+  required String fontFamily,
+  required Object fontSize,
+  bool bold = false,
+}) {
   final canvas = _measureTextCanvas ??= HTMLCanvasElement()
     ..width = 10
     ..height = 10;

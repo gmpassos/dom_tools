@@ -54,8 +54,9 @@ abstract class _SimpleStorage {
     return timeValue.resolveBoth(value, (timeValue, value) {
       if (timeValue == null) return null;
 
-      var time =
-          timeValue is num ? timeValue.toInt() : int.parse('$timeValue'.trim());
+      var time = timeValue is num
+          ? timeValue.toInt()
+          : int.parse('$timeValue'.trim());
 
       var storageValue = StorageValue.stored(time, value);
       return storageValue;
@@ -88,8 +89,9 @@ class _SessionSimpleStorage extends _SimpleStorage {
 
   @override
   List<String> listKeys(String prefix) {
-    var keys =
-        window.sessionStorage.keys.where((k) => k.startsWith(prefix)).toList();
+    var keys = window.sessionStorage.keys
+        .where((k) => k.startsWith(prefix))
+        .toList();
     return keys;
   }
 
@@ -128,7 +130,8 @@ class _PersistentSimpleStorage extends _SimpleStorage {
         } else {
           var localStorage = _LocalSimpleStorage();
           _consoleLog(
-              '[WARN] Error loading _DBSimpleStorage: $db > Using _LocalSimpleStorage: $localStorage');
+            '[WARN] Error loading _DBSimpleStorage: $db > Using _LocalSimpleStorage: $localStorage',
+          );
           _onLoadStorage(localStorage);
           completer.complete(localStorage);
         }
@@ -245,41 +248,50 @@ class _DBSimpleStorage extends _SimpleStorage {
 
     completer.future.then(_setDB, onError: _onOpenVersionedError);
 
-    _indexedDBOpen().then((db) {
-      if (db != null && !completer.isCompleted) {
-        completer.complete(db);
-      }
-      return db;
-    }, onError: (e, s) {
-      if (!completer.isCompleted) completer.completeError(e, s);
-      return null;
-    });
+    _indexedDBOpen().then(
+      (db) {
+        if (db != null && !completer.isCompleted) {
+          completer.complete(db);
+        }
+        return db;
+      },
+      onError: (e, s) {
+        if (!completer.isCompleted) completer.completeError(e, s);
+        return null;
+      },
+    );
 
     Future.delayed(Duration(milliseconds: 600), () {
       if (!completer.isCompleted) {
-        _indexedDBOpen().then((db) {
-          if (db != null && !completer.isCompleted) {
-            completer.complete(db);
-          }
-          return db;
-        }, onError: (e, s) {
-          return null;
-        });
+        _indexedDBOpen().then(
+          (db) {
+            if (db != null && !completer.isCompleted) {
+              completer.complete(db);
+            }
+            return db;
+          },
+          onError: (e, s) {
+            return null;
+          },
+        );
       }
     });
 
     Future.delayed(Duration(seconds: 3), () {
       if (!completer.isCompleted) {
         var error = StateError(
-            "indexedDB open timeout (3s) error! (isSupported: $isSupported)");
+          "indexedDB open timeout (3s) error! (isSupported: $isSupported)",
+        );
         completer.completeError(error);
       }
     });
   }
 
-  Future<IDBDatabase?> _indexedDBOpen() =>
-      window.indexedDB.openDatabase(indexedDbName,
-          version: 1, onUpgradeNeeded: _initializeDatabase);
+  Future<IDBDatabase?> _indexedDBOpen() => window.indexedDB.openDatabase(
+    indexedDbName,
+    version: 1,
+    onUpgradeNeeded: _initializeDatabase,
+  );
 
   bool _loadError = false;
 
@@ -289,7 +301,8 @@ class _DBSimpleStorage extends _SimpleStorage {
 
   void _onOpenVersionedError(dynamic error) {
     _consoleError(
-        '-- indexedDB open versioned error: $error (isSupported: $isSupported)');
+      '-- indexedDB open versioned error: $error (isSupported: $isSupported)',
+    );
     _loadError = true;
     onLoad.add(false);
   }
@@ -314,12 +327,18 @@ class _DBSimpleStorage extends _SimpleStorage {
   void _initializeDatabase(Event e) {
     var request = e.target as IDBOpenDBRequest;
     var db = request.result as IDBDatabase;
-    db.createObjectStore(objStore,
-        IDBObjectStoreParameters(keyPath: 'k'.toJS, autoIncrement: false));
+    db.createObjectStore(
+      objStore,
+      IDBObjectStoreParameters(keyPath: 'k'.toJS, autoIncrement: false),
+    );
   }
 
-  FutureOr<IDBTransaction?> _transactionObjStore(IDBDatabase db, String mode,
-      {bool autoRecreateDB = false, bool verbose = false}) {
+  FutureOr<IDBTransaction?> _transactionObjStore(
+    IDBDatabase db,
+    String mode, {
+    bool autoRecreateDB = false,
+    bool verbose = false,
+  }) {
     if (_recreateDBFuture != null) {
       return _transactionObjStore2(mode, verbose);
     }
@@ -330,7 +349,8 @@ class _DBSimpleStorage extends _SimpleStorage {
       if (!autoRecreateDB) {
         if (verbose) {
           _consoleLog(
-              '[WARN] Failed to open indexedDB `$indexedDbName` transaction for ObjectStore `$objStore`: $this');
+            '[WARN] Failed to open indexedDB `$indexedDbName` transaction for ObjectStore `$objStore`: $this',
+          );
           _consoleError(e);
         }
         return null;
@@ -338,7 +358,8 @@ class _DBSimpleStorage extends _SimpleStorage {
 
       if (verbose) {
         _consoleLog(
-            '[WARN] Failed to open transaction for indexedDB `$indexedDbName` ObjectStore `$objStore`. Attempting to auto-recreate indexedDB ...');
+          '[WARN] Failed to open transaction for indexedDB `$indexedDbName` ObjectStore `$objStore`. Attempting to auto-recreate indexedDB ...',
+        );
       }
 
       return _transactionObjStore2(mode, verbose);
@@ -346,14 +367,17 @@ class _DBSimpleStorage extends _SimpleStorage {
   }
 
   Future<IDBTransaction?> _transactionObjStore2(
-      String mode, bool verbose) async {
+    String mode,
+    bool verbose,
+  ) async {
     var db = await _recreateDB(verbose);
 
     try {
       return db.transaction(objStore.toJS, mode);
     } catch (e2) {
       _consoleLog(
-          '[WARN] Failed to open indexedDB `$indexedDbName` transaction for ObjectStore `$objStore` (after auto-recreate DB): $this');
+        '[WARN] Failed to open indexedDB `$indexedDbName` transaction for ObjectStore `$objStore` (after auto-recreate DB): $this',
+      );
       _consoleError(e2);
       return null;
     }
@@ -369,7 +393,8 @@ class _DBSimpleStorage extends _SimpleStorage {
       var objectStoreNames = prevDB.objectStoreNames;
       if (objectStoreNames.contains(objStore)) {
         throw StateError(
-            "Can't re-create indexedDB `$indexedDbName`: `ObjectStore` `$objStore` already present on DB. objectStoreNames: $objectStoreNames");
+          "Can't re-create indexedDB `$indexedDbName`: `ObjectStore` `$objStore` already present on DB. objectStoreNames: $objectStoreNames",
+        );
       }
 
       prevDB.close();
@@ -377,22 +402,26 @@ class _DBSimpleStorage extends _SimpleStorage {
 
     if (verbose) {
       _consoleLog(
-          '[WARN] Attempting to re-create indexedDB `$indexedDbName` ...');
+        '[WARN] Attempting to re-create indexedDB `$indexedDbName` ...',
+      );
     }
 
     _db = null;
 
     var recreateDB = _recreateDBFuture = _recreateDBImpl();
 
-    recreateDB.then((_) {
-      if (identical(recreateDB, _recreateDBFuture)) {
-        _recreateDBFuture = null;
-      }
-    }, onError: (_) {
-      if (identical(recreateDB, _recreateDBFuture)) {
-        _recreateDBFuture = null;
-      }
-    });
+    recreateDB.then(
+      (_) {
+        if (identical(recreateDB, _recreateDBFuture)) {
+          _recreateDBFuture = null;
+        }
+      },
+      onError: (_) {
+        if (identical(recreateDB, _recreateDBFuture)) {
+          _recreateDBFuture = null;
+        }
+      },
+    );
 
     return recreateDB;
   }
@@ -405,11 +434,13 @@ class _DBSimpleStorage extends _SimpleStorage {
       await req.toFuture();
     } catch (e2) {
       _consoleError(
-          '[ERROR] Failed to delete indexedDB `$indexedDbName` (auto-recreate DB)');
+        '[ERROR] Failed to delete indexedDB `$indexedDbName` (auto-recreate DB)',
+      );
       _consoleError(e2);
 
       throw StateError(
-          "Failed to delete indexedDB `$indexedDbName`. Can't auto-recreate DB & ObjectStore `$objStore` for: $this");
+        "Failed to delete indexedDB `$indexedDbName`. Can't auto-recreate DB & ObjectStore `$objStore` for: $this",
+      );
     }
 
     try {
@@ -424,7 +455,8 @@ class _DBSimpleStorage extends _SimpleStorage {
       _consoleError(e2);
 
       throw StateError(
-          "Can't auto-recreate indexedDB `$indexedDbName` & ObjectStore `$objStore` for: $this");
+        "Can't auto-recreate indexedDB `$indexedDbName` & ObjectStore `$objStore` for: $this",
+      );
     }
   }
 
@@ -535,8 +567,11 @@ class _DBSimpleStorage extends _SimpleStorage {
   Future<bool> set(String key, Object? value) async {
     var db = await _getDB();
 
-    var transaction =
-        await _transactionObjStore(db, 'readwrite', autoRecreateDB: true);
+    var transaction = await _transactionObjStore(
+      db,
+      'readwrite',
+      autoRecreateDB: true,
+    );
     if (transaction == null) return false;
 
     var objectStore = transaction.objectStore(objStore);
@@ -570,7 +605,7 @@ enum DataStorageType {
   persistent,
 
   /// Data is available ony in the current browser session.
-  session
+  session,
 }
 
 /// Represents a persistent storage in the browser.
@@ -649,7 +684,8 @@ class DataStorage {
 
   FutureOr<StorageValue?> _getStorageValue(String fullKey) async {
     try {
-      var storageValue = _simpleStorage.getStorageValue(fullKey);
+      // Awaited, so asynchronous errors are caught below:
+      var storageValue = await _simpleStorage.getStorageValue(fullKey);
       return storageValue;
     } catch (e, s) {
       _consoleError('DataStorage[$id]> Error loading key: $fullKey >> $e');
@@ -707,21 +743,18 @@ class StorageValue {
   @override
   String toString() => 'StorageValue{storeTime: $storeTime, value: $value}';
 
-  Map<String, dynamic> toJson() => {
-        'storeTime': storeTime,
-        'value': value,
-      };
+  Map<String, dynamic> toJson() => {'storeTime': storeTime, 'value': value};
 }
 
 /// State operation.
-enum StateOperation {
-  load,
-  set,
-  all,
-}
+enum StateOperation { load, set, all }
 
 typedef StateEventListener = void Function(
-    StateOperation op, State state, String key, dynamic value);
+  StateOperation op,
+  State state,
+  String key,
+  dynamic value,
+);
 typedef StateKeyListener = void Function(dynamic value);
 
 /// A state stored in [DataStorage].
@@ -739,7 +772,8 @@ class State {
 
     if (!storage.registerState(this)) {
       throw StateError(
-          'DataStorage[${storage.id}] already have a registered State[$name]!');
+        'DataStorage[${storage.id}] already have a registered State[$name]!',
+      );
     }
 
     _load();
@@ -959,15 +993,15 @@ class State {
   }
 
   void _fireEvent(StateOperation op, State state, String key, dynamic value) {
-    var eventListeners = _eventListeners[op];
+    // A copy: don't add the `all` listeners into the registered `op` list.
+    var eventListeners = [...?_eventListeners[op]];
     var eventListenersAll = _eventListeners[StateOperation.all];
 
     if (eventListenersAll != null) {
-      eventListeners ??= [];
       eventListeners.addAll(eventListenersAll);
     }
 
-    if (eventListeners != null && eventListeners.isNotEmpty) {
+    if (eventListeners.isNotEmpty) {
       for (var listener in eventListeners) {
         try {
           listener(op, state, key, value);
@@ -1012,11 +1046,12 @@ V? _castTo<V>(Object? val) {
   } else if (V == bool) {
     return parseBool(val) as V?;
   } else if (V == List<int>) {
-    return parseListOf(val, parseInt) as V?;
+    // `parseListOf` returns a `List<int?>` (not a `List<int>`):
+    return parseListOf(val, parseInt)?.whereType<int>().toList() as V?;
   } else if (V == List<double>) {
-    return parseListOf(val, parseDouble) as V?;
+    return parseListOf(val, parseDouble)?.whereType<double>().toList() as V?;
   } else if (V == List<num>) {
-    return parseListOf(val, parseNum) as V?;
+    return parseListOf(val, parseNum)?.whereType<num>().toList() as V?;
   }
 
   try {

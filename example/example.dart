@@ -9,10 +9,13 @@ void main() {
   var tracker = TrackElementInViewport();
   var imageElement = HTMLImageElement();
 
-  tracker.track(imageElement, onEnterViewport: (elem) {
-    // ignore: unsafe_html
-    imageElement.src = imgSrc;
-  });
+  tracker.track(
+    imageElement,
+    onEnterViewport: (elem) {
+      // ignore: unsafe_html
+      imageElement.src = imgSrc;
+    },
+  );
 
   document.body!.appendChild(imageElement);
 

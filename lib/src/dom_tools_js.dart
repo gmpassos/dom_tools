@@ -43,8 +43,11 @@ Map<String, Future<bool>> _addedJavaScriptsSources = {};
 /// [addToBody] If [true] adds into `body` node instead of `head` node.
 /// [async] If true, the script will be executed asynchronously as soon as it is available,
 /// and not when the page has finished parsing.
-Future<bool> addJavaScriptSource(String scriptSource,
-    {bool addToBody = false, bool async = false}) async {
+Future<bool> addJavaScriptSource(
+  String scriptSource, {
+  bool addToBody = false,
+  bool async = false,
+}) async {
   var scriptInDom = getScriptElementBySRC(scriptSource);
 
   var prevCall = _addedJavaScriptsSources[scriptSource];
@@ -82,11 +85,13 @@ Future<bool> addJavaScriptSource(String scriptSource,
 
   var completer = Completer<bool>();
 
-  script.onLoad.listen((e) {
-    completer.complete(true);
-  }, onError: (e) {
-    completer.complete(false);
-  });
+  void complete(bool loaded) {
+    if (!completer.isCompleted) completer.complete(loaded);
+  }
+
+  script.onLoad.listen((e) => complete(true), onError: (e) => complete(false));
+  // A failed load fires an `error` event (not an error in `onLoad`):
+  script.onError.listen((e) => complete(false));
 
   parent.appendChild(script);
 
@@ -171,7 +176,8 @@ String _jsFunctionBlockScrolling = '__JS__BlockScroll__';
 
 /// Disables scrolling in browser.
 void disableScrolling() {
-  var scriptCode = '''
+  var scriptCode =
+      '''
   
   if ( window.$_jsFunctionBlockScrolling == null ) {
     $_jsFunctionBlockScrolling = function(event) {

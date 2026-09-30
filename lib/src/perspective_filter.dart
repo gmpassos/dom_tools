@@ -88,28 +88,57 @@ class ImagePerspectiveFilter {
 
   ImagePerspectiveFilter(this.image, this.width, this.height);
 
-  void setCornersFromDimensionRatio(double x0, double y0, double x1, double y1,
-      double x2, double y2, double x3, double y3) {
-    setCorners(width * x0, height * y0, width * x1, height * y1, width * x2,
-        height * y2, width * x3, height * y3);
+  void setCornersFromDimensionRatio(
+    double x0,
+    double y0,
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+    double x3,
+    double y3,
+  ) {
+    setCorners(
+      width * x0,
+      height * y0,
+      width * x1,
+      height * y1,
+      width * x2,
+      height * y2,
+      width * x3,
+      height * y3,
+    );
   }
 
   void setCornersFromPoints(
-      Point<num> p0, Point<num> p1, Point<num> p2, Point<num> p3) {
-    setCornersFromInts(p0.x.toInt(), p0.y.toInt(), p1.x.toInt(), p1.y.toInt(),
-        p2.x.toInt(), p2.y.toInt(), p3.x.toInt(), p3.y.toInt());
+    Point<num> p0,
+    Point<num> p1,
+    Point<num> p2,
+    Point<num> p3,
+  ) {
+    setCornersFromInts(
+      p0.x.toInt(),
+      p0.y.toInt(),
+      p1.x.toInt(),
+      p1.y.toInt(),
+      p2.x.toInt(),
+      p2.y.toInt(),
+      p3.x.toInt(),
+      p3.y.toInt(),
+    );
   }
 
   void setCornersFromNumList(List<num> points) {
     setCornersFromInts(
-        points[0].toInt(),
-        points[1].toInt(),
-        points[2].toInt(),
-        points[3].toInt(),
-        points[4].toInt(),
-        points[5].toInt(),
-        points[6].toInt(),
-        points[7].toInt());
+      points[0].toInt(),
+      points[1].toInt(),
+      points[2].toInt(),
+      points[3].toInt(),
+      points[4].toInt(),
+      points[5].toInt(),
+      points[6].toInt(),
+      points[7].toInt(),
+    );
   }
 
   void setCornersFromPointsList(List<Point<num>> points) {
@@ -117,13 +146,37 @@ class ImagePerspectiveFilter {
   }
 
   void setCornersFromInts(
-      int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3) {
-    setCorners(x0.toDouble(), y0.toDouble(), x1.toDouble(), y1.toDouble(),
-        x2.toDouble(), y2.toDouble(), x3.toDouble(), y3.toDouble());
+    int x0,
+    int y0,
+    int x1,
+    int y1,
+    int x2,
+    int y2,
+    int x3,
+    int y3,
+  ) {
+    setCorners(
+      x0.toDouble(),
+      y0.toDouble(),
+      x1.toDouble(),
+      y1.toDouble(),
+      x2.toDouble(),
+      y2.toDouble(),
+      x3.toDouble(),
+      y3.toDouble(),
+    );
   }
 
-  void setCorners(double x0, double y0, double x1, double y1, double x2,
-      double y2, double x3, double y3) {
+  void setCorners(
+    double x0,
+    double y0,
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+    double x3,
+    double y3,
+  ) {
     _x0 = x0;
     _y0 = y0;
     _x1 = x1;
@@ -193,21 +246,28 @@ class ImagePerspectiveFilter {
   void _transformSpace(_Rect rect) {
     rect.x = math.min(math.min(_x0, _x1), math.min(_x2, _x3)).toInt();
     rect.y = math.min(math.min(_y0, _y1), math.min(_y2, _y3)).toInt();
-    rect.width =
-        (math.max(math.max(_x0, _x1), math.max(_x2, _x3)) - rect.x).toInt();
-    rect.height =
-        (math.max(math.max(_y0, _y1), math.max(_y2, _y3)) - rect.y).toInt();
+    rect.width = (math.max(math.max(_x0, _x1), math.max(_x2, _x3)) - rect.x)
+        .toInt();
+    rect.height = (math.max(math.max(_y0, _y1), math.max(_y2, _y3)) - rect.y)
+        .toInt();
   }
 
   void _transformInverse(_Rect originalSpace, int x, int y, Float32List out) {
     out[0] =
         (originalSpace.width * (_a * x + _b * y + _c)) / (_g * x + _h * y + _i);
-    out[1] = (originalSpace.height * (_d * x + _e * y + _f)) /
+    out[1] =
+        (originalSpace.height * (_d * x + _e * y + _f)) /
         (_g * x + _h * y + _i);
   }
 
-  void _getPixel(Uint8ClampedList pixels, int x, int y, int width, int height,
-      Uint8ClampedList rgba) {
+  void _getPixel(
+    Uint8ClampedList pixels,
+    int x,
+    int y,
+    int width,
+    int height,
+    Uint8ClampedList rgba,
+  ) {
     _getPixelEdgeBlack(pixels, x, y, width, height, rgba);
   }
 
@@ -218,8 +278,14 @@ class ImagePerspectiveFilter {
     rgba[3] = pixels[idx + 3];
   }
 
-  void _getPixelEdgeBlack(Uint8ClampedList pixels, int x, int y, int width,
-      int height, Uint8ClampedList rgba) {
+  void _getPixelEdgeBlack(
+    Uint8ClampedList pixels,
+    int x,
+    int y,
+    int width,
+    int height,
+    Uint8ClampedList rgba,
+  ) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
       rgba[0] = 0;
       rgba[1] = 0;
@@ -344,7 +410,9 @@ class ImagePerspectiveFilter {
 
 /// Apply [perspective] filter to [image].
 FilterResult? applyPerspective(
-    CanvasImageSource image, List<Point<num>> perspective) {
+  CanvasImageSource image,
+  List<Point<num>> perspective,
+) {
   var wh = getImageDimension(image)!;
 
   var w = wh.width;
@@ -362,15 +430,16 @@ FilterResult? applyPerspective(
 class ImagePerspectiveFilterCache extends ImageScaledCache {
   final int _maxPerspectiveCacheEntries;
 
-  ImagePerspectiveFilterCache(super.image,
-      [super.width,
-      super.height,
-      super.maxScaleCacheEntries,
-      int? maxPerspectiveCacheEntries])
-      : _maxPerspectiveCacheEntries =
-            maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0
-                ? maxPerspectiveCacheEntries
-                : 2;
+  ImagePerspectiveFilterCache(
+    super.image, [
+    super.width,
+    super.height,
+    super.maxScaleCacheEntries,
+    int? maxPerspectiveCacheEntries,
+  ]) : _maxPerspectiveCacheEntries =
+           maxPerspectiveCacheEntries != null && maxPerspectiveCacheEntries > 0
+           ? maxPerspectiveCacheEntries
+           : 2;
 
   int? get maxPerspectiveCacheEntries => _maxPerspectiveCacheEntries;
 
@@ -395,7 +464,9 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
   }
 
   FilterResult? getImageWithPerspective(
-      List<Point<num>>? points, double scale) {
+    List<Point<num>>? points,
+    double scale,
+  ) {
     if (scale <= 0) return null;
 
     var cacheKey = '$scale > $points';
@@ -416,7 +487,9 @@ class ImagePerspectiveFilterCache extends ImageScaledCache {
       imageWithPerspective = applyPerspective(imageScaled, perspective);
 
       ImageScaledCache.limitEntries(
-          _perspectiveCache, _maxPerspectiveCacheEntries - 1);
+        _perspectiveCache,
+        _maxPerspectiveCacheEntries - 1,
+      );
 
       _perspectiveCache[cacheKey] = imageWithPerspective;
     }

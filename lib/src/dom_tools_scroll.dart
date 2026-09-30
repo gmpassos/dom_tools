@@ -13,7 +13,8 @@ bool isSafariIOS() {
 
   var userAgent = window.navigator.userAgent.toLowerCase();
 
-  safariIOS = userAgent.contains('safari') &&
+  safariIOS =
+      userAgent.contains('safari') &&
       RegExp(r'ip(?:ad|od|hone)').hasMatch(userAgent);
 
   _safariIOS = safariIOS;
@@ -34,11 +35,18 @@ void _callAsync(int delayMs, void Function() f) {
 /// - If [delayMs] >= 1 it will scroll after a [Future.delayed]. (value in milliseconds)
 /// - [scrollable] is the element to scroll. If `null` it will be the [window] or the [body],
 ///   identifying which one is scrolled.
-void scrollTo(num? x, num? y,
-    {bool smooth = true, int? delayMs, Object? scrollable}) {
+void scrollTo(
+  num? x,
+  num? y, {
+  bool smooth = true,
+  int? delayMs,
+  Object? scrollable,
+}) {
   if (delayMs != null && delayMs > 0) {
     _callAsync(
-        delayMs, () => scrollTo(x, y, smooth: smooth, scrollable: scrollable));
+      delayMs,
+      () => scrollTo(x, y, smooth: smooth, scrollable: scrollable),
+    );
     return;
   }
 
@@ -98,40 +106,61 @@ void scrollToTopDelayed(int delayMs) {
 ///   where `smooth` is ignored and the viewport position is vertically shifted
 ///   even at `scrollX == 0`. Bug still present on iOS 16.4 (latest version on current date).
 /// - See [scrollTo].
-void scrollToTop(
-    {bool smooth = true,
-    int y = 0,
-    bool fixSafariIOS = false,
-    int? delayMs,
-    Object? scrollable}) {
+void scrollToTop({
+  bool smooth = true,
+  int y = 0,
+  bool fixSafariIOS = false,
+  int? delayMs,
+  Object? scrollable,
+}) {
   if (fixSafariIOS && y == 0 && isSafariIOS()) {
     y = 1;
   }
 
-  scrollTo(window.scrollX, y,
-      smooth: smooth, delayMs: delayMs, scrollable: scrollable);
+  scrollTo(
+    window.scrollX,
+    y,
+    smooth: smooth,
+    delayMs: delayMs,
+    scrollable: scrollable,
+  );
 }
 
 /// Scrolls viewport to the bottom.
 ///
 /// - See [scrollTo].
 void scrollToBottom({bool smooth = true, int? delayMs, Object? scrollable}) =>
-    scrollTo(window.scrollX, document.body!.scrollHeight,
-        smooth: smooth, delayMs: delayMs, scrollable: scrollable);
+    scrollTo(
+      window.scrollX,
+      document.body!.scrollHeight,
+      smooth: smooth,
+      delayMs: delayMs,
+      scrollable: scrollable,
+    );
 
 /// Scrolls viewport to the left border.
 ///
 /// - See [scrollTo].
 void scrollToLeft({bool smooth = true, int? delayMs, Object? scrollable}) =>
-    scrollTo(0, window.scrollY,
-        smooth: smooth, delayMs: delayMs, scrollable: scrollable);
+    scrollTo(
+      0,
+      window.scrollY,
+      smooth: smooth,
+      delayMs: delayMs,
+      scrollable: scrollable,
+    );
 
 /// Scrolls viewport to the right border.
 ///
 /// - See [scrollTo].
 void scrollToRight({bool smooth = true, int? delayMs, Object? scrollable}) =>
-    scrollTo(document.body!.scrollWidth, window.scrollY,
-        smooth: smooth, delayMs: delayMs, scrollable: scrollable);
+    scrollTo(
+      document.body!.scrollWidth,
+      window.scrollY,
+      smooth: smooth,
+      delayMs: delayMs,
+      scrollable: scrollable,
+    );
 
 /// Scrolls the viewport to the [element].
 ///
@@ -182,14 +211,16 @@ void scrollToElement(
 
 /// Blocks a scroll event in the vertical direction that traverses the [element].
 void blockVerticalScrollTraverse(HTMLElement element) {
-  element.onWheel
-      .listen((event) => blockVerticalScrollTraverseEvent(element, event));
+  element.onWheel.listen(
+    (event) => blockVerticalScrollTraverseEvent(element, event),
+  );
 }
 
 /// Blocks a scroll event in the horizontal direction that traverses the [element].
 void blockHorizontalScrollTraverse(HTMLElement element) {
-  element.onWheel
-      .listen((event) => blockHorizontalScrollTraverseEvent(element, event));
+  element.onWheel.listen(
+    (event) => blockHorizontalScrollTraverseEvent(element, event),
+  );
 }
 
 /// Blocks a scroll event in the vertical and horizontal directions that traverses the [element].
@@ -204,7 +235,9 @@ void blockScrollTraverse(HTMLElement element) {
 
 /// Blocks a [wheelEvent] in the vertical direction that traverses the [element].
 bool blockVerticalScrollTraverseEvent(
-    HTMLElement element, WheelEvent wheelEvent) {
+  HTMLElement element,
+  WheelEvent wheelEvent,
+) {
   var delta = -wheelEvent.deltaY;
   var up = delta > 0;
 
@@ -233,7 +266,9 @@ bool blockVerticalScrollTraverseEvent(
 
 /// Blocks a [wheelEvent] in the horizontal direction that traverses the [element].
 bool blockHorizontalScrollTraverseEvent(
-    HTMLElement element, WheelEvent wheelEvent) {
+  HTMLElement element,
+  WheelEvent wheelEvent,
+) {
   var delta = -wheelEvent.deltaX;
   var left = delta > 0;
 

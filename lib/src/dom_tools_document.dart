@@ -39,60 +39,97 @@ const codeTheme0 = {
   'keyword': TextStyle(color: StyleColor(0xffdcc6e0)),
   'selector-tag': TextStyle(color: StyleColor(0xffdcc6e0)),
   'root': TextStyle(
-      backgroundColor: StyleColor(0xff2b2b2b), color: StyleColor(0xfff8f8f2)),
+    backgroundColor: StyleColor(0xff2b2b2b),
+    color: StyleColor(0xfff8f8f2),
+  ),
   'emphasis': TextStyle(fontStyle: FontStyle.italic),
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
 const codeTheme1 = {
   'root': TextStyle(
-      color: StyleColor(0xff000000), backgroundColor: StyleColor(0xffffffff)),
-  'subst':
-      TextStyle(fontWeight: FontWeight.normal, color: StyleColor(0xff000000)),
-  'title':
-      TextStyle(fontWeight: FontWeight.normal, color: StyleColor(0xff000000)),
-  'comment':
-      TextStyle(color: StyleColor(0xff808080), fontStyle: FontStyle.italic),
-  'quote':
-      TextStyle(color: StyleColor(0xff808080), fontStyle: FontStyle.italic),
+    color: StyleColor(0xff000000),
+    backgroundColor: StyleColor(0xffffffff),
+  ),
+  'subst': TextStyle(
+    fontWeight: FontWeight.normal,
+    color: StyleColor(0xff000000),
+  ),
+  'title': TextStyle(
+    fontWeight: FontWeight.normal,
+    color: StyleColor(0xff000000),
+  ),
+  'comment': TextStyle(
+    color: StyleColor(0xff808080),
+    fontStyle: FontStyle.italic,
+  ),
+  'quote': TextStyle(
+    color: StyleColor(0xff808080),
+    fontStyle: FontStyle.italic,
+  ),
   'meta': TextStyle(color: StyleColor(0xff808000)),
   'tag': TextStyle(backgroundColor: StyleColor(0xffefefef)),
-  'section':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
+  'section': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff000080),
+  ),
   'name': TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
-  'literal':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
-  'keyword':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
-  'selector-tag':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
+  'literal': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff000080),
+  ),
+  'keyword': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff000080),
+  ),
+  'selector-tag': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff000080),
+  ),
   'type': TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
-  'selector-id':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
-  'selector-class':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff000080)),
-  'attribute':
-      TextStyle(fontWeight: FontWeight.bold, color: StyleColor(0xff0000ff)),
-  'number':
-      TextStyle(fontWeight: FontWeight.normal, color: StyleColor(0xff0000ff)),
-  'regexp':
-      TextStyle(fontWeight: FontWeight.normal, color: StyleColor(0xff0000ff)),
-  'link':
-      TextStyle(fontWeight: FontWeight.normal, color: StyleColor(0xff0000ff)),
-  'string':
-      TextStyle(color: StyleColor(0xff008000), fontWeight: FontWeight.bold),
+  'selector-id': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff000080),
+  ),
+  'selector-class': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff000080),
+  ),
+  'attribute': TextStyle(
+    fontWeight: FontWeight.bold,
+    color: StyleColor(0xff0000ff),
+  ),
+  'number': TextStyle(
+    fontWeight: FontWeight.normal,
+    color: StyleColor(0xff0000ff),
+  ),
+  'regexp': TextStyle(
+    fontWeight: FontWeight.normal,
+    color: StyleColor(0xff0000ff),
+  ),
+  'link': TextStyle(
+    fontWeight: FontWeight.normal,
+    color: StyleColor(0xff0000ff),
+  ),
+  'string': TextStyle(
+    color: StyleColor(0xff008000),
+    fontWeight: FontWeight.bold,
+  ),
   'symbol': TextStyle(
-      color: StyleColor(0xff000000),
-      backgroundColor: StyleColor(0xffd0eded),
-      fontStyle: FontStyle.italic),
+    color: StyleColor(0xff000000),
+    backgroundColor: StyleColor(0xffd0eded),
+    fontStyle: FontStyle.italic,
+  ),
   'bullet': TextStyle(
-      color: StyleColor(0xff000000),
-      backgroundColor: StyleColor(0xffd0eded),
-      fontStyle: FontStyle.italic),
+    color: StyleColor(0xff000000),
+    backgroundColor: StyleColor(0xffd0eded),
+    fontStyle: FontStyle.italic,
+  ),
   'formula': TextStyle(
-      color: StyleColor(0xff000000),
-      backgroundColor: StyleColor(0xffd0eded),
-      fontStyle: FontStyle.italic),
+    color: StyleColor(0xff000000),
+    backgroundColor: StyleColor(0xffd0eded),
+    fontStyle: FontStyle.italic,
+  ),
   'variable': TextStyle(color: StyleColor(0xff660e7a)),
   'template-variable': TextStyle(color: StyleColor(0xff660e7a)),
   'addition': TextStyle(backgroundColor: StyleColor(0xffbaeeba)),
@@ -128,17 +165,26 @@ const codeTheme2 = {
   'keyword': TextStyle(color: StyleColor(0xff955ae7)),
   'selector-tag': TextStyle(color: StyleColor(0xff955ae7)),
   'deletion': TextStyle(
-      color: StyleColor(0xff19171c), backgroundColor: StyleColor(0xffbe4678)),
+    color: StyleColor(0xff19171c),
+    backgroundColor: StyleColor(0xffbe4678),
+  ),
   'addition': TextStyle(
-      color: StyleColor(0xff19171c), backgroundColor: StyleColor(0xff2a9292)),
+    color: StyleColor(0xff19171c),
+    backgroundColor: StyleColor(0xff2a9292),
+  ),
   'root': TextStyle(
-      backgroundColor: StyleColor(0xff19171c), color: StyleColor(0xff8b8792)),
+    backgroundColor: StyleColor(0xff19171c),
+    color: StyleColor(0xff8b8792),
+  ),
   'emphasis': TextStyle(fontStyle: FontStyle.italic),
   'strong': TextStyle(fontWeight: FontWeight.bold),
 };
 
-final CSSThemeSet codeTheme =
-    CSSThemeSet('hljs-', [codeTheme0, codeTheme1, codeTheme2], 2);
+final CSSThemeSet codeTheme = CSSThemeSet('hljs-', [
+  codeTheme0,
+  codeTheme1,
+  codeTheme2,
+], 2);
 
 /// Normalizes a indent, removing the common/global indent of the code.
 ///
@@ -192,22 +238,27 @@ String normalizeIndent(String text) {
 ///
 /// [markdown] The markdown document.
 /// [normalize] If [true] normalizes indent.
-HTMLDivElement markdownToDiv(String markdown,
-    {bool normalize = true,
-    Iterable<mk.BlockSyntax>? blockSyntaxes,
-    Iterable<mk.InlineSyntax>? inlineSyntaxes,
-    mk.ExtensionSet? extensionSet,
-    mk.Resolver? linkResolver,
-    mk.Resolver? imageLinkResolver,
-    bool inlineOnly = false}) {
+HTMLDivElement markdownToDiv(
+  String markdown, {
+  bool normalize = true,
+  Iterable<mk.BlockSyntax>? blockSyntaxes,
+  Iterable<mk.InlineSyntax>? inlineSyntaxes,
+  mk.ExtensionSet? extensionSet,
+  mk.Resolver? linkResolver,
+  mk.Resolver? imageLinkResolver,
+  bool inlineOnly = false,
+}) {
   if (markdown.isEmpty) return createDivInline();
-  var html = markdownToHtml(markdown,
-      blockSyntaxes: blockSyntaxes,
-      inlineSyntaxes: inlineSyntaxes,
-      extensionSet: extensionSet,
-      linkResolver: linkResolver,
-      imageLinkResolver: imageLinkResolver,
-      inlineOnly: inlineOnly);
+  var html = markdownToHtml(
+    markdown,
+    normalize: normalize,
+    blockSyntaxes: blockSyntaxes,
+    inlineSyntaxes: inlineSyntaxes,
+    extensionSet: extensionSet,
+    linkResolver: linkResolver,
+    imageLinkResolver: imageLinkResolver,
+    inlineOnly: inlineOnly,
+  );
   return createDivInline(html: html);
 }
 
@@ -215,32 +266,43 @@ HTMLDivElement markdownToDiv(String markdown,
 ///
 /// [markdown] The markdown document.
 /// [normalize] If [true] normalizes indent.
-String markdownToHtml(String markdown,
-    {bool normalize = true,
-    Iterable<mk.BlockSyntax>? blockSyntaxes,
-    Iterable<mk.InlineSyntax>? inlineSyntaxes,
-    mk.ExtensionSet? extensionSet,
-    mk.Resolver? linkResolver,
-    mk.Resolver? imageLinkResolver,
-    bool inlineOnly = false}) {
+String markdownToHtml(
+  String markdown, {
+  bool normalize = true,
+  Iterable<mk.BlockSyntax>? blockSyntaxes,
+  Iterable<mk.InlineSyntax>? inlineSyntaxes,
+  mk.ExtensionSet? extensionSet,
+  mk.Resolver? linkResolver,
+  mk.Resolver? imageLinkResolver,
+  bool inlineOnly = false,
+}) {
   if (markdown.isEmpty) return '';
   if (normalize) markdown = normalizeIndent(markdown);
 
-  var markdownHtml = mk.markdownToHtml(markdown,
-      blockSyntaxes: blockSyntaxes ?? [],
-      inlineSyntaxes: inlineSyntaxes ?? [],
-      extensionSet: extensionSet,
-      linkResolver: linkResolver,
-      imageLinkResolver: imageLinkResolver,
-      inlineOnly: inlineOnly);
+  var markdownHtml = mk.markdownToHtml(
+    markdown,
+    blockSyntaxes: blockSyntaxes ?? [],
+    inlineSyntaxes: inlineSyntaxes ?? [],
+    extensionSet: extensionSet,
+    linkResolver: linkResolver,
+    imageLinkResolver: imageLinkResolver,
+    inlineOnly: inlineOnly,
+  );
 
   // allow attributes for url. For example:
   // [GitHub](https://github.com/){:target="_blank"}
-  markdownHtml = regExpReplaceAll(
-      RegExp(r'(<a.*?)(>.*?</a>){:(.*?)}',
-          multiLine: false, caseSensitive: false),
-      markdownHtml,
-      r'$1 $3$2');
+  // (The attributes are HTML-escaped by the markdown parser: unescape quotes.)
+  markdownHtml = markdownHtml.replaceAllMapped(
+    RegExp(
+      r'(<a.*?)(>.*?</a>){:(.*?)}',
+      multiLine: false,
+      caseSensitive: false,
+    ),
+    (m) {
+      var attributes = m[3]!.replaceAll('&quot;', '"').replaceAll('&#39;', "'");
+      return '${m[1]} $attributes${m[2]}';
+    },
+  );
 
   return markdownHtml;
 }
@@ -253,8 +315,12 @@ Blob dataURLToBlob(DataURLBase64 dataURL) {
 }
 
 /// Makes a HTTP request and returns [url] content as [Uint8List].
-Future<Uint8List> getURLData(String url,
-    {String? user, String? password, bool withCredentials = true}) {
+Future<Uint8List> getURLData(
+  String url, {
+  String? user,
+  String? password,
+  bool withCredentials = true,
+}) {
   var client = http.BrowserClient()..withCredentials = withCredentials;
   return client.readBytes(Uri.parse(url));
 }
@@ -276,8 +342,9 @@ void downloadContent(List<String> content, MimeType mimeType, String fileName) {
 
 /// Downloads [bytes] of type [mimeType], saving a file with [fileName].
 void downloadBytes(List<int> bytes, MimeType mimeType, String fileName) {
+  // A single typed array part (a part per byte would be stringified):
   var blob = Blob(
-    bytes.map((e) => e.toJS).toList().toJS,
+    [Uint8List.fromList(bytes).toJS].toJS,
     BlobPropertyBag(type: mimeType.toString()),
   );
   downloadBlob(blob, fileName);
@@ -336,13 +403,16 @@ class DataAssets {
 
   /// Returns a [Map] of ID and ObjectURL pairs.
   Map<String, String> get entries => Map.fromEntries(
-      _assets.entries.map((e) => MapEntry(e.key, e.value.objectURL)));
+    _assets.entries.map((e) => MapEntry(e.key, e.value.objectURL)),
+  );
 
   /// Returns a list of IDs of [mimeType].
   ///
   /// [matchSubType] If [true] also matches the [mimeType.subType].
-  List<String> getIDsWhereMimeTypeOf(MimeType? mimeType,
-      {bool matchSubType = true}) {
+  List<String> getIDsWhereMimeTypeOf(
+    MimeType? mimeType, {
+    bool matchSubType = true,
+  }) {
     if (mimeType == null) return [];
 
     var ids = _assets.entries
@@ -376,10 +446,10 @@ class DataAssets {
 
   /// Returns a list of IDs of type 'image/*', 'video/*' or 'audio/*'.
   List<String> getIDsWhereMimeTypeIsMedia() => <String>{
-        ...getIDsWhereMimeTypeIsImage(),
-        ...getIDsWhereMimeTypeIsVideo(),
-        ...getIDsWhereMimeTypeIsAudio(),
-      }.toList();
+    ...getIDsWhereMimeTypeIsImage(),
+    ...getIDsWhereMimeTypeIsVideo(),
+    ...getIDsWhereMimeTypeIsAudio(),
+  }.toList();
 
   /// Returns a list of ObjectURL of type 'image/*'.
   List<String> getURLsWhereMimeTypeIsImage() =>
@@ -511,8 +581,10 @@ class DataAssets {
 /// Reloads an asset (img, audi or video), forcing reload of asset URL.
 ///
 /// [assetsURLAndTag] A [Map] of URL as key and tag as value. Accepts '?' as tag (will be defined by URL extension).
-Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
-    {Duration? timeout}) async {
+Future<bool> reloadAssets(
+  Map<String, String> assetsURLAndTag, {
+  Duration? timeout,
+}) async {
   if (assetsURLAndTag.isEmpty) return false;
 
   var doc = '<html><body>';
@@ -552,7 +624,10 @@ Future<bool> reloadAssets(Map<String, String> assetsURLAndTag,
   listen = iFrame.onLoad.listen((event) {
     if (reloadCounter == 0) {
       reloadCounter++;
-      Future.microtask(() => iFrame.remove());
+      // Reload the document, forcing the assets to be requested again; the
+      // 2nd `load` completes. (It used to remove the iframe here, so the 2nd
+      // `load` never happened.)
+      iFrame.contentWindow?.location.reload();
     } else if (reloadCounter == 1) {
       listen?.cancel();
       completer.complete(true);
