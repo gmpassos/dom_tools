@@ -1,3 +1,18 @@
+## 3.1.1
+
+- `MimeType` (from `swiss_knife` 3.4.2) **(output change)**: `getFileMimeType`, `readFileDataAsDataURLBase64`,
+  `readFileDataAsBlobURL` and `readFileInputElementAsBlobUrl` resolve `.mp3` files to the standard `audio/mpeg`
+  (it was `audio/mp3`).
+
+- `pubspec.yaml`:
+  - Updated dependencies:
+    - `swiss_knife`: ^3.4.2
+    - `async_extension`: ^1.2.24
+    - `web`: ^1.1.2
+  - Updated dev dependency `test` to ^1.33.0
+
+- CI: `actions/checkout@v7`, `codecov/codecov-action@v7`.
+
 ## 3.1.0
 
 - sdk: ^3.13.0
