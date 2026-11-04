@@ -11,6 +11,8 @@
     - `web`: ^1.1.2
   - Updated dev dependency `test` to ^1.33.0
 
+- CI: `actions/checkout@v7`, `codecov/codecov-action@v7`.
+
 ## 3.1.0
 
 - sdk: ^3.13.0
